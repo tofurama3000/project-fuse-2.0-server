@@ -1,13 +1,11 @@
-package example.controllers;
+package server.controllers.rest;
 
-import example.dto.Session;
-import example.dto.User;
+import server.entities.dto.Session;
+import server.entities.dto.User;
 import org.springframework.util.AlternativeJdkIdGenerator;
 import org.springframework.util.IdGenerator;
 
-/**
- * Created by tofurama on 11/8/17.
- */
+
 public class SessionController {
   private static IdGenerator generator = new AlternativeJdkIdGenerator();
 

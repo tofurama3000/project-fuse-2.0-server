@@ -1,4 +1,4 @@
-package example.controllers.helpers;
+package server.controllers.rest.response;
 
 import lombok.Getter;
 

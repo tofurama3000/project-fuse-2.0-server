@@ -1,12 +1,10 @@
-package example.dto;
+package server.entities.dto;
 
 import lombok.Getter;
 
 import java.sql.Timestamp;
 
-/**
- * Created by tofurama on 11/8/17.
- */
+
 public class Session {
 
   public Session(String id, User sessionFor){

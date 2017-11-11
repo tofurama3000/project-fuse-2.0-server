@@ -1,8 +1,8 @@
-package example.controllers;
+package server.controllers.rest;
 
-import example.controllers.helpers.GeneralResponse;
-import example.dto.User;
-import example.repositories.UserRepository;
+import server.controllers.rest.response.GeneralResponse;
+import server.entities.dto.User;
+import server.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,7 +13,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.List;
 
 @Controller
 @RequestMapping(value="/user")
@@ -26,7 +27,7 @@ public class UserController {
   public @ResponseBody
   GeneralResponse addNewUser (@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
 
-    List<String> errors = new LinkedList<>();
+    List<String> errors = new ArrayList<>();
 
     // @ResponseBody means the returned String is the response, not a view name
     // @RequestParam means it is a parameter from the GET or POST request
@@ -52,12 +53,12 @@ public class UserController {
   @PostMapping(path="/login")
   public @ResponseBody
   GeneralResponse login(@RequestBody User loginRequest, HttpServletRequest request, HttpServletResponse response){
-    UserPermission permissions = new UserPermission(request);
-    if(permissoins.isLogedIn()){
-      // logged in!
-      user = permissions.getUser();
-    }
-    LinkedList<String> errors = new LinkedList<>();
+    //UserPermission permissions = new UserPermission(request);
+    //if(permissoins.isLogedIn()){
+    //  // logged in!
+    //  user = permissions.getUser();
+    //}
+    List<String> errors = new ArrayList<>();
     if(loginRequest == null){
       errors.add("Invalid Credentials");
     }
