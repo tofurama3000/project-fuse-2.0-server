@@ -1,5 +1,6 @@
 package server.entities.dto;
 
+import lombok.Data;
 import lombok.Getter;
 
 import javax.persistence.Column;
@@ -10,6 +11,7 @@ import java.sql.Timestamp;
 
 @Entity
 @Table(name = "sessionId")
+@Data
 public class Session {
 
   public Session(String sessionId, User sessionFor){
@@ -25,6 +27,8 @@ public class Session {
     this.sessionId = sessionId;
     this.created = created;
   }
+
+  public Session(){}
 
   @Getter
   @Id

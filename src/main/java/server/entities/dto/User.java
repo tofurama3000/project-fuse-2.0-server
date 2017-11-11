@@ -31,16 +31,16 @@ public class User {
   @JsonIgnore
   @Transient
   @Getter(AccessLevel.NONE)
-  private String password;
+  private String _password;
 
   private String email;
 
   private void setPassword(String password){
     this.encoded_password = new BCryptPasswordEncoder().encode(password);
-    this.password = password;
+    this._password = password;
   }
 
   public boolean checkPassword(){
-    return new BCryptPasswordEncoder().matches(this.password, this.encoded_password);
+    return new BCryptPasswordEncoder().matches(this._password, this.encoded_password);
   }
 }
