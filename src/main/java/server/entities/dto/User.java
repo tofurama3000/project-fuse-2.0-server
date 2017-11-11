@@ -1,5 +1,6 @@
 package server.entities.dto;
 
+import lombok.AccessLevel;
 import lombok.Data;
 
 import javax.persistence.Entity;
@@ -9,6 +10,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Getter;
 import org.springframework.data.annotation.Transient;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
@@ -28,16 +30,17 @@ public class User {
 
   @JsonIgnore
   @Transient
-  private String _password;
+  @Getter(AccessLevel.NONE)
+  private String password;
 
   private String email;
 
   private void setPassword(String password){
     this.encoded_password = new BCryptPasswordEncoder().encode(password);
-    this._password = password;
+    this.password = password;
   }
 
   public boolean checkPassword(){
-    return new BCryptPasswordEncoder().matches(this._password, this.encoded_password);
+    return new BCryptPasswordEncoder().matches(this.password, this.encoded_password);
   }
 }

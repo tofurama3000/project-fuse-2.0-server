@@ -1,6 +1,9 @@
 package server.controllers.rest;
 
+import server.controllers.SessionController;
 import server.controllers.rest.response.GeneralResponse;
+import server.entities.UserPermission;
+import server.entities.dto.Session;
 import server.entities.dto.User;
 import server.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +18,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 @RequestMapping(value="/user")
@@ -23,14 +27,15 @@ public class UserController {
   @Autowired
   private UserRepository userRepository;
 
-  @PostMapping(path="/add") // Map ONLY GET Requests
+  @Autowired
+  private SessionController sessionController;
+
+  @PostMapping(path="/add")
   public @ResponseBody
   GeneralResponse addNewUser (@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
 
     List<String> errors = new ArrayList<>();
 
-    // @ResponseBody means the returned String is the response, not a view name
-    // @RequestParam means it is a parameter from the GET or POST request
     if(user != null){
       if(user.getName() == null)
         errors.add("Missing Name");
@@ -52,35 +57,57 @@ public class UserController {
 
   @PostMapping(path="/login")
   public @ResponseBody
-  GeneralResponse login(@RequestBody User loginRequest, HttpServletRequest request, HttpServletResponse response){
-    //UserPermission permissions = new UserPermission(request);
-    //if(permissoins.isLogedIn()){
-    //  // logged in!
-    //  user = permissions.getUser();
-    //}
+  GeneralResponse login(@RequestBody User user, HttpServletRequest request, HttpServletResponse response){
+
+    logoutIfLoggedIn(user, request);
+
     List<String> errors = new ArrayList<>();
-    if(loginRequest == null){
+    if(user == null){
       errors.add("Invalid Credentials");
     }
     else {
-      User dbUser = userRepository.findByEmail(loginRequest.getEmail());
+      User dbUser = userRepository.findByEmail(user.getEmail());
 
       if (dbUser == null) {
         errors.add("Invalid Credentials");
       } else {
-        loginRequest.setEncoded_password(dbUser.getEncoded_password());
+        user.setEncoded_password(dbUser.getEncoded_password());
 
-        if (loginRequest.checkPassword()) {
-          return new GeneralResponse(response, GeneralResponse.Status.OK, null, SessionController.GetSession(dbUser));
+        if (user.checkPassword()) {
+          return new GeneralResponse(response, GeneralResponse.Status.OK, null, sessionController.createSession(dbUser));
         }
         errors.add("Invalid Credentials");
       }
     }
+
     return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
   }
 
-  @GetMapping(path="/all")
+  @PostMapping(path="/logout")
+  public @ResponseBody
+  GeneralResponse logout(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
+    if (logoutIfLoggedIn(user, request)) {
+      return new GeneralResponse(response, GeneralResponse.Status.OK);
+    } else {
+      List<String> errors = new ArrayList<>();
+      errors.add("No active session");
+      return new GeneralResponse(response, GeneralResponse.Status.ERROR, errors);
+    }
+  }
+
+    @GetMapping(path="/all")
   public @ResponseBody Iterable<User> getAllUsers() {
     return userRepository.findAll();
+  }
+
+  private boolean logoutIfLoggedIn(User user, HttpServletRequest request) {
+    UserPermission userPermission = new UserPermission(user, request, sessionController);
+    if (userPermission.isLoggedIn()) {
+      Optional<Session> session = sessionController.getSession(request);
+      session.ifPresent(s -> sessionController.deleteSession(s));
+      return true;
+    } else {
+      return false;
+    }
   }
 }
