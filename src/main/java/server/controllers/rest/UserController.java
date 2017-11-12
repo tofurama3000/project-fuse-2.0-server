@@ -85,8 +85,10 @@ public class UserController {
 
   @PostMapping(path="/logout")
   public @ResponseBody
-  GeneralResponse logout(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
-    if (logoutIfLoggedIn(user, request)) {
+  GeneralResponse logout(HttpServletRequest request, HttpServletResponse response) {
+    Optional<Session> session = sessionController.getSession(request);
+    if (session.isPresent()) {
+      sessionController.deleteSession(session.get());
       return new GeneralResponse(response, GeneralResponse.Status.OK);
     } else {
       List<String> errors = new ArrayList<>();
