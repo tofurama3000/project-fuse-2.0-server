@@ -31,8 +31,8 @@ public class UserController {
   private SessionController sessionController;
 
   @PostMapping(path = "/add")
-  public @ResponseBody
-  GeneralResponse addNewUser(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
+  @ResponseBody
+  public GeneralResponse addNewUser(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
 
     List<String> errors = new ArrayList<>();
 
@@ -55,8 +55,8 @@ public class UserController {
   }
 
   @PostMapping(path = "/login")
-  public @ResponseBody
-  GeneralResponse login(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
+  @ResponseBody
+  public GeneralResponse login(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
 
     logoutIfLoggedIn(user, request);
 
@@ -82,8 +82,8 @@ public class UserController {
   }
 
   @PostMapping(path = "/logout")
-  public @ResponseBody
-  GeneralResponse logout(HttpServletRequest request, HttpServletResponse response) {
+  @ResponseBody
+  public GeneralResponse logout(HttpServletRequest request, HttpServletResponse response) {
     Optional<Session> session = sessionController.getSession(request);
     if (session.isPresent()) {
       sessionController.deleteSession(session.get());
@@ -96,14 +96,14 @@ public class UserController {
   }
 
   @GetMapping(path = "/userbyID")
-  public @ResponseBody
-  GeneralResponse getUserbyID(long id, HttpServletResponse response) {
+  @ResponseBody
+  public GeneralResponse getUserbyID(long id, HttpServletResponse response) {
     return new GeneralResponse(response, GeneralResponse.Status.OK, null, userRepository.findOne(id));
   }
 
   @GetMapping(path = "/all")
-  public @ResponseBody
-  GeneralResponse getAllUsers(HttpServletResponse response) {
+  @ResponseBody
+  public GeneralResponse getAllUsers(HttpServletResponse response) {
     return new GeneralResponse(response, GeneralResponse.Status.OK, null, userRepository.findAll());
   }
 

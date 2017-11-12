@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -98,7 +99,7 @@ public class TeamController {
 
 
     if (teams.size() == 0) {
-      errors.add("Could not find team named: " + team.getName() + "owned by " + user.getName());
+      errors.add("Could not find team named: '" + team.getName() + "' owned by " + user.getName());
       return new GeneralResponse(response, errors);
     } else if (teams.size() != 1) {
       logger.error("Multiple teams found (" + teams.size() + ") for team name: " + team.getName()
@@ -109,7 +110,12 @@ public class TeamController {
       teamRespository.delete(teams.get(0));
       return new GeneralResponse(response);
     }
+  }
 
+  @GetMapping(path = "/all")
+  @ResponseBody
+  public GeneralResponse getAllTeams(HttpServletResponse response) {
+    return new GeneralResponse(response, GeneralResponse.Status.OK, null, teamRespository.findAll());
   }
 
   @SuppressWarnings("unchecked")
