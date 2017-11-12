@@ -98,8 +98,8 @@ public class UserController {
   }
 
     @GetMapping(path="/all")
-  public @ResponseBody Iterable<User> getAllUsers() {
-    return userRepository.findAll();
+  public @ResponseBody GeneralResponse getAllUsers(HttpServletRequest request, HttpServletResponse response) {
+    return new GeneralResponse(response, GeneralResponse.Status.OK, null, userRepository.findAll());
   }
 
   private boolean logoutIfLoggedIn(User user, HttpServletRequest request) {
