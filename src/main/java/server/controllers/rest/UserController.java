@@ -105,12 +105,12 @@ public class UserController {
 
 
   }
-//    @GetMapping(path="/all")
-//    public @ResponseBody GeneralResponse getAllUsers(HttpServletResponse response) {
-//     //   return userRepository.findAll();
-//
-//        return new GeneralResponse(response, GeneralResponse.Status.OK,null,userRepository.findAll());
-//    }
+    @GetMapping(path="/all")
+    public @ResponseBody GeneralResponse getAllUsers(HttpServletResponse response) {
+     //   return userRepository.findAll();
+
+        return new GeneralResponse(response, GeneralResponse.Status.OK,null,userRepository.findAll());
+    }
 
   private boolean logoutIfLoggedIn(User user, HttpServletRequest request) {
     UserPermission userPermission = new UserPermission(user, request, sessionController);
