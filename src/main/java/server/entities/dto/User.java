@@ -35,12 +35,12 @@ public class User {
 
   private String email;
 
-  private void setPassword(String password){
+  private void setPassword(String password) {
     this.encoded_password = new BCryptPasswordEncoder().encode(password);
     this._password = password;
   }
 
-  public boolean checkPassword(){
+  public boolean checkPassword() {
     return new BCryptPasswordEncoder().matches(this._password, this.encoded_password);
   }
 }

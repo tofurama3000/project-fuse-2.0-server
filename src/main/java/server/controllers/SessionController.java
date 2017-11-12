@@ -37,14 +37,14 @@ public class SessionController {
 
   public Optional<Session> getSession(HttpServletRequest servletRequest) {
     String sessionId = servletRequest.getHeader(SESSION_ID_NAME);
-    if(sessionId != null){
+    if (sessionId != null) {
       Session session = sessionRepository.findOne(sessionId);
       return Optional.of(session);
     }
     return Optional.empty();
   }
 
-  private static String createId(){
+  private static String createId() {
     return generator.generateId().toString();
   }
 }

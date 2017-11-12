@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Controller
-@RequestMapping(value="/user")
+@RequestMapping(value = "/user")
 public class UserController {
 
   @Autowired
@@ -30,42 +30,40 @@ public class UserController {
   @Autowired
   private SessionController sessionController;
 
-  @PostMapping(path="/add")
+  @PostMapping(path = "/add")
   public @ResponseBody
-  GeneralResponse addNewUser (@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
+  GeneralResponse addNewUser(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
 
     List<String> errors = new ArrayList<>();
 
-    if(user != null){
-      if(user.getName() == null)
+    if (user != null) {
+      if (user.getName() == null)
         errors.add("Missing Name");
-      if(user.getEncoded_password() == null)
+      if (user.getEncoded_password() == null)
         errors.add("Missing Password");
-      if(user.getEmail() == null)
+      if (user.getEmail() == null)
         errors.add("Missing Email");
-      if(errors.size() == 0 && userRepository.findByEmail(user.getEmail()) != null)
+      if (errors.size() == 0 && userRepository.findByEmail(user.getEmail()) != null)
         errors.add("Username already exists!");
-    }
-    else
+    } else
       errors.add("No request body found");
 
-    if(errors.size() == 0)
+    if (errors.size() == 0)
       userRepository.save(user);
 
     return new GeneralResponse(response, errors);
   }
 
-  @PostMapping(path="/login")
+  @PostMapping(path = "/login")
   public @ResponseBody
-  GeneralResponse login(@RequestBody User user, HttpServletRequest request, HttpServletResponse response){
+  GeneralResponse login(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
 
     logoutIfLoggedIn(user, request);
 
     List<String> errors = new ArrayList<>();
-    if(user == null){
+    if (user == null) {
       errors.add("Invalid Credentials");
-    }
-    else {
+    } else {
       User dbUser = userRepository.findByEmail(user.getEmail());
 
       if (dbUser == null) {
@@ -83,7 +81,7 @@ public class UserController {
     return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
   }
 
-  @PostMapping(path="/logout")
+  @PostMapping(path = "/logout")
   public @ResponseBody
   GeneralResponse logout(HttpServletRequest request, HttpServletResponse response) {
     Optional<Session> session = sessionController.getSession(request);
@@ -97,15 +95,17 @@ public class UserController {
     }
   }
 
-    @GetMapping(path="/userbyID")
-  public @ResponseBody GeneralResponse getUserbyID(long id, HttpServletResponse response) {
-      return  new GeneralResponse(response, GeneralResponse.Status.OK,null,userRepository.findOne(id));
+  @GetMapping(path = "/userbyID")
+  public @ResponseBody
+  GeneralResponse getUserbyID(long id, HttpServletResponse response) {
+    return new GeneralResponse(response, GeneralResponse.Status.OK, null, userRepository.findOne(id));
   }
 
-    @GetMapping(path="/all")
-    public @ResponseBody GeneralResponse getAllUsers(HttpServletResponse response) {
-        return new GeneralResponse(response, GeneralResponse.Status.OK,null,userRepository.findAll());
-    }
+  @GetMapping(path = "/all")
+  public @ResponseBody
+  GeneralResponse getAllUsers(HttpServletResponse response) {
+    return new GeneralResponse(response, GeneralResponse.Status.OK, null, userRepository.findAll());
+  }
 
   private boolean logoutIfLoggedIn(User user, HttpServletRequest request) {
     UserPermission userPermission = new UserPermission(user, request, sessionController);

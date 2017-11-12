@@ -15,31 +15,30 @@ public class GeneralResponse {
     DENIED,
   }
 
-  public GeneralResponse(HttpServletResponse response, Status status, List<String> errors, Object data){
+  public GeneralResponse(HttpServletResponse response, Status status, List<String> errors, Object data) {
     this.status = status;
     this.errors = errors;
     this.data = data;
     setReturnStatus(response);
   }
 
-  public GeneralResponse(HttpServletResponse response, Status status, List<String> errors){
+  public GeneralResponse(HttpServletResponse response, Status status, List<String> errors) {
     this(response, status, errors, null);
   }
 
-  public GeneralResponse(HttpServletResponse response, Status status){
+  public GeneralResponse(HttpServletResponse response, Status status) {
     this(response, status, null);
   }
 
-  public GeneralResponse(HttpServletResponse response){
+  public GeneralResponse(HttpServletResponse response) {
     this(response, Status.OK);
   }
 
-  public GeneralResponse(HttpServletResponse response, List<String> errors){
-    if(errors.size() > 0) {
+  public GeneralResponse(HttpServletResponse response, List<String> errors) {
+    if (errors.size() > 0) {
       this.status = Status.BAD_DATA;
       this.errors = errors;
-    }
-    else {
+    } else {
       this.status = Status.OK;
       this.errors = null;
     }
@@ -47,8 +46,8 @@ public class GeneralResponse {
     setReturnStatus(response);
   }
 
-  private void setReturnStatus(HttpServletResponse response){
-    switch(this.status){
+  private void setReturnStatus(HttpServletResponse response) {
+    switch (this.status) {
       case OK:
         response.setStatus(HttpServletResponse.SC_OK);
         break;

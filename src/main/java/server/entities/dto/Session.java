@@ -14,21 +14,22 @@ import java.sql.Timestamp;
 @Data
 public class Session {
 
-  public Session(String sessionId, User sessionFor){
+  public Session(String sessionId, User sessionFor) {
     this.email = sessionFor.getEmail();
     this.name = sessionFor.getName();
     this.sessionId = sessionId;
     this.created = new Timestamp(System.currentTimeMillis());
   }
 
-  public Session(String sessionId, User sessionFor, Timestamp created){
+  public Session(String sessionId, User sessionFor, Timestamp created) {
     this.email = sessionFor.getEmail();
     this.name = sessionFor.getName();
     this.sessionId = sessionId;
     this.created = created;
   }
 
-  public Session(){}
+  public Session() {
+  }
 
   @Getter
   @Id
@@ -45,7 +46,7 @@ public class Session {
   private Timestamp created;
 
   @Override
-  public String toString(){
+  public String toString() {
     return this.sessionId;
   }
 }
