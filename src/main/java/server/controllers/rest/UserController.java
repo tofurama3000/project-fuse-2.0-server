@@ -85,8 +85,10 @@ public class UserController {
 
   @PostMapping(path="/logout")
   public @ResponseBody
-  GeneralResponse logout(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
-    if (logoutIfLoggedIn(user, request)) {
+  GeneralResponse logout(HttpServletRequest request, HttpServletResponse response) {
+    Optional<Session> session = sessionController.getSession(request);
+    if (session.isPresent()) {
+      sessionController.deleteSession(session.get());
       return new GeneralResponse(response, GeneralResponse.Status.OK);
     } else {
       List<String> errors = new ArrayList<>();
@@ -95,18 +97,20 @@ public class UserController {
     }
   }
 
+
     @GetMapping(path="/userbyID")
   public @ResponseBody GeneralResponse getUserbyID(int id,HttpServletResponse response) {
 
       return  new GeneralResponse(response, GeneralResponse.Status.OK,null,userRepository.findOne((long)id));
 
-  }
-    @GetMapping(path="/all")
-    public @ResponseBody GeneralResponse getAllUsers(HttpServletResponse response) {
-     //   return userRepository.findAll();
 
-        return new GeneralResponse(response, GeneralResponse.Status.OK,null,userRepository.findAll());
-    }
+  }
+//    @GetMapping(path="/all")
+//    public @ResponseBody GeneralResponse getAllUsers(HttpServletResponse response) {
+//     //   return userRepository.findAll();
+//
+//        return new GeneralResponse(response, GeneralResponse.Status.OK,null,userRepository.findAll());
+//    }
 
   private boolean logoutIfLoggedIn(User user, HttpServletRequest request) {
     UserPermission userPermission = new UserPermission(user, request, sessionController);
