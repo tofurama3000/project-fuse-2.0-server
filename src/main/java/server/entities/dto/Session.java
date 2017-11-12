@@ -10,7 +10,7 @@ import javax.persistence.Table;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "sessionId")
+@Table(name = "session")
 @Data
 public class Session {
 

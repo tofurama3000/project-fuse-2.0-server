@@ -7,9 +7,24 @@ CREATE TABLE IF NOT EXISTS user (
   email VARCHAR(500)
 );
 
+CREATE TABLE IF NOT EXISTS organization (
+  id INT(11) PRIMARY KEY AUTO_INCREMENT,
+  name TEXT
+);
+
+CREATE TABLE IF NOT EXISTS project (
+  id INT(11) PRIMARY KEY AUTO_INCREMENT,
+  name TEXT
+);
+
+CREATE TABLE IF NOT EXISTS team (
+  id INT(11) PRIMARY KEY AUTO_INCREMENT,
+  name TEXT
+);
 
 CREATE TABLE IF NOT EXISTS session (
-  session_id varchar(32) PRIMARY KEY,
+  session_id varchar(200) PRIMARY KEY,
   created TIMESTAMP,
   email VARCHAR(500)
 );
+
