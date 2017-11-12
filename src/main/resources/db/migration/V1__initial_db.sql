@@ -3,8 +3,14 @@ CREATE DATABASE IF NOT EXISTS project_fuse;
 CREATE TABLE IF NOT EXISTS user (
   id INT(11) PRIMARY KEY AUTO_INCREMENT,
   name TEXT,
+  global_role TEXT,
   encoded_password TEXT,
   email VARCHAR(500)
+);
+
+CREATE TABLE IF NOT EXISTS role (
+  id INT(11) PRIMARY KEY,
+  name TEXT
 );
 
 CREATE TABLE IF NOT EXISTS organization (
@@ -27,4 +33,3 @@ CREATE TABLE IF NOT EXISTS session (
   created TIMESTAMP,
   email VARCHAR(500)
 );
-

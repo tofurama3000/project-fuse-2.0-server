@@ -36,18 +36,11 @@ public class SessionController {
   }
 
   public Optional<Session> getSession(HttpServletRequest servletRequest) {
-    Cookie[] cookies = servletRequest.getCookies();
-
-    if (cookies != null) {
-      for (Cookie cookie : cookies) {
-        String name = cookie.getName();
-        if (name.equals(SESSION_ID_NAME)) {
-          Session session = sessionRepository.findOne(cookie.getValue());
-          return Optional.of(session);
-        }
-      }
+    String sessionId = servletRequest.getHeader(SESSION_ID_NAME);
+    if(sessionId != null){
+      Session session = sessionRepository.findOne(sessionId);
+      return Optional.of(session);
     }
-
     return Optional.empty();
   }
 
