@@ -35,6 +35,11 @@ public class SessionController {
     return session != null && session.getEmail().equals(user.getEmail());
   }
 
+  public boolean isSessionValid(User user, HttpServletRequest servletRequest) {
+    Optional<Session> session = getSession(servletRequest);
+    return session.isPresent() && session.get().getEmail().equals(user.getEmail());
+  }
+
   public Optional<Session> getSession(HttpServletRequest servletRequest) {
     String sessionId = servletRequest.getHeader(SESSION_ID_NAME);
     if (sessionId != null) {

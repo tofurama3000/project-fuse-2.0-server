@@ -15,6 +15,7 @@ public class GeneralResponse {
     DENIED,
   }
 
+
   public GeneralResponse(HttpServletResponse response, Status status, List<String> errors, Object data) {
     this.status = status;
     this.errors = errors;

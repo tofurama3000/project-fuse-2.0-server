@@ -1,4 +1,4 @@
-package server.entities.dto;
+package server.entities.dto.team;
 
 import lombok.Data;
 
@@ -15,6 +15,8 @@ public class Team {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   private long id;
+
+  private long teamOwnerId;
 
   private String name;
 }
