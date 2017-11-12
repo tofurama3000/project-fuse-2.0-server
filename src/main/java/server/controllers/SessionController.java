@@ -2,13 +2,12 @@ package server.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import server.entities.dto.Session;
-import server.entities.dto.User;
 import org.springframework.util.AlternativeJdkIdGenerator;
 import org.springframework.util.IdGenerator;
+import server.entities.dto.Session;
+import server.entities.dto.User;
 import server.repositories.SessionRepository;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Optional;
 
@@ -32,19 +31,19 @@ public class SessionController {
 
   public boolean isSessionValid(User user, String sessionId) {
     Session session = sessionRepository.findOne(sessionId);
-    return session != null && session.getEmail().equals(user.getEmail());
+    return session != null && session.getUser().getId() == user.getId();
   }
 
-  public boolean isSessionValid(User user, HttpServletRequest servletRequest) {
+  public boolean isSessionValid(HttpServletRequest servletRequest) {
     Optional<Session> session = getSession(servletRequest);
-    return session.isPresent() && session.get().getEmail().equals(user.getEmail());
+    return session.isPresent();
   }
 
   public Optional<Session> getSession(HttpServletRequest servletRequest) {
     String sessionId = servletRequest.getHeader(SESSION_ID_NAME);
     if (sessionId != null) {
       Session session = sessionRepository.findOne(sessionId);
-      return Optional.of(session);
+      return Optional.ofNullable(session);
     }
     return Optional.empty();
   }

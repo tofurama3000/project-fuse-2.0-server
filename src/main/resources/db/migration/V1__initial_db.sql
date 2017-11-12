@@ -25,20 +25,17 @@ CREATE TABLE IF NOT EXISTS project (
 
 CREATE TABLE IF NOT EXISTS team (
   id INT(11) PRIMARY KEY AUTO_INCREMENT,
-  team_owner_id INT(11),
+  owner_id INT(11),
   name TEXT,
-  FOREIGN KEY (user_id) REFERENCES user(id)
+  FOREIGN KEY (owner_id) REFERENCES user(id)
 );
 
-CREATE TABLE IF NOT EXISTS team (
-  id INT(11) PRIMARY KEY AUTO_INCREMENT,
-  name TEXT
-);
 
 CREATE TABLE IF NOT EXISTS session (
   session_id varchar(200) PRIMARY KEY,
   created TIMESTAMP,
-  email VARCHAR(500)
+  user_id int,
+  FOREIGN KEY (user_id) REFERENCES user(id)
 );
 
 CREATE TABLE team_member (
