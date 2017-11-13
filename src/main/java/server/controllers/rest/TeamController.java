@@ -12,7 +12,7 @@ import server.repositories.TeamRespository;
 @Controller
 @RequestMapping(value = "/team")
 @Transactional
-public class TeamController extends JoinableController<Team> {
+public class TeamController extends GroupController<Team> {
 
   @Autowired
   private SessionFactory sessionFactory;

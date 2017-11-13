@@ -2,7 +2,7 @@ package server.entities;
 
 import server.entities.dto.User;
 
-public interface Joinable {
+public interface Group {
   User getOwner();
 
   void setOwner(User owner);

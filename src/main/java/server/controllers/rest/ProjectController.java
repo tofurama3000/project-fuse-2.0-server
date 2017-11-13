@@ -12,7 +12,7 @@ import server.repositories.ProjectRepository;
 @Controller
 @RequestMapping(value = "/project")
 @Transactional
-public class ProjectController extends JoinableController<Project> {
+public class ProjectController extends GroupController<Project> {
 
   @Autowired
   public ProjectController(FuseSessionController fuseSessionController, ProjectRepository projectRepository,

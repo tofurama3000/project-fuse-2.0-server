@@ -2,7 +2,7 @@ package server.entities.dto.project;
 
 import lombok.Data;
 import lombok.Getter;
-import server.entities.Joinable;
+import server.entities.Group;
 import server.entities.dto.User;
 
 import javax.persistence.Entity;
@@ -16,7 +16,7 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "project")
 @Data
-public class Project implements Joinable {
+public class Project implements Group {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   private long id;

@@ -5,7 +5,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.GeneralResponse;
-import server.entities.UserPermission;
+import server.permissions.PermissionFactory;
+import server.permissions.UserPermission;
 import server.entities.dto.FuseSession;
 import server.entities.dto.User;
 import server.repositories.UserRepository;
@@ -25,6 +26,9 @@ public class UserController {
 
   @Autowired
   private FuseSessionController fuseSessionController;
+
+  @Autowired
+  private PermissionFactory permissionFactory;
 
   @PostMapping(path = "/add")
   @ResponseBody
@@ -104,8 +108,8 @@ public class UserController {
   }
 
   private boolean logoutIfLoggedIn(User user, HttpServletRequest request) {
-    UserPermission userPermission = new UserPermission(user, request, fuseSessionController);
-    if (userPermission.isLoggedIn()) {
+    UserPermission userPermission = permissionFactory.createUserPermission(user);
+    if (userPermission.isLoggedIn(request)) {
       Optional<FuseSession> session = fuseSessionController.getSession(request);
       session.ifPresent(s -> fuseSessionController.deleteSession(s));
       return true;

@@ -12,7 +12,7 @@ import server.repositories.OrganizationRepository;
 @Controller
 @RequestMapping(value = "/organization")
 @Transactional
-public class OrganizationController extends JoinableController<Organization> {
+public class OrganizationController extends GroupController<Organization> {
 
   @Autowired
   public OrganizationController(FuseSessionController fuseSessionController, OrganizationRepository organizationRepository,

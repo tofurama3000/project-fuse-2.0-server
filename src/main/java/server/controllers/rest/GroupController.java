@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.GeneralResponse;
-import server.entities.Joinable;
+import server.entities.Group;
 import server.entities.dto.FuseSession;
 import server.entities.dto.User;
 
@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Transactional
-public abstract class JoinableController<T extends Joinable> {
+public abstract class GroupController<T extends Group> {
 
   private final FuseSessionController fuseSessionController;
   private final SessionFactory sessionFactory;
@@ -38,7 +38,7 @@ public abstract class JoinableController<T extends Joinable> {
   private static Logger logger = LoggerFactory.getLogger(TeamController.class);
 
 
-  protected JoinableController(FuseSessionController fuseSessionController, SessionFactory sessionFactory, CrudRepository<T, Long> repository) {
+  protected GroupController(FuseSessionController fuseSessionController, SessionFactory sessionFactory, CrudRepository<T, Long> repository) {
     this.fuseSessionController = fuseSessionController;
     this.sessionFactory = sessionFactory;
     this.repository = repository;
