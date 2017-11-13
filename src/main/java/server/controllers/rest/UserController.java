@@ -2,11 +2,7 @@ package server.controllers.rest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.UserPermission;
@@ -95,9 +91,9 @@ public class UserController {
     }
   }
 
-  @GetMapping(path = "/userbyID")
-  @ResponseBody
-  public GeneralResponse getUserbyID(long id, HttpServletResponse response) {
+  @GetMapping(path = "/{id}")
+  public @ResponseBody
+  GeneralResponse getUserbyID(@PathVariable(value="id") long id, HttpServletResponse response) {
     return new GeneralResponse(response, GeneralResponse.Status.OK, null, userRepository.findOne(id));
   }
 
