@@ -1,4 +1,5 @@
-package server.entities.dto;
+package server.entities.dto.team;
+
 
 import lombok.Data;
 
@@ -9,12 +10,15 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "project")
+@Table(name = "team_member")
 @Data
-public class Project {
+public class TeamMember {
+
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
-  private long id;
+  private int id;
 
-  private String name;
+  private int team_id;
+
+  private int user_id;
 }

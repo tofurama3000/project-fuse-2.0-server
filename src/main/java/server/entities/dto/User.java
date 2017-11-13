@@ -1,18 +1,17 @@
 package server.entities.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AccessLevel;
 import lombok.Data;
+import lombok.Getter;
+import org.springframework.data.annotation.Transient;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Getter;
-import org.springframework.data.annotation.Transient;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @Entity // This tells Hibernate to make a table out of this class
 @Table(name = "user")
@@ -42,5 +41,14 @@ public class User {
 
   public boolean checkPassword() {
     return new BCryptPasswordEncoder().matches(this._password, this.encoded_password);
+  }
+
+  @Override
+  public boolean equals(Object object) {
+    return object instanceof User && ((User) object).getId() == this.getId();
+  }
+
+  public int hashCode() {
+    return (int) id;
   }
 }

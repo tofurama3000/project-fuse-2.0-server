@@ -1,14 +1,14 @@
 package server.controllers.rest;
 
-import org.springframework.web.bind.annotation.*;
-import server.controllers.SessionController;
-import server.controllers.rest.response.GeneralResponse;
-import server.entities.UserPermission;
-import server.entities.dto.Session;
-import server.entities.dto.User;
-import server.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
+import server.controllers.FuseSessionController;
+import server.controllers.rest.response.GeneralResponse;
+import server.entities.UserPermission;
+import server.entities.dto.FuseSession;
+import server.entities.dto.User;
+import server.repositories.UserRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -24,11 +24,11 @@ public class UserController {
   private UserRepository userRepository;
 
   @Autowired
-  private SessionController sessionController;
+  private FuseSessionController fuseSessionController;
 
   @PostMapping(path = "/add")
-  public @ResponseBody
-  GeneralResponse addNewUser(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
+  @ResponseBody
+  public GeneralResponse addNewUser(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
 
     List<String> errors = new ArrayList<>();
 
@@ -51,8 +51,8 @@ public class UserController {
   }
 
   @PostMapping(path = "/login")
-  public @ResponseBody
-  GeneralResponse login(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
+  @ResponseBody
+  public GeneralResponse login(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
 
     logoutIfLoggedIn(user, request);
 
@@ -68,7 +68,7 @@ public class UserController {
         user.setEncoded_password(dbUser.getEncoded_password());
 
         if (user.checkPassword()) {
-          return new GeneralResponse(response, GeneralResponse.Status.OK, null, sessionController.createSession(dbUser));
+          return new GeneralResponse(response, GeneralResponse.Status.OK, null, fuseSessionController.createSession(dbUser));
         }
         errors.add("Invalid Credentials");
       }
@@ -78,11 +78,11 @@ public class UserController {
   }
 
   @PostMapping(path = "/logout")
-  public @ResponseBody
-  GeneralResponse logout(HttpServletRequest request, HttpServletResponse response) {
-    Optional<Session> session = sessionController.getSession(request);
+  @ResponseBody
+  public GeneralResponse logout(HttpServletRequest request, HttpServletResponse response) {
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (session.isPresent()) {
-      sessionController.deleteSession(session.get());
+      fuseSessionController.deleteSession(session.get());
       return new GeneralResponse(response, GeneralResponse.Status.OK);
     } else {
       List<String> errors = new ArrayList<>();
@@ -98,16 +98,16 @@ public class UserController {
   }
 
   @GetMapping(path = "/all")
-  public @ResponseBody
-  GeneralResponse getAllUsers(HttpServletResponse response) {
+  @ResponseBody
+  public GeneralResponse getAllUsers(HttpServletResponse response) {
     return new GeneralResponse(response, GeneralResponse.Status.OK, null, userRepository.findAll());
   }
 
   private boolean logoutIfLoggedIn(User user, HttpServletRequest request) {
-    UserPermission userPermission = new UserPermission(user, request, sessionController);
+    UserPermission userPermission = new UserPermission(user, request, fuseSessionController);
     if (userPermission.isLoggedIn()) {
-      Optional<Session> session = sessionController.getSession(request);
-      session.ifPresent(s -> sessionController.deleteSession(s));
+      Optional<FuseSession> session = fuseSessionController.getSession(request);
+      session.ifPresent(s -> fuseSessionController.deleteSession(s));
       return true;
     } else {
       return false;
