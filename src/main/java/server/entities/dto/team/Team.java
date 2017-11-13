@@ -27,4 +27,9 @@ public class Team implements Joinable {
   private User owner;
 
   private String name;
+
+  @Override
+  public String getTableName() {
+    return "Team";
+  }
 }

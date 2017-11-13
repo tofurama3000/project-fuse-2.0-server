@@ -1,6 +1,6 @@
 package server.entities;
 
-import server.controllers.SessionController;
+import server.controllers.FuseSessionController;
 import server.entities.dto.FuseSession;
 import server.entities.dto.User;
 
@@ -11,19 +11,19 @@ public class UserPermission {
 
   private final User user;
   private final HttpServletRequest httpServletRequest;
-  private final SessionController sessionController;
+  private final FuseSessionController fuseSessionController;
 
-  public UserPermission(User user, HttpServletRequest httpServletRequest, SessionController sessionController) {
+  public UserPermission(User user, HttpServletRequest httpServletRequest, FuseSessionController fuseSessionController) {
     this.user = user;
     this.httpServletRequest = httpServletRequest;
-    this.sessionController = sessionController;
+    this.fuseSessionController = fuseSessionController;
   }
 
   public boolean isLoggedIn() {
-    Optional<FuseSession> session = sessionController.getSession(httpServletRequest);
+    Optional<FuseSession> session = fuseSessionController.getSession(httpServletRequest);
     if (session.isPresent()) {
       String sessionId = session.get().getSessionId();
-      return sessionController.isSessionValid(user, sessionId);
+      return fuseSessionController.isSessionValid(user, sessionId);
     } else {
       return false;
     }

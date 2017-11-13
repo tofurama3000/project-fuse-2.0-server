@@ -8,4 +8,6 @@ public interface Joinable {
   void setOwner(User owner);
 
   String getName();
+
+  String getTableName();
 }

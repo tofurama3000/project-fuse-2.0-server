@@ -12,7 +12,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Optional;
 
 @Controller
-public class SessionController {
+public class FuseSessionController {
   private static IdGenerator generator = new AlternativeJdkIdGenerator();
   private static String SESSION_ID_NAME = "SESSIONID";
 
@@ -20,7 +20,7 @@ public class SessionController {
   private SessionRepository sessionRepository;
 
   public FuseSession createSession(User user) {
-    FuseSession fuseSession = new FuseSession(SessionController.createId(), user);
+    FuseSession fuseSession = new FuseSession(FuseSessionController.createId(), user);
     sessionRepository.save(fuseSession);
     return fuseSession;
   }

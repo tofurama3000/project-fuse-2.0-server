@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
-import server.controllers.SessionController;
+import server.controllers.FuseSessionController;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.UserPermission;
 import server.entities.dto.FuseSession;
@@ -28,7 +28,7 @@ public class UserController {
   private UserRepository userRepository;
 
   @Autowired
-  private SessionController sessionController;
+  private FuseSessionController fuseSessionController;
 
   @PostMapping(path = "/add")
   @ResponseBody
@@ -72,7 +72,7 @@ public class UserController {
         user.setEncoded_password(dbUser.getEncoded_password());
 
         if (user.checkPassword()) {
-          return new GeneralResponse(response, GeneralResponse.Status.OK, null, sessionController.createSession(dbUser));
+          return new GeneralResponse(response, GeneralResponse.Status.OK, null, fuseSessionController.createSession(dbUser));
         }
         errors.add("Invalid Credentials");
       }
@@ -84,9 +84,9 @@ public class UserController {
   @PostMapping(path = "/logout")
   @ResponseBody
   public GeneralResponse logout(HttpServletRequest request, HttpServletResponse response) {
-    Optional<FuseSession> session = sessionController.getSession(request);
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (session.isPresent()) {
-      sessionController.deleteSession(session.get());
+      fuseSessionController.deleteSession(session.get());
       return new GeneralResponse(response, GeneralResponse.Status.OK);
     } else {
       List<String> errors = new ArrayList<>();
@@ -108,10 +108,10 @@ public class UserController {
   }
 
   private boolean logoutIfLoggedIn(User user, HttpServletRequest request) {
-    UserPermission userPermission = new UserPermission(user, request, sessionController);
+    UserPermission userPermission = new UserPermission(user, request, fuseSessionController);
     if (userPermission.isLoggedIn()) {
-      Optional<FuseSession> session = sessionController.getSession(request);
-      session.ifPresent(s -> sessionController.deleteSession(s));
+      Optional<FuseSession> session = fuseSessionController.getSession(request);
+      session.ifPresent(s -> fuseSessionController.deleteSession(s));
       return true;
     } else {
       return false;

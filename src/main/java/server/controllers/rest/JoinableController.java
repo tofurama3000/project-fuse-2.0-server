@@ -6,6 +6,8 @@ import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import static server.controllers.rest.response.CannedResponse.SERVER_ERROR;
 import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
 import static server.controllers.rest.response.GeneralResponse.Status.ERROR;
+import org.hibernate.Query;
+import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.repository.CrudRepository;
@@ -14,7 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
-import server.controllers.SessionController;
+import server.controllers.FuseSessionController;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.Joinable;
 import server.entities.dto.FuseSession;
@@ -29,14 +31,16 @@ import java.util.Optional;
 @Transactional
 public abstract class JoinableController<T extends Joinable> {
 
-  private final SessionController sessionController;
+  private final FuseSessionController fuseSessionController;
+  private final SessionFactory sessionFactory;
   private final CrudRepository<T, Long> repository;
 
   private static Logger logger = LoggerFactory.getLogger(TeamController.class);
 
 
-  protected JoinableController(SessionController sessionController, CrudRepository<T, Long> repository) {
-    this.sessionController = sessionController;
+  protected JoinableController(FuseSessionController fuseSessionController, SessionFactory sessionFactory, CrudRepository<T, Long> repository) {
+    this.fuseSessionController = fuseSessionController;
+    this.sessionFactory = sessionFactory;
     this.repository = repository;
   }
 
@@ -45,7 +49,7 @@ public abstract class JoinableController<T extends Joinable> {
   public synchronized GeneralResponse create(@RequestBody T entity, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
-    Optional<FuseSession> session = sessionController.getSession(request);
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, DENIED, errors);
@@ -57,7 +61,7 @@ public abstract class JoinableController<T extends Joinable> {
     }
 
     User user = session.get().getUser();
-    List<T> entities = getEntitiesWith(user, entity.getName());
+    List<T> entities = getEntitiesWith(user, entity);
 
     entity.setOwner(user);
 
@@ -75,7 +79,7 @@ public abstract class JoinableController<T extends Joinable> {
   public GeneralResponse delete(@RequestBody T entity, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
-    Optional<FuseSession> session = sessionController.getSession(request);
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, DENIED, errors);
@@ -87,7 +91,7 @@ public abstract class JoinableController<T extends Joinable> {
     }
 
     User user = session.get().getUser();
-    List<T> entities = getEntitiesWith(user, entity.getName());
+    List<T> entities = getEntitiesWith(user, entity);
 
     if (entities.size() == 0) {
       errors.add("Could not find entity named: '" + entity.getName() + "' owned by " + user.getName());
@@ -113,5 +117,14 @@ public abstract class JoinableController<T extends Joinable> {
 
   protected abstract boolean validFieldsForDelete(T entity);
 
-  protected abstract List<T> getEntitiesWith(User owner, String name);
+  @SuppressWarnings("unchecked")
+  private List<T> getEntitiesWith(User owner, T entity) {
+    Query query = sessionFactory.getCurrentSession()
+        .createQuery("FROM " + entity.getTableName() + " e WHERE e.owner = :owner AND e.name = :name");
+
+    query.setParameter("owner", owner);
+    query.setParameter("name", entity.getName());
+
+    return query.list();
+  }
 }
