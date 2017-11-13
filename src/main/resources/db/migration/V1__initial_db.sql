@@ -14,13 +14,17 @@ CREATE TABLE IF NOT EXISTS role (
 );
 
 CREATE TABLE IF NOT EXISTS organization (
-  id INT(11) PRIMARY KEY AUTO_INCREMENT,
-  name TEXT
+   id INT(11) PRIMARY KEY AUTO_INCREMENT,
+   owner_id INT(11),
+   name TEXT,
+   FOREIGN KEY (owner_id) REFERENCES user(id)
 );
 
 CREATE TABLE IF NOT EXISTS project (
-  id INT(11) PRIMARY KEY AUTO_INCREMENT,
-  name TEXT
+   id INT(11) PRIMARY KEY AUTO_INCREMENT,
+   owner_id INT(11),
+   name TEXT,
+   FOREIGN KEY (owner_id) REFERENCES user(id)
 );
 
 CREATE TABLE IF NOT EXISTS team (

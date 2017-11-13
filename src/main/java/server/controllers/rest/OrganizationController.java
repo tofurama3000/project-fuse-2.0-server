@@ -6,28 +6,27 @@ import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMapping;
 import server.controllers.FuseSessionController;
-import server.entities.dto.project.Project;
-import server.repositories.ProjectRepository;
+import server.entities.dto.organization.Organization;
+import server.repositories.OrganizationRepository;
 
 @Controller
-@RequestMapping(value = "/project")
+@RequestMapping(value = "/organization")
 @Transactional
-public class ProjectController extends JoinableController<Project> {
+public class OrganizationController extends JoinableController<Organization> {
 
   @Autowired
-  public ProjectController(FuseSessionController fuseSessionController, ProjectRepository projectRepository,
+  public OrganizationController(FuseSessionController fuseSessionController, OrganizationRepository organizationRepository,
                            SessionFactory sessionFactory) {
-    super(fuseSessionController, sessionFactory, projectRepository);
+    super(fuseSessionController, sessionFactory, organizationRepository);
   }
 
   @Override
-  protected boolean validFieldsForCreate(Project entity) {
+  protected boolean validFieldsForCreate(Organization entity) {
     return entity.getName() != null;
   }
 
   @Override
-  protected boolean validFieldsForDelete(Project entity) {
+  protected boolean validFieldsForDelete(Organization entity) {
     return entity.getName() != null;
   }
-
 }

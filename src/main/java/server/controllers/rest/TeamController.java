@@ -18,7 +18,8 @@ public class TeamController extends JoinableController<Team> {
   private SessionFactory sessionFactory;
 
   @Autowired
-  public TeamController(FuseSessionController fuseSessionController, TeamRespository teamRespository, SessionFactory sessionFactory) {
+  public TeamController(FuseSessionController fuseSessionController, TeamRespository teamRespository,
+                        SessionFactory sessionFactory) {
     super(fuseSessionController, sessionFactory, teamRespository);
   }
 
