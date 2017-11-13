@@ -13,7 +13,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-@Entity // This tells Hibernate to make a table out of this class
+@Entity
 @Table(name = "user")
 @Data
 public class User {

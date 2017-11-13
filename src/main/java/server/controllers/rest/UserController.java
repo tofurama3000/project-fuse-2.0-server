@@ -96,8 +96,8 @@ public class UserController {
   }
 
   @GetMapping(path = "/{id}")
-  public @ResponseBody
-  GeneralResponse getUserbyID(@PathVariable(value="id") long id, HttpServletResponse response) {
+  @ResponseBody
+  public GeneralResponse getUserbyID(@PathVariable(value = "id") long id, HttpServletResponse response) {
     return new GeneralResponse(response, GeneralResponse.Status.OK, null, userRepository.findOne(id));
   }
 
