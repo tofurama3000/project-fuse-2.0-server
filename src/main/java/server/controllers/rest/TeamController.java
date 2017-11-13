@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.SessionController;
 import server.controllers.rest.response.GeneralResponse;
-import server.entities.dto.Session;
+import server.entities.dto.FuseSession;
 import server.entities.dto.User;
 import server.entities.dto.team.Team;
 import server.repositories.TeamRespository;
@@ -51,10 +51,10 @@ public class TeamController {
                                                  HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
-    Optional<Session> session = sessionController.getSession(request);
+    Optional<FuseSession> session = sessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, errors);
+      return new GeneralResponse(response, DENIED, errors);
     }
 
     if (team.getName() == null) {
@@ -83,7 +83,7 @@ public class TeamController {
 
     List<String> errors = new ArrayList<>();
 
-    Optional<Session> session = sessionController.getSession(request);
+    Optional<FuseSession> session = sessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, DENIED, errors);
@@ -96,7 +96,6 @@ public class TeamController {
 
     User user = session.get().getUser();
     List<Team> teams = getTeamsWith(user, team.getName());
-
 
     if (teams.size() == 0) {
       errors.add("Could not find team named: '" + team.getName() + "' owned by " + user.getName());

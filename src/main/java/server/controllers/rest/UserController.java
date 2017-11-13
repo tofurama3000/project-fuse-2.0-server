@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.SessionController;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.UserPermission;
-import server.entities.dto.Session;
+import server.entities.dto.FuseSession;
 import server.entities.dto.User;
 import server.repositories.UserRepository;
 
@@ -84,7 +84,7 @@ public class UserController {
   @PostMapping(path = "/logout")
   @ResponseBody
   public GeneralResponse logout(HttpServletRequest request, HttpServletResponse response) {
-    Optional<Session> session = sessionController.getSession(request);
+    Optional<FuseSession> session = sessionController.getSession(request);
     if (session.isPresent()) {
       sessionController.deleteSession(session.get());
       return new GeneralResponse(response, GeneralResponse.Status.OK);
@@ -110,7 +110,7 @@ public class UserController {
   private boolean logoutIfLoggedIn(User user, HttpServletRequest request) {
     UserPermission userPermission = new UserPermission(user, request, sessionController);
     if (userPermission.isLoggedIn()) {
-      Optional<Session> session = sessionController.getSession(request);
+      Optional<FuseSession> session = sessionController.getSession(request);
       session.ifPresent(s -> sessionController.deleteSession(s));
       return true;
     } else {

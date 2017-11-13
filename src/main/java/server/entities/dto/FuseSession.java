@@ -14,15 +14,15 @@ import java.sql.Timestamp;
 @Entity
 @Table(name = "session")
 @Data
-public class Session {
+public class FuseSession {
 
-  public Session(String sessionId, User sessionFor) {
+  public FuseSession(String sessionId, User sessionFor) {
     this.user = sessionFor;
     this.sessionId = sessionId;
     this.created = new Timestamp(System.currentTimeMillis());
   }
 
-  public Session() {
+  public FuseSession() {
   }
 
   @Getter

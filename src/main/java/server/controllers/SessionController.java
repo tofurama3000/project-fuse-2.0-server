@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.AlternativeJdkIdGenerator;
 import org.springframework.util.IdGenerator;
-import server.entities.dto.Session;
+import server.entities.dto.FuseSession;
 import server.entities.dto.User;
 import server.repositories.SessionRepository;
 
@@ -19,31 +19,31 @@ public class SessionController {
   @Autowired
   private SessionRepository sessionRepository;
 
-  public Session createSession(User user) {
-    Session session = new Session(SessionController.createId(), user);
-    sessionRepository.save(session);
-    return session;
+  public FuseSession createSession(User user) {
+    FuseSession fuseSession = new FuseSession(SessionController.createId(), user);
+    sessionRepository.save(fuseSession);
+    return fuseSession;
   }
 
-  public void deleteSession(Session session) {
-    sessionRepository.delete(session);
+  public void deleteSession(FuseSession fuseSession) {
+    sessionRepository.delete(fuseSession);
   }
 
   public boolean isSessionValid(User user, String sessionId) {
-    Session session = sessionRepository.findOne(sessionId);
-    return session != null && session.getUser().getId() == user.getId();
+    FuseSession fuseSession = sessionRepository.findOne(sessionId);
+    return fuseSession != null && fuseSession.getUser().getId() == user.getId();
   }
 
   public boolean isSessionValid(HttpServletRequest servletRequest) {
-    Optional<Session> session = getSession(servletRequest);
+    Optional<FuseSession> session = getSession(servletRequest);
     return session.isPresent();
   }
 
-  public Optional<Session> getSession(HttpServletRequest servletRequest) {
+  public Optional<FuseSession> getSession(HttpServletRequest servletRequest) {
     String sessionId = servletRequest.getHeader(SESSION_ID_NAME);
     if (sessionId != null) {
-      Session session = sessionRepository.findOne(sessionId);
-      return Optional.ofNullable(session);
+      FuseSession fuseSession = sessionRepository.findOne(sessionId);
+      return Optional.ofNullable(fuseSession);
     }
     return Optional.empty();
   }

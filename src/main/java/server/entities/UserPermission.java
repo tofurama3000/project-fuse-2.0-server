@@ -1,7 +1,7 @@
 package server.entities;
 
 import server.controllers.SessionController;
-import server.entities.dto.Session;
+import server.entities.dto.FuseSession;
 import server.entities.dto.User;
 
 import javax.servlet.http.HttpServletRequest;
@@ -20,7 +20,7 @@ public class UserPermission {
   }
 
   public boolean isLoggedIn() {
-    Optional<Session> session = sessionController.getSession(httpServletRequest);
+    Optional<FuseSession> session = sessionController.getSession(httpServletRequest);
     if (session.isPresent()) {
       String sessionId = session.get().getSessionId();
       return sessionController.isSessionValid(user, sessionId);

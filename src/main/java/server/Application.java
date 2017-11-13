@@ -29,7 +29,6 @@ public class Application {
 
   @Bean
   public SessionFactory sessionFactory(HibernateEntityManagerFactory hemf) {
-
     return hemf.getSessionFactory();
   }
 
