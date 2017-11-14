@@ -1,11 +1,12 @@
 package server.controllers.rest.response;
 
+import lombok.Data;
 import lombok.Getter;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
-
+@Data
 public class GeneralResponse {
 
   public enum Status {
@@ -14,6 +15,10 @@ public class GeneralResponse {
     BAD_DATA,
     DENIED,
   }
+
+  private  Status status;
+  private List<String> errors;
+  private Object data;
 
 
   public GeneralResponse(HttpServletResponse response, Status status, List<String> errors, Object data) {
@@ -47,6 +52,10 @@ public class GeneralResponse {
     setReturnStatus(response);
   }
 
+  public GeneralResponse() {
+    // Default constructor for serialization
+  }
+
   private void setReturnStatus(HttpServletResponse response) {
     switch (this.status) {
       case OK:
@@ -66,10 +75,5 @@ public class GeneralResponse {
     }
   }
 
-  @Getter
-  private final Status status;
-  @Getter
-  private final List<String> errors;
-  @Getter
-  private final Object data;
+
 }
