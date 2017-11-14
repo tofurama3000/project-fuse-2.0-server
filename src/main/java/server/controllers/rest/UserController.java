@@ -106,21 +106,16 @@ public class UserController {
 
   @PutMapping
   @ResponseBody
-  public GeneralResponse updateUserbyID(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
-
+  public GeneralResponse updateUser(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
 
     List<String> errors = new ArrayList<>();
-
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, DENIED, errors);
     }
-
     user.setId(session.get().getUser().getId());
     userRepository.save(user);
-
-
     return new GeneralResponse(response, GeneralResponse.Status.OK);
   }
 
