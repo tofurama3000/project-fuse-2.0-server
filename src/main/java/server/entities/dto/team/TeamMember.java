@@ -29,12 +29,10 @@ public class TeamMember implements UserToGroupRelationship {
 
   @ManyToOne
   @JoinColumn(name = "team_id", referencedColumnName = "id")
-  @Getter
   private Team team;
 
   @ManyToOne
   @JoinColumn(name = "user_id", referencedColumnName = "id")
-  @Getter
   private User user;
 
   @Override

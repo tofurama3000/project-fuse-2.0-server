@@ -1,4 +1,4 @@
-package server.repositories;
+package server.repositories.project;
 
 import org.springframework.data.repository.CrudRepository;
 import server.entities.dto.project.ProjectMember;

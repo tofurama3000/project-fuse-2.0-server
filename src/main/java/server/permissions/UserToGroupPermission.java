@@ -1,6 +1,8 @@
 package server.permissions;
 
+import static server.constants.RoleValue.ADMIN;
 import static server.constants.RoleValue.INVITED;
+import static server.constants.RoleValue.OWNER;
 import static server.permissions.results.JoinResult.ALREADY_JOINED;
 import static server.permissions.results.JoinResult.HAS_INVITE;
 import static server.permissions.results.JoinResult.NEED_INVITE;
@@ -8,6 +10,7 @@ import static server.permissions.results.JoinResult.OK;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.springframework.transaction.annotation.Transactional;
+import server.constants.RoleValue;
 import server.entities.Group;
 import server.entities.dto.User;
 import server.permissions.results.JoinResult;
@@ -49,11 +52,13 @@ public abstract class UserToGroupPermission<T extends Group> {
 
   protected boolean isMember() {
     String queryString = "SELECT sum(id) FROM " + group.getRelationshipTableName() + " r WHERE r." + getGroupFieldName()
-        + " = :group AND r.user = :user";
+        + " = :group AND r.user = :user AND r.role_id != :invited";
     Query query = getSession().createQuery(queryString);
 
     query.setParameter("group", group);
     query.setParameter("user", user);
+    query.setParameter("role_id", INVITED);
+
 
     Object result = query.uniqueResult();
     return result != null;
@@ -61,15 +66,7 @@ public abstract class UserToGroupPermission<T extends Group> {
 
   @SuppressWarnings("unchecked")
   protected boolean hasInvite() {
-    String queryString = "SELECT role_id FROM " + group.getRelationshipTableName() + " r WHERE r." + getGroupFieldName()
-        + " = :group AND r.user= :user";
-
-    Query query = getSession().createQuery(queryString);
-
-    query.setParameter("group", group);
-    query.setParameter("user", user);
-
-    List<Integer> roleIds = query.list();
+    List<Integer> roleIds = getRoles();
     for (Integer roleId : roleIds) {
       if (roleId == INVITED) {
         return true;
@@ -78,4 +75,29 @@ public abstract class UserToGroupPermission<T extends Group> {
     return false;
   }
 
+  public boolean canInvite() {
+    List<Integer> roleIds = getRoles();
+    for (Integer roleId : roleIds) {
+      if (roleId == ADMIN || roleId == OWNER) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean canAcceptInvite() {
+    return getRoles().size() == 0;
+  }
+
+  @SuppressWarnings("unchecked")
+  private List<Integer> getRoles() {
+    String queryString = "SELECT role_id FROM " + group.getRelationshipTableName() + " r WHERE r." + getGroupFieldName()
+        + " = :group AND r.user= :user";
+
+    Query query = getSession().createQuery(queryString);
+
+    query.setParameter("group", group);
+    query.setParameter("user", user);
+    return query.list();
+  }
 }

@@ -2,10 +2,9 @@ package server.permissions;
 
 import lombok.Setter;
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
 import server.entities.dto.User;
 import server.entities.dto.organization.Organization;
-import server.repositories.OrganizationMemberRepository;
+import server.repositories.organization.OrganizationMemberRepository;
 
 public class UserToOrganizationPermission extends UserToGroupPermission<Organization> {
 

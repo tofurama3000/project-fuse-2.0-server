@@ -1,6 +1,8 @@
 package server.controllers.rest;
 
 import static server.controllers.rest.response.CannedResponse.ALREADY_JOINED_MSG;
+import static server.controllers.rest.response.CannedResponse.ALREADY_JOINED_OR_INVITED;
+import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS_FOR_CREATE;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS_FOR_DELETE;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
@@ -22,9 +24,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
+import server.controllers.rest.response.CannedResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.Group;
 import server.entities.dto.FuseSession;
+import server.entities.dto.GroupInvitation;
 import server.entities.dto.User;
 import server.entities.dto.UserToGroupRelationship;
 import server.permissions.UserToGroupPermission;
@@ -154,6 +158,38 @@ public abstract class GroupController<T extends Group> {
         errors.add(SERVER_ERROR);
         return new GeneralResponse(response, ERROR, errors);
     }
+  }
+
+  @PostMapping(path = "/invite")
+  @ResponseBody
+  public GeneralResponse invite(@RequestBody GroupInvitation<T> groupInvitation, HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+
+    User sessionUser = session.get().getUser();
+    UserToGroupPermission senderPermission = getUserToGroupPermission(sessionUser, groupInvitation.getGroup());
+
+    if (!senderPermission.canInvite()) {
+      errors.add(INSUFFICIENT_PRIVELAGES);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+
+    User receiver = groupInvitation.getReceiver();
+    UserToGroupPermission receiverPermission = getUserToGroupPermission(receiver, groupInvitation.getGroup());
+
+    if (!receiverPermission.canAcceptInvite()) {
+      errors.add(ALREADY_JOINED_OR_INVITED);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+
+
+
+    return null;
   }
 
   @GetMapping(path = "/{id}/members")

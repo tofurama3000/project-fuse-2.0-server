@@ -8,17 +8,15 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMapping;
-import server.constants.RoleValue;
 import server.controllers.FuseSessionController;
 import server.entities.dto.User;
 import server.entities.dto.UserToGroupRelationship;
 import server.entities.dto.project.Project;
 import server.entities.dto.project.ProjectMember;
-import server.entities.dto.team.TeamMember;
 import server.permissions.PermissionFactory;
 import server.permissions.UserToGroupPermission;
-import server.repositories.ProjectMemberRepository;
-import server.repositories.ProjectRepository;
+import server.repositories.project.ProjectMemberRepository;
+import server.repositories.project.ProjectRepository;
 
 @Controller
 @RequestMapping(value = "/project")

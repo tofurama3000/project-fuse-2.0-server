@@ -9,5 +9,7 @@ public class CannedResponse {
   public static final String NEED_INVITE_MSG = "need invite";
   public static final String ALREADY_JOINED_MSG = "already joined";
   public static final String NO_GROUP_FOUND = "Could not find group";
+  public static final String ALREADY_JOINED_OR_INVITED = "User already joined, or received invite";
+
 
 }

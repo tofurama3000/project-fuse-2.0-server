@@ -15,10 +15,8 @@ import server.entities.dto.organization.Organization;
 import server.entities.dto.organization.OrganizationMember;
 import server.permissions.PermissionFactory;
 import server.permissions.UserToGroupPermission;
-import server.permissions.UserToOrganizationPermission;
-import server.permissions.results.JoinResult;
-import server.repositories.OrganizationMemberRepository;
-import server.repositories.OrganizationRepository;
+import server.repositories.organization.OrganizationMemberRepository;
+import server.repositories.organization.OrganizationRepository;
 
 @Controller
 @RequestMapping(value = "/organization")

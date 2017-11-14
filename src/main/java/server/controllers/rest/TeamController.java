@@ -15,8 +15,8 @@ import server.entities.dto.team.Team;
 import server.entities.dto.team.TeamMember;
 import server.permissions.PermissionFactory;
 import server.permissions.UserToGroupPermission;
-import server.repositories.TeamMemberRepository;
-import server.repositories.TeamRepository;
+import server.repositories.team.TeamMemberRepository;
+import server.repositories.team.TeamRepository;
 
 @Controller
 @RequestMapping(value = "/team")
