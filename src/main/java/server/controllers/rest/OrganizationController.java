@@ -60,12 +60,9 @@ public class OrganizationController extends GroupController<Organization> {
   @Override
   protected void addMember(User user, Organization group) {
     OrganizationMember member = new OrganizationMember();
-    //member.setUserId(user.getId());
-    //member.setOrganizationId(group.getId());
     member.setUser(user);
     member.setOrganization(group);
     member.setRoleId(DEFAULT_USER);
-
 
     organizationMemberRepository.save(member);
   }

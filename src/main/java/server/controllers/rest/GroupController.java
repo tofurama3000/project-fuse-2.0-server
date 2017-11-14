@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -155,6 +156,12 @@ public abstract class GroupController<T extends Group> {
     }
   }
 
+  @GetMapping(path = "/{id}/members")
+  @ResponseBody
+  public GeneralResponse getMembersOfGroup(@PathVariable(value = "id") T group, HttpServletRequest request, HttpServletResponse response) {
+    return new GeneralResponse(response, GeneralResponse.Status.OK, null,  getMembersOf(group));
+  }
+
   @GetMapping(path = "/all")
   @ResponseBody
   protected GeneralResponse getAll(HttpServletResponse response) {
@@ -180,12 +187,23 @@ public abstract class GroupController<T extends Group> {
   protected abstract Session getSession();
 
   @SuppressWarnings("unchecked")
-  private List<T> getEntitiesWith(User owner, T entity) {
+  private List<T> getEntitiesWith(User owner, T group) {
     Query query = getSession()
-        .createQuery("FROM " + entity.getTableName() + " e WHERE e.owner = :owner AND e.name = :name");
+        .createQuery("FROM " + group.getTableName() + " e WHERE e.owner = :owner AND e.name = :name");
 
     query.setParameter("owner", owner);
-    query.setParameter("name", entity.getName());
+    query.setParameter("name", group.getName());
+
+    return query.list();
+  }
+
+  @SuppressWarnings("unchecked")
+  private List<T> getMembersOf(T group) {
+    Query query = getSession()
+        // 'group.getTableName().toLowerCase()' is kind of a hack, if run into issues make method to get this from subclass
+        .createQuery("SELECT user FROM " + group.getRelationshipTableName() + " e WHERE e." + group.getTableName().toLowerCase() + "= :group");
+
+    query.setParameter("group", group);
 
     return query.list();
   }

@@ -58,8 +58,6 @@ public class TeamController extends GroupController<Team> {
   @Override
   protected void addMember(User user, Team team) {
     TeamMember member = new TeamMember();
-    //member.setUserId(user.getId());
-    //member.setTeamId(team.getId());
     member.setUser(user);
     member.setTeam(team);
     member.setRoleId(DEFAULT_USER);

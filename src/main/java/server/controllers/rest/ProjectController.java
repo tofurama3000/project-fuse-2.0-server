@@ -60,8 +60,7 @@ public class ProjectController extends GroupController<Project> {
   @Override
   protected void addMember(User user, Project group) {
     ProjectMember member = new ProjectMember();
-    //member.setUserId(user.getId());
-    //member.setProjectId(group.getId());
+
     member.setUser(user);
     member.setProject(group);
     member.setRoleId(DEFAULT_USER);
