@@ -17,6 +17,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
+import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
+
 @Controller
 @RequestMapping(value = "/user")
 public class UserController {
@@ -99,6 +102,26 @@ public class UserController {
   @ResponseBody
   public GeneralResponse getUserbyID(@PathVariable(value = "id") long id, HttpServletResponse response) {
     return new GeneralResponse(response, GeneralResponse.Status.OK, null, userRepository.findOne(id));
+  }
+
+  @PutMapping
+  @ResponseBody
+  public GeneralResponse updateUserbyID(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
+
+
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+
+    user.setId(session.get().getUser().getId());
+    userRepository.save(user);
+
+
+    return new GeneralResponse(response, GeneralResponse.Status.OK);
   }
 
   @GetMapping(path = "/all")
