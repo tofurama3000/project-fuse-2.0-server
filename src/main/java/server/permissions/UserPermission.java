@@ -1,5 +1,6 @@
-package server.entities;
+package server.permissions;
 
+import lombok.Setter;
 import server.controllers.FuseSessionController;
 import server.entities.dto.FuseSession;
 import server.entities.dto.User;
@@ -10,16 +11,15 @@ import java.util.Optional;
 public class UserPermission {
 
   private final User user;
-  private final HttpServletRequest httpServletRequest;
-  private final FuseSessionController fuseSessionController;
 
-  public UserPermission(User user, HttpServletRequest httpServletRequest, FuseSessionController fuseSessionController) {
+  @Setter
+  private FuseSessionController fuseSessionController;
+
+  public UserPermission(User user) {
     this.user = user;
-    this.httpServletRequest = httpServletRequest;
-    this.fuseSessionController = fuseSessionController;
   }
 
-  public boolean isLoggedIn() {
+  public boolean isLoggedIn(HttpServletRequest httpServletRequest) {
     Optional<FuseSession> session = fuseSessionController.getSession(httpServletRequest);
     if (session.isPresent()) {
       String sessionId = session.get().getSessionId();
