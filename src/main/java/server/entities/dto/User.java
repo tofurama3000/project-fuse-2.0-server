@@ -12,6 +12,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.util.Objects;
 
 @Entity
 @Table(name = "user")
@@ -45,10 +46,10 @@ public class User {
 
   @Override
   public boolean equals(Object object) {
-    return object instanceof User && ((User) object).getId() == this.getId();
+    return object instanceof User && Objects.equals(((User) object).getId(), this.getId());
   }
 
   public int hashCode() {
-    return  id.hashCode();
+    return id.hashCode();
   }
 }

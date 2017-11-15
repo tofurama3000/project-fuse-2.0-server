@@ -1,5 +1,6 @@
 package server.repositories.group.project;
 
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,4 +16,10 @@ public interface ProjectMemberRepository extends GroupMemberRepository<Project, 
 
   @Query("SELECT roleId FROM ProjectMember a where a.project = :group AND a.user = :user")
   Iterable<Integer> getRoles(@Param("group") Project group, @Param("user") User user);
+
+  @Modifying(clearAutomatically = true)
+  @Query("DELETE from ProjectMember a where a.project =:group AND a.user =:user and a.roleId = :roleId")
+  void delete(@Param("group") Project group, @Param("user") User user, @Param("roleId") int roleId);
+
+
 }

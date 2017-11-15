@@ -2,7 +2,6 @@ package server.controllers.rest.group;
 
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,9 +9,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.rest.response.GeneralResponse;
-import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.User;
-import server.entities.dto.GroupMember;
+import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.team.Team;
 import server.entities.dto.group.team.TeamInvitation;
 import server.entities.dto.group.team.TeamMember;

@@ -17,7 +17,6 @@ import static server.controllers.rest.response.CannedResponse.SERVER_ERROR;
 import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
 import static server.controllers.rest.response.GeneralResponse.Status.ERROR;
-import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
@@ -32,15 +31,15 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.CannedResponse;
 import server.controllers.rest.response.GeneralResponse;
-import server.entities.dto.group.Group;
 import server.entities.dto.FuseSession;
-import server.entities.dto.group.GroupInvitation;
-import server.entities.dto.User;
 import server.entities.dto.GroupMember;
+import server.entities.dto.User;
+import server.entities.dto.group.Group;
+import server.entities.dto.group.GroupInvitation;
 import server.permissions.UserToGroupPermission;
+import server.repositories.UserRepository;
 import server.repositories.group.GroupMemberRepository;
 import server.repositories.group.GroupRepository;
-import server.repositories.UserRepository;
 import server.utility.UserFindHelper;
 
 import javax.servlet.http.HttpServletRequest;
@@ -271,7 +270,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
   protected abstract GroupRepository<T> getGroupRepository();
 
-  protected abstract GroupMemberRepository<T,R> getRelationshipRepository();
+  protected abstract GroupMemberRepository<T, R> getRelationshipRepository();
 
   protected abstract UserToGroupPermission getUserToGroupPermission(User user, T group);
 
@@ -288,17 +287,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     return toList(getGroupRepository().getGroups(owner, group.getName()));
   }
 
-
   private void removeRelationship(User user, T group, int role) {
-    // TODO make me repository method
-    Query query = getSession()
-        .createQuery("Delete FROM " + group.getRelationshipTableName() + " e WHERE e."
-            + group.getTableName().toLowerCase() + "= :group AND user = :user AND roleId = :roleId");
-    query.setParameter("group", group);
-    query.setParameter("user", user);
-    query.setParameter("roleId", role);
-
-    query.executeUpdate();
+    getRelationshipRepository().delete(group, user, role);
   }
 
   private List<User> getMembersOf(T group) {

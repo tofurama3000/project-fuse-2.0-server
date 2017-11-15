@@ -1,5 +1,6 @@
 package server.repositories.group.organization;
 
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,4 +16,8 @@ public interface OrganizationMemberRepository extends GroupMemberRepository<Orga
 
   @Query("SELECT roleId FROM OrganizationMember a where a.organization = :group AND a.user = :user")
   Iterable<Integer> getRoles(@Param("group") Organization group, @Param("user") User user);
+
+  @Modifying(clearAutomatically = true)
+  @Query("DELETE from OrganizationMember a where a.organization =:group AND a.user =:user and a.roleId = :roleId")
+  void delete(@Param("group") Organization group, @Param("user") User user, @Param("roleId") int roleId);
 }
