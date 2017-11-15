@@ -2,6 +2,7 @@ package server.controllers.rest;
 
 import static server.constants.InvitationStatus.PENDING;
 import static server.constants.RoleValue.DEFAULT_USER;
+import static server.constants.RoleValue.INVITED;
 import static server.constants.RoleValue.OWNER;
 import static server.controllers.rest.response.CannedResponse.ALREADY_JOINED_MSG;
 import static server.controllers.rest.response.CannedResponse.ALREADY_JOINED_OR_INVITED;
@@ -76,7 +77,7 @@ public abstract class GroupController<T extends Group> {
 
     if (entities.size() == 0) {
       getGroupRepository().save(entity);
-      addMember(user, entity, OWNER);
+      addRelationship(user, entity, OWNER);
 
       return new GeneralResponse(response);
     } else {
@@ -145,11 +146,11 @@ public abstract class GroupController<T extends Group> {
 
     switch (getUserToGroupPermission(user, group).canJoin()) {
       case OK:
-        addMember(user, group, DEFAULT_USER);
+        addRelationship(user, group, DEFAULT_USER);
         return new GeneralResponse(response);
       case HAS_INVITE:
-        addMember(user, group, DEFAULT_USER);
-        // TODO Remove invite
+        addRelationship(user, group, DEFAULT_USER);
+        removeRelationship(user, group, INVITED);
         return new GeneralResponse(response);
       case NEED_INVITE:
         errors.add(NEED_INVITE_MSG);
@@ -199,6 +200,7 @@ public abstract class GroupController<T extends Group> {
     groupInvitation.setStatus(PENDING);
     groupInvitation.setSender(sessionUser);
     saveInvitation(groupInvitation);
+    addRelationship(receiver, groupInvitation.getGroup(), INVITED);
 
     return new GeneralResponse(response);
   }
@@ -229,7 +231,7 @@ public abstract class GroupController<T extends Group> {
 
   protected abstract UserToGroupPermission getUserToGroupPermission(User user, T group);
 
-  protected abstract void addMember(User user, T group, int role);
+  protected abstract void addRelationship(User user, T group, int role);
 
   protected abstract void saveInvitation(GroupInvitation<T> invitation);
 
@@ -246,10 +248,20 @@ public abstract class GroupController<T extends Group> {
     return query.list();
   }
 
+  private void removeRelationship(User user, T group, int role) {
+    Query query = getSession()
+        .createQuery("Delete FROM " + group.getRelationshipTableName() + " e WHERE e."
+            + group.getTableName().toLowerCase() + "= :group AND user = :user AND roleId = :roleId");
+    query.setParameter("group", group);
+    query.setParameter("user", user);
+    query.setParameter("roleId", role);
+
+    query.executeUpdate();
+  }
+
   @SuppressWarnings("unchecked")
   private List<T> getMembersOf(T group) {
     Query query = getSession()
-        // 'group.getTableName().toLowerCase()' is kind of a hack, if run into issues make method to get this from subclass
         .createQuery("SELECT user FROM " + group.getRelationshipTableName() + " e WHERE e." + group.getTableName().toLowerCase() + "= :group");
 
     query.setParameter("group", group);

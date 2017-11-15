@@ -62,7 +62,7 @@ public class TeamController extends GroupController<Team> {
   }
 
   @Override
-  protected void addMember(User user, Team team, int role) {
+  protected void addRelationship(User user, Team team, int role) {
     TeamMember member = new TeamMember();
     member.setUser(user);
     member.setTeam(team);

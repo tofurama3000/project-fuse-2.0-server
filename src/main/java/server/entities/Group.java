@@ -2,6 +2,7 @@ package server.entities;
 
 import static server.entities.Restriction.INVITE;
 import static server.entities.Restriction.NONE;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import server.entities.dto.User;
 
@@ -28,6 +29,7 @@ public abstract class Group {
   private String name;
 
   @Column(name = "restriction")
+  @JsonIgnore
   private String restrictionString;
 
   public Restriction getRestriction() {
@@ -35,6 +37,10 @@ public abstract class Group {
       return INVITE;
     }
     return NONE;
+  }
+
+  public void setRestriction(String restriction) {
+    restrictionString = restriction;
   }
 
   public abstract String getTableName();

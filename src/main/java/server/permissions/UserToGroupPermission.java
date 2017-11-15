@@ -56,7 +56,7 @@ public abstract class UserToGroupPermission<T extends Group> {
 
     query.setParameter("group", group);
     query.setParameter("user", user);
-    query.setParameter("role_id", INVITED);
+    query.setParameter("invited", INVITED);
 
 
     Object result = query.uniqueResult();

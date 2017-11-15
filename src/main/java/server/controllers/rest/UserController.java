@@ -128,7 +128,7 @@ public class UserController {
 
   @GetMapping(path = "/incoming/invites/project")
   @ResponseBody
-  public GeneralResponse getInvites(HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse getProjectInvites(HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -142,6 +142,41 @@ public class UserController {
     return new GeneralResponse(response, GeneralResponse.Status.OK, null,
         projectInvitationRepository.findByReceiver(user));
   }
+
+  @GetMapping(path = "/incoming/invites/project")
+  @ResponseBody
+  public GeneralResponse getOrganizationInvites(HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+
+    User user = session.get().getUser();
+
+    return new GeneralResponse(response, GeneralResponse.Status.OK, null,
+        organizationInvitationRepository.findByReceiver(user));
+  }
+
+  @GetMapping(path = "/incoming/invites/project")
+  @ResponseBody
+  public GeneralResponse getTeamInvites(HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+
+    User user = session.get().getUser();
+
+    return new GeneralResponse(response, GeneralResponse.Status.OK, null,
+        teamInvitationRepository.findByReceiver(user));
+  }
+
 
   private boolean logoutIfLoggedIn(User user, HttpServletRequest request) {
     UserPermission userPermission = permissionFactory.createUserPermission(user);
