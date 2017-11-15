@@ -25,10 +25,12 @@ import server.repositories.team.TeamRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 @Controller
 @RequestMapping(value = "/team")
 @Transactional
+@SuppressWarnings("unused")
 public class TeamController extends GroupController<Team> {
 
   @Autowired
@@ -45,6 +47,11 @@ public class TeamController extends GroupController<Team> {
 
   @Autowired
   private SessionFactory sessionFactory;
+
+  @Override
+  protected Team createGroup() {
+    return new Team();
+  }
 
   @Override
   protected CrudRepository<Team, Long> getGroupRepository() {
@@ -84,8 +91,7 @@ public class TeamController extends GroupController<Team> {
   }
 
   @Override
-  protected Session getSession() {
-    return sessionFactory.openSession();
+  protected Iterable<Team> getGroupsWith(User owner, Team group) {
+    return teamRepository.getTeams(owner, group.getName());
   }
-
 }

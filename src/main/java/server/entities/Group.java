@@ -43,8 +43,10 @@ public abstract class Group {
     restrictionString = restriction;
   }
 
+  @JsonIgnore
   public abstract String getTableName();
 
+  @JsonIgnore
   public abstract String getRelationshipTableName();
 
 }

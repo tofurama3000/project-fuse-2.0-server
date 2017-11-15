@@ -7,6 +7,7 @@ import static server.constants.RoleValue.OWNER;
 import static server.controllers.rest.response.CannedResponse.ALREADY_JOINED_MSG;
 import static server.controllers.rest.response.CannedResponse.ALREADY_JOINED_OR_INVITED;
 import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
+import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS_FOR_CREATE;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS_FOR_DELETE;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
@@ -18,6 +19,7 @@ import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
 import static server.controllers.rest.response.GeneralResponse.Status.ERROR;
 import org.hibernate.Query;
 import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,8 +29,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
+import server.controllers.rest.response.CannedResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.Group;
 import server.entities.dto.FuseSession;
@@ -37,6 +41,7 @@ import server.entities.dto.User;
 import server.entities.dto.UserToGroupRelationship;
 import server.permissions.UserToGroupPermission;
 import server.repositories.UserRepository;
+import server.utility.UserFindHelper;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -44,7 +49,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@Transactional
+@SuppressWarnings("unused")
 public abstract class GroupController<T extends Group> {
 
   @Autowired
@@ -52,6 +57,12 @@ public abstract class GroupController<T extends Group> {
 
   @Autowired
   private UserRepository userRepository;
+
+  @Autowired
+  private UserFindHelper userFindHelper;
+
+  @Autowired
+  private SessionFactory sessionFactory;
 
   private static Logger logger = LoggerFactory.getLogger(TeamController.class);
 
@@ -72,7 +83,7 @@ public abstract class GroupController<T extends Group> {
     }
 
     User user = session.get().getUser();
-    List<T> entities = getEntitiesWith(user, entity);
+    List<T> entities = toList(getGroupsWith(user, entity));
     entity.setOwner(user);
 
     if (entities.size() == 0) {
@@ -103,7 +114,7 @@ public abstract class GroupController<T extends Group> {
     }
 
     User user = session.get().getUser();
-    List<T> entities = getEntitiesWith(user, entity);
+    List<T> entities = toList(getGroupsWith(user, entity));
 
     if (entities.size() == 0) {
       errors.add("Could not find entity named: '" + entity.getName() + "' owned by " + user.getName());
@@ -130,11 +141,11 @@ public abstract class GroupController<T extends Group> {
       return new GeneralResponse(response, DENIED, errors);
     }
 
-    if (group.getId() == null) {
+    if (group.getId() != null) {
       group = getGroupRepository().findOne(group.getId());
     } else {
       User owner = group.getOwner();
-      List<T> matching = getEntitiesWith(owner, group);
+      List<T> matching = toList(getGroupsWith(owner, group));
       if (matching.size() == 0) {
         errors.add(NO_GROUP_FOUND);
         return new GeneralResponse(response, BAD_DATA, errors);
@@ -188,14 +199,14 @@ public abstract class GroupController<T extends Group> {
       return new GeneralResponse(response, DENIED, errors);
     }
 
-    User receiver = groupInvitation.getReceiver();
+    Optional<User> receiver = userFindHelper.findUserByEmailIfIdNotSet(groupInvitation.getReceiver());
 
-    if (receiver == null || !userRepository.exists(receiver.getId())) {
+    if (!receiver.isPresent() || !userRepository.exists(receiver.get().getId())) {
       errors.add(INVALID_FIELDS_FOR_CREATE);
       return new GeneralResponse(response, BAD_DATA, errors);
     }
 
-    UserToGroupPermission receiverPermission = getUserToGroupPermission(receiver, groupInvitation.getGroup());
+    UserToGroupPermission receiverPermission = getUserToGroupPermission(receiver.get(), groupInvitation.getGroup());
 
     if (!receiverPermission.canAcceptInvite()) {
       errors.add(ALREADY_JOINED_OR_INVITED);
@@ -205,10 +216,38 @@ public abstract class GroupController<T extends Group> {
     groupInvitation.setStatus(PENDING);
     groupInvitation.setSender(sessionUser);
     saveInvitation(groupInvitation);
-    addRelationship(receiver, groupInvitation.getGroup(), INVITED);
+    addRelationship(receiver.get(), groupInvitation.getGroup(), INVITED);
 
     return new GeneralResponse(response);
   }
+
+  @GetMapping(path = "/find", params = {"name", "email"})
+  @ResponseBody
+  public GeneralResponse findByNameAndOwner(@RequestParam(value = "name") String name, @RequestParam(value = "email") String email,
+                                            HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    User user = new User();
+    user.setEmail(email);
+    Optional<User> userOptional = userFindHelper.findUserByEmailIfIdNotSet(user);
+    if (!userOptional.isPresent() || name == null) {
+      errors.add(INVALID_FIELDS);
+      return new GeneralResponse(response, BAD_DATA, errors);
+    }
+
+    T group = createGroup();
+    group.setName(name);
+
+    List<T> matching = toList(getGroupsWith(userOptional.get(), group));
+    if (matching.size() == 0) {
+      errors.add(CannedResponse.NO_GROUP_FOUND);
+      return new GeneralResponse(response, errors);
+    }
+
+    return new GeneralResponse(response, GeneralResponse.Status.OK, null, matching.get(0));
+  }
+
+  protected abstract T createGroup();
 
   @GetMapping(path = "/{id}/members")
   @ResponseBody
@@ -240,18 +279,17 @@ public abstract class GroupController<T extends Group> {
 
   protected abstract void saveInvitation(GroupInvitation<T> invitation);
 
-  protected abstract Session getSession();
+  protected Session getSession() {
+    Session currentSession = sessionFactory.getCurrentSession();
+    if (currentSession.isOpen()) {
+      return currentSession;
+    } else {
+      return sessionFactory.openSession();
+    }
+  }
 
   @SuppressWarnings("unchecked")
-  private List<T> getEntitiesWith(User owner, T group) {
-    Query query = getSession()
-        .createQuery("FROM " + group.getTableName() + " e WHERE e.owner = :owner AND e.name = :name");
-
-    query.setParameter("owner", owner);
-    query.setParameter("name", group.getName());
-
-    return query.list();
-  }
+  protected abstract Iterable<T> getGroupsWith(User owner, T group);
 
   private void removeRelationship(User user, T group, int role) {
     Query query = getSession()
@@ -273,4 +311,11 @@ public abstract class GroupController<T extends Group> {
 
     return query.list();
   }
+
+  private List<T> toList(Iterable<T> iterable) {
+    List<T> list = new ArrayList<>();
+    iterable.forEach(list::add);
+    return list;
+  }
+
 }

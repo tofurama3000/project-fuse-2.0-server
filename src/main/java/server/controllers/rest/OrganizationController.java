@@ -25,10 +25,12 @@ import server.repositories.organization.OrganizationRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 @Controller
 @RequestMapping(value = "/organization")
 @Transactional
+@SuppressWarnings("unused")
 public class OrganizationController extends GroupController<Organization> {
 
   @Autowired
@@ -45,6 +47,11 @@ public class OrganizationController extends GroupController<Organization> {
 
   @Autowired
   private SessionFactory sessionFactory;
+
+  @Override
+  protected Organization createGroup() {
+    return new Organization();
+  }
 
   @Override
   protected CrudRepository<Organization, Long> getGroupRepository() {
@@ -84,8 +91,8 @@ public class OrganizationController extends GroupController<Organization> {
   }
 
   @Override
-  protected Session getSession() {
-    return sessionFactory.openSession();
+  protected Iterable<Organization> getGroupsWith(User owner, Organization group) {
+    return null;
   }
 
 

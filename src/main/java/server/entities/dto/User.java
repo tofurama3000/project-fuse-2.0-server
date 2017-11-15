@@ -20,7 +20,7 @@ public class User {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
-  private long id;
+  private Long id;
 
   private String name;
 
@@ -49,6 +49,6 @@ public class User {
   }
 
   public int hashCode() {
-    return (int) id;
+    return  id.hashCode();
   }
 }

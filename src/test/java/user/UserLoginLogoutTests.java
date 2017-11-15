@@ -7,6 +7,8 @@ import static junit.framework.TestCase.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static server.controllers.rest.response.GeneralResponse.Status.OK;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import framework.JsonHelper;
+import framework.RequestHelper;
 import framework.RestTester;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,11 +28,17 @@ public class UserLoginLogoutTests extends RestTester {
   @Autowired
   private MockMvc mockMvc;
 
+  @Autowired
+  private JsonHelper jsonHelper;
+
+  @Autowired
+  private RequestHelper requestHelper;
+
   private User primaryUser;
 
   @Before
   public void setup() throws Exception {
-    String contents = getContentsFromResources("addUser/addUser2");
+    String contents = requestHelper.getContentsFromResources("addUser/addUser2");
     primaryUser = new ObjectMapper().readValue(contents, User.class);
 
     mockMvc.perform(post("/user/add")
@@ -41,7 +49,7 @@ public class UserLoginLogoutTests extends RestTester {
   @Test
   public void testLoginCreatesValidSession() throws Exception {
 
-    String contents = getContentsFromResources("login/loginUser2");
+    String contents = requestHelper.getContentsFromResources("login/loginUser2");
     MvcResult mvcResult = mockMvc.perform(post("/user/login")
         .contentType(MediaType.APPLICATION_JSON_UTF8)
         .content(contents)).andReturn();

@@ -25,10 +25,12 @@ import server.repositories.project.ProjectRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 @Controller
 @RequestMapping(value = "/project")
 @Transactional
+@SuppressWarnings("unused")
 public class ProjectController extends GroupController<Project> {
 
   @Autowired
@@ -45,6 +47,11 @@ public class ProjectController extends GroupController<Project> {
 
   @Autowired
   private SessionFactory sessionFactory;
+
+  @Override
+  protected Project createGroup() {
+    return new Project();
+  }
 
   @Override
   protected CrudRepository<Project, Long> getGroupRepository() {
@@ -85,8 +92,7 @@ public class ProjectController extends GroupController<Project> {
   }
 
   @Override
-  protected Session getSession() {
-    return sessionFactory.openSession();
+  protected Iterable<Project> getGroupsWith(User owner, Project group) {
+    return null;
   }
-
 }

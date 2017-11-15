@@ -1,7 +1,11 @@
 package server.controllers.rest;
 
+import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
+import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
+import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
+import static server.controllers.rest.response.GeneralResponse.Status.OK;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
+import server.controllers.rest.response.CannedResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.FuseSession;
 import server.entities.dto.User;
@@ -29,6 +34,7 @@ import java.util.Optional;
 
 @Controller
 @RequestMapping(value = "/user")
+@SuppressWarnings("unused")
 public class UserController {
 
   @Autowired
@@ -91,7 +97,7 @@ public class UserController {
         user.setEncoded_password(dbUser.getEncoded_password());
 
         if (user.checkPassword()) {
-          return new GeneralResponse(response, GeneralResponse.Status.OK, null, fuseSessionController.createSession(dbUser));
+          return new GeneralResponse(response, OK, null, fuseSessionController.createSession(dbUser));
         }
         errors.add("Invalid Credentials");
       }
@@ -106,7 +112,7 @@ public class UserController {
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (session.isPresent()) {
       fuseSessionController.deleteSession(session.get());
-      return new GeneralResponse(response, GeneralResponse.Status.OK);
+      return new GeneralResponse(response, OK);
     } else {
       List<String> errors = new ArrayList<>();
       errors.add("No active session");
@@ -116,14 +122,48 @@ public class UserController {
 
   @GetMapping(path = "/{id}")
   @ResponseBody
-  public GeneralResponse getUserbyID(@PathVariable(value = "id") long id, HttpServletResponse response) {
-    return new GeneralResponse(response, GeneralResponse.Status.OK, null, userRepository.findOne(id));
+  public GeneralResponse getUserbyID(@PathVariable(value = "id") Long id, HttpServletResponse response) {
+
+    List<String> errors = new ArrayList<>();
+
+    if (id == null) {
+      errors.add(INVALID_FIELDS);
+      return new GeneralResponse(response, BAD_DATA, errors);
+    }
+
+    User byId = userRepository.findOne(id);
+    if (byId == null) {
+      errors.add(NO_USER_FOUND);
+      return new GeneralResponse(response, BAD_DATA, errors);
+    }
+
+    return new GeneralResponse(response, OK, null, byId);
+  }
+
+  @GetMapping(path = "/{email}")
+  @ResponseBody
+  public GeneralResponse getUserbyEmail(@PathVariable(value = "email") String email, HttpServletResponse response) {
+
+    List<String> errors = new ArrayList<>();
+
+    if (email == null) {
+      errors.add(INVALID_FIELDS);
+      return new GeneralResponse(response, BAD_DATA, errors);
+    }
+
+    User byEmail = userRepository.findByEmail(email);
+    if (byEmail == null) {
+      errors.add(NO_USER_FOUND);
+      return new GeneralResponse(response, BAD_DATA, errors);
+    }
+
+    return new GeneralResponse(response, OK, null, byEmail);
   }
 
   @GetMapping(path = "/all")
   @ResponseBody
   public GeneralResponse getAllUsers(HttpServletResponse response) {
-    return new GeneralResponse(response, GeneralResponse.Status.OK, null, userRepository.findAll());
+    return new GeneralResponse(response, OK, null, userRepository.findAll());
   }
 
   @GetMapping(path = "/incoming/invites/project")
@@ -139,7 +179,7 @@ public class UserController {
 
     User user = session.get().getUser();
 
-    return new GeneralResponse(response, GeneralResponse.Status.OK, null,
+    return new GeneralResponse(response, OK, null,
         projectInvitationRepository.findByReceiver(user));
   }
 
@@ -156,7 +196,7 @@ public class UserController {
 
     User user = session.get().getUser();
 
-    return new GeneralResponse(response, GeneralResponse.Status.OK, null,
+    return new GeneralResponse(response, OK, null,
         organizationInvitationRepository.findByReceiver(user));
   }
 
@@ -173,7 +213,7 @@ public class UserController {
 
     User user = session.get().getUser();
 
-    return new GeneralResponse(response, GeneralResponse.Status.OK, null,
+    return new GeneralResponse(response, OK, null,
         teamInvitationRepository.findByReceiver(user));
   }
 
