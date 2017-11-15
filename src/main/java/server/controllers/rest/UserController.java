@@ -14,6 +14,7 @@ import server.repositories.UserRepository;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
@@ -98,7 +99,12 @@ public class UserController {
   @GetMapping(path = "/{id}")
   @ResponseBody
   public GeneralResponse getUserbyID(@PathVariable(value = "id") long id, HttpServletResponse response) {
-    return new GeneralResponse(response, GeneralResponse.Status.OK, null, userRepository.findOne(id));
+    User res = userRepository.findOne(id);
+    if(res != null)
+      return new GeneralResponse(response, GeneralResponse.Status.OK, null, res);
+    List<String> errors = new LinkedList<String>();
+    errors.add("Invalid ID! User does not exist!");
+    return new GeneralResponse(response, GeneralResponse.Status.BAD_DATA, errors);
   }
 
   @GetMapping(path = "/all")
