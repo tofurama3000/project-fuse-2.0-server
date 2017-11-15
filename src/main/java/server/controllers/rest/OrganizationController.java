@@ -92,7 +92,7 @@ public class OrganizationController extends GroupController<Organization> {
 
   @Override
   protected Iterable<Organization> getGroupsWith(User owner, Organization group) {
-    return null;
+    return organizationRepository.getOrganizations(owner, group.getName());
   }
 
 

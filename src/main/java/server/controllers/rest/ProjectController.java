@@ -93,6 +93,6 @@ public class ProjectController extends GroupController<Project> {
 
   @Override
   protected Iterable<Project> getGroupsWith(User owner, Project group) {
-    return null;
+    return projectRepository.getProjects(owner, group.getName());
   }
 }
