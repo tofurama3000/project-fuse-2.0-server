@@ -1,4 +1,4 @@
-package server.controllers.rest;
+package server.controllers.rest.group;
 
 import static server.constants.InvitationStatus.PENDING;
 import static server.constants.RoleValue.DEFAULT_USER;
@@ -35,10 +35,11 @@ import server.controllers.rest.response.CannedResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.Group;
 import server.entities.dto.FuseSession;
-import server.entities.dto.GroupInvitation;
+import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.User;
 import server.entities.dto.UserToGroupRelationship;
 import server.permissions.UserToGroupPermission;
+import server.repositories.GroupRepository;
 import server.repositories.UserRepository;
 import server.utility.UserFindHelper;
 
@@ -82,7 +83,7 @@ public abstract class GroupController<T extends Group> {
     }
 
     User user = session.get().getUser();
-    List<T> entities = toList(getGroupsWith(user, entity));
+    List<T> entities = getGroupsWith(user, entity);
     entity.setOwner(user);
 
     if (entities.size() == 0) {
@@ -113,7 +114,7 @@ public abstract class GroupController<T extends Group> {
     }
 
     User user = session.get().getUser();
-    List<T> entities = toList(getGroupsWith(user, entity));
+    List<T> entities = getGroupsWith(user, entity);
 
     if (entities.size() == 0) {
       errors.add("Could not find entity named: '" + entity.getName() + "' owned by " + user.getName());
@@ -144,7 +145,7 @@ public abstract class GroupController<T extends Group> {
       group = getGroupRepository().findOne(group.getId());
     } else {
       User owner = group.getOwner();
-      List<T> matching = toList(getGroupsWith(owner, group));
+      List<T> matching = getGroupsWith(owner, group);
       if (matching.size() == 0) {
         errors.add(NO_GROUP_FOUND);
         return new GeneralResponse(response, BAD_DATA, errors);
@@ -237,7 +238,7 @@ public abstract class GroupController<T extends Group> {
     T group = createGroup();
     group.setName(name);
 
-    List<T> matching = toList(getGroupsWith(userOptional.get(), group));
+    List<T> matching = getGroupsWith(userOptional.get(), group);
     if (matching.size() == 0) {
       errors.add(CannedResponse.NO_GROUP_FOUND);
       return new GeneralResponse(response, errors);
@@ -268,7 +269,7 @@ public abstract class GroupController<T extends Group> {
     return entity.getName() != null;
   }
 
-  protected abstract CrudRepository<T, Long> getGroupRepository();
+  protected abstract GroupRepository<T> getGroupRepository();
 
   protected abstract CrudRepository<? extends UserToGroupRelationship, Long> getRelationshipRepository();
 
@@ -283,7 +284,10 @@ public abstract class GroupController<T extends Group> {
   }
 
   @SuppressWarnings("unchecked")
-  protected abstract Iterable<T> getGroupsWith(User owner, T group);
+  private List<T> getGroupsWith(User owner, T group) {
+    return toList(getGroupRepository().getGroups(owner, group.getName()));
+  }
+
 
   private void removeRelationship(User user, T group, int role) {
     Query query = getSession()

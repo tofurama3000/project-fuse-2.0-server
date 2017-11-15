@@ -1,6 +1,5 @@
-package server.controllers.rest;
+package server.controllers.rest.group;
 
-import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
@@ -11,21 +10,21 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.rest.response.GeneralResponse;
-import server.entities.dto.GroupInvitation;
+import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.User;
 import server.entities.dto.UserToGroupRelationship;
-import server.entities.dto.team.Team;
-import server.entities.dto.team.TeamInvitation;
-import server.entities.dto.team.TeamMember;
+import server.entities.dto.group.team.Team;
+import server.entities.dto.group.team.TeamInvitation;
+import server.entities.dto.group.team.TeamMember;
 import server.permissions.PermissionFactory;
 import server.permissions.UserToGroupPermission;
+import server.repositories.GroupRepository;
 import server.repositories.team.TeamInvitationRepository;
 import server.repositories.team.TeamMemberRepository;
 import server.repositories.team.TeamRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
 
 @Controller
 @RequestMapping(value = "/team")
@@ -54,7 +53,7 @@ public class TeamController extends GroupController<Team> {
   }
 
   @Override
-  protected CrudRepository<Team, Long> getGroupRepository() {
+  protected GroupRepository<Team> getGroupRepository() {
     return teamRepository;
   }
 
@@ -90,8 +89,4 @@ public class TeamController extends GroupController<Team> {
     teamInvitationRepository.save(((TeamInvitation) invitation));
   }
 
-  @Override
-  protected Iterable<Team> getGroupsWith(User owner, Team group) {
-    return teamRepository.getTeams(owner, group.getName());
-  }
 }

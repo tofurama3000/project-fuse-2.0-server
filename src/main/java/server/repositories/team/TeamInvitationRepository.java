@@ -2,7 +2,7 @@ package server.repositories.team;
 
 import org.springframework.data.repository.CrudRepository;
 import server.entities.dto.User;
-import server.entities.dto.team.TeamInvitation;
+import server.entities.dto.group.team.TeamInvitation;
 
 import java.util.List;
 

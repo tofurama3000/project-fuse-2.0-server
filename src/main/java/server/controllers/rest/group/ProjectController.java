@@ -1,6 +1,5 @@
-package server.controllers.rest;
+package server.controllers.rest.group;
 
-import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
@@ -11,21 +10,21 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.rest.response.GeneralResponse;
-import server.entities.dto.GroupInvitation;
+import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.User;
 import server.entities.dto.UserToGroupRelationship;
-import server.entities.dto.project.Project;
-import server.entities.dto.project.ProjectInvitation;
-import server.entities.dto.project.ProjectMember;
+import server.entities.dto.group.project.Project;
+import server.entities.dto.group.project.ProjectInvitation;
+import server.entities.dto.group.project.ProjectMember;
 import server.permissions.PermissionFactory;
 import server.permissions.UserToGroupPermission;
+import server.repositories.GroupRepository;
 import server.repositories.project.ProjectInvitationRepository;
 import server.repositories.project.ProjectMemberRepository;
 import server.repositories.project.ProjectRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
 
 @Controller
 @RequestMapping(value = "/project")
@@ -54,7 +53,7 @@ public class ProjectController extends GroupController<Project> {
   }
 
   @Override
-  protected CrudRepository<Project, Long> getGroupRepository() {
+  protected GroupRepository<Project> getGroupRepository() {
     return projectRepository;
   }
 
@@ -89,10 +88,5 @@ public class ProjectController extends GroupController<Project> {
   @Override
   protected void saveInvitation(GroupInvitation<Project> invitation) {
     projectInvitationRepository.save(((ProjectInvitation) invitation));
-  }
-
-  @Override
-  protected Iterable<Project> getGroupsWith(User owner, Project group) {
-    return projectRepository.getProjects(owner, group.getName());
   }
 }

@@ -1,4 +1,4 @@
-package server.entities.dto.organization;
+package server.entities.dto.group.organization;
 
 
 import lombok.Data;

@@ -1,4 +1,4 @@
-package server.entities.dto.organization;
+package server.entities.dto.group.team;
 
 import server.entities.Group;
 
@@ -6,15 +6,15 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "organization")
-public class Organization extends Group {
+@Table(name = "team")
+public class Team extends Group {
   @Override
   public String getTableName() {
-    return Organization.class.getSimpleName();
+    return "Team";
   }
 
   @Override
   public String getRelationshipTableName() {
-    return OrganizationMember.class.getSimpleName();
+    return "TeamMember";
   }
 }

@@ -1,7 +1,7 @@
-package server.entities.dto.organization;
+package server.entities.dto.group.organization;
 
 import lombok.Data;
-import server.entities.dto.GroupInvitation;
+import server.entities.dto.group.GroupInvitation;
 
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;

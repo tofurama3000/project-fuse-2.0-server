@@ -1,14 +1,15 @@
 package server.repositories.project;
 
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 import server.entities.dto.User;
-import server.entities.dto.project.Project;
-import server.entities.dto.team.Team;
+import server.entities.dto.group.project.Project;
+import server.repositories.GroupRepository;
 
 
-public interface ProjectRepository extends CrudRepository<Project, Long> {
+@Transactional
+public interface ProjectRepository extends GroupRepository<Project> {
   @Query("From Project t WHERE t.owner =:owner AND t.name=:name")
-  Iterable<Project> getProjects(@Param("owner") User user, @Param("name") String name);
+  Iterable<Project> getGroups(@Param("owner") User user, @Param("name") String name);
 }

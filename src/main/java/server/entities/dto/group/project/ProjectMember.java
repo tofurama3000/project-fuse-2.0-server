@@ -1,4 +1,4 @@
-package server.entities.dto.team;
+package server.entities.dto.group.project;
 
 
 import lombok.Data;
@@ -15,9 +15,9 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "team_member")
+@Table(name = "project_member")
 @Data
-public class TeamMember implements UserToGroupRelationship {
+public class ProjectMember implements UserToGroupRelationship {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
@@ -27,8 +27,8 @@ public class TeamMember implements UserToGroupRelationship {
   private int roleId;
 
   @ManyToOne
-  @JoinColumn(name = "team_id", referencedColumnName = "id")
-  private Team team;
+  @JoinColumn(name = "project_id", referencedColumnName = "id")
+  private Project project;
 
   @ManyToOne
   @JoinColumn(name = "user_id", referencedColumnName = "id")
@@ -36,6 +36,6 @@ public class TeamMember implements UserToGroupRelationship {
 
   @Override
   public long getGroupId() {
-    return team.getId();
+    return project.getId();
   }
 }

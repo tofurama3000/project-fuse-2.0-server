@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.FuseSession;
 import server.entities.dto.User;
-import server.entities.dto.team.Team;
+import server.entities.dto.group.team.Team;
 import server.repositories.UserRepository;
 
 import java.util.Optional;

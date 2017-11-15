@@ -1,4 +1,4 @@
-package server.entities.dto.project;
+package server.entities.dto.group.project;
 
 import server.entities.Group;
 

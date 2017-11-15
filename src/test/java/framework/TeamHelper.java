@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MockMvc;
 import server.controllers.rest.response.GeneralResponse;
-import server.entities.dto.team.Team;
+import server.entities.dto.group.team.Team;
 
 import java.util.Optional;
 

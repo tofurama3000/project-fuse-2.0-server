@@ -1,6 +1,5 @@
-package server.controllers.rest;
+package server.controllers.rest.group;
 
-import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
@@ -11,21 +10,21 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.rest.response.GeneralResponse;
-import server.entities.dto.GroupInvitation;
+import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.User;
 import server.entities.dto.UserToGroupRelationship;
-import server.entities.dto.organization.Organization;
-import server.entities.dto.organization.OrganizationInvitation;
-import server.entities.dto.organization.OrganizationMember;
+import server.entities.dto.group.organization.Organization;
+import server.entities.dto.group.organization.OrganizationInvitation;
+import server.entities.dto.group.organization.OrganizationMember;
 import server.permissions.PermissionFactory;
 import server.permissions.UserToGroupPermission;
+import server.repositories.GroupRepository;
 import server.repositories.organization.OrganizationInvitationRepository;
 import server.repositories.organization.OrganizationMemberRepository;
 import server.repositories.organization.OrganizationRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
 
 @Controller
 @RequestMapping(value = "/organization")
@@ -54,7 +53,7 @@ public class OrganizationController extends GroupController<Organization> {
   }
 
   @Override
-  protected CrudRepository<Organization, Long> getGroupRepository() {
+  protected GroupRepository<Organization> getGroupRepository() {
     return organizationRepository;
   }
 
@@ -89,11 +88,5 @@ public class OrganizationController extends GroupController<Organization> {
   protected void saveInvitation(GroupInvitation<Organization> invitation) {
     organizationInvitationRepository.save((OrganizationInvitation) invitation);
   }
-
-  @Override
-  protected Iterable<Organization> getGroupsWith(User owner, Organization group) {
-    return organizationRepository.getOrganizations(owner, group.getName());
-  }
-
 
 }
