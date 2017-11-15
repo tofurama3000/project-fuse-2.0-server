@@ -168,6 +168,12 @@ public abstract class GroupController<T extends Group> {
     return new GeneralResponse(response, GeneralResponse.Status.OK, null, getGroupRepository().findAll());
   }
 
+  @GetMapping(path = "/{id}")
+  @ResponseBody
+  protected GeneralResponse getById(@PathVariable(value = "id") long id, HttpServletResponse response) {
+    return new GeneralResponse(response, GeneralResponse.Status.OK, null, getGroupRepository().findOne(id));
+  }
+
   protected boolean validFieldsForCreate(T entity) {
     return entity.getName() != null;
   }
