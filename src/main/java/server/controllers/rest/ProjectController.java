@@ -7,16 +7,27 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
+import server.controllers.rest.response.GeneralResponse;
+import server.entities.dto.GroupInvitation;
 import server.entities.dto.User;
 import server.entities.dto.UserToGroupRelationship;
 import server.entities.dto.project.Project;
+import server.entities.dto.project.ProjectInvitation;
 import server.entities.dto.project.ProjectMember;
 import server.permissions.PermissionFactory;
 import server.permissions.UserToGroupPermission;
+import server.repositories.UserRepository;
+import server.repositories.project.ProjectInvitationRepository;
 import server.repositories.project.ProjectMemberRepository;
 import server.repositories.project.ProjectRepository;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 @Controller
 @RequestMapping(value = "/project")
@@ -33,12 +44,10 @@ public class ProjectController extends GroupController<Project> {
   private ProjectMemberRepository projectMemberRepository;
 
   @Autowired
-  private SessionFactory sessionFactory;
+  private ProjectInvitationRepository projectInvitationRepository;
 
   @Autowired
-  public ProjectController(FuseSessionController fuseSessionController) {
-    super(fuseSessionController);
-  }
+  private SessionFactory sessionFactory;
 
   @Override
   protected CrudRepository<Project, Long> getGroupRepository() {
@@ -56,14 +65,26 @@ public class ProjectController extends GroupController<Project> {
   }
 
   @Override
-  protected void addMember(User user, Project group) {
+  protected void addMember(User user, Project group, int role) {
     ProjectMember member = new ProjectMember();
 
     member.setUser(user);
     member.setProject(group);
-    member.setRoleId(DEFAULT_USER);
+    member.setRoleId(role);
 
     projectMemberRepository.save(member);
+  }
+
+  @PostMapping(path = "/invite")
+  @ResponseBody
+  public GeneralResponse invite(@RequestBody ProjectInvitation projectInvitation,
+                                HttpServletRequest request, HttpServletResponse response) {
+    return generalInvite(projectInvitation, request, response);
+  }
+
+  @Override
+  protected void saveInvitation(GroupInvitation<Project> invitation) {
+    projectInvitationRepository.save(((ProjectInvitation) invitation));
   }
 
   @Override

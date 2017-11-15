@@ -1,5 +1,8 @@
 package server.controllers.rest;
 
+import static server.constants.InvitationStatus.PENDING;
+import static server.constants.RoleValue.DEFAULT_USER;
+import static server.constants.RoleValue.OWNER;
 import static server.controllers.rest.response.CannedResponse.ALREADY_JOINED_MSG;
 import static server.controllers.rest.response.CannedResponse.ALREADY_JOINED_OR_INVITED;
 import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
@@ -16,6 +19,7 @@ import org.hibernate.Query;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +27,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
+import server.constants.RoleValue;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.CannedResponse;
 import server.controllers.rest.response.GeneralResponse;
@@ -31,7 +36,9 @@ import server.entities.dto.FuseSession;
 import server.entities.dto.GroupInvitation;
 import server.entities.dto.User;
 import server.entities.dto.UserToGroupRelationship;
+import server.permissions.UserPermission;
 import server.permissions.UserToGroupPermission;
+import server.repositories.UserRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -42,14 +49,13 @@ import java.util.Optional;
 @Transactional
 public abstract class GroupController<T extends Group> {
 
-  private final FuseSessionController fuseSessionController;
+  @Autowired
+  private FuseSessionController fuseSessionController;
+
+  @Autowired
+  private UserRepository userRepository;
 
   private static Logger logger = LoggerFactory.getLogger(TeamController.class);
-
-
-  protected GroupController(FuseSessionController fuseSessionController) {
-    this.fuseSessionController = fuseSessionController;
-  }
 
   @PostMapping(path = "/create")
   @ResponseBody
@@ -69,11 +75,12 @@ public abstract class GroupController<T extends Group> {
 
     User user = session.get().getUser();
     List<T> entities = getEntitiesWith(user, entity);
-
     entity.setOwner(user);
 
     if (entities.size() == 0) {
       getGroupRepository().save(entity);
+      addMember(user, entity, OWNER);
+
       return new GeneralResponse(response);
     } else {
       errors.add("entity name already exists for user");
@@ -141,10 +148,10 @@ public abstract class GroupController<T extends Group> {
 
     switch (getUserToGroupPermission(user, group).canJoin()) {
       case OK:
-        addMember(user, group);
+        addMember(user, group, DEFAULT_USER);
         return new GeneralResponse(response);
       case HAS_INVITE:
-        addMember(user, group);
+        addMember(user, group, DEFAULT_USER);
         // TODO Remove invite
         return new GeneralResponse(response);
       case NEED_INVITE:
@@ -160,9 +167,8 @@ public abstract class GroupController<T extends Group> {
     }
   }
 
-  @PostMapping(path = "/invite")
-  @ResponseBody
-  public GeneralResponse invite(@RequestBody GroupInvitation<T> groupInvitation, HttpServletRequest request, HttpServletResponse response) {
+
+  protected GeneralResponse generalInvite(GroupInvitation<T> groupInvitation, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -180,6 +186,12 @@ public abstract class GroupController<T extends Group> {
     }
 
     User receiver = groupInvitation.getReceiver();
+
+    if (receiver == null || !userRepository.exists(receiver.getId())) {
+      errors.add(INVALID_FIELDS_FOR_CREATE);
+      return new GeneralResponse(response, BAD_DATA, errors);
+    }
+
     UserToGroupPermission receiverPermission = getUserToGroupPermission(receiver, groupInvitation.getGroup());
 
     if (!receiverPermission.canAcceptInvite()) {
@@ -187,9 +199,11 @@ public abstract class GroupController<T extends Group> {
       return new GeneralResponse(response, DENIED, errors);
     }
 
+    groupInvitation.setStatus(PENDING);
+    groupInvitation.setSender(sessionUser);
+    saveInvitation(groupInvitation);
 
-
-    return null;
+    return new GeneralResponse(response);
   }
 
   @GetMapping(path = "/{id}/members")
@@ -218,7 +232,8 @@ public abstract class GroupController<T extends Group> {
 
   protected abstract UserToGroupPermission getUserToGroupPermission(User user, T group);
 
-  protected abstract void addMember(User user, T group);
+  protected abstract void addMember(User user, T group, int role);
+  protected abstract void saveInvitation(GroupInvitation<T> invitation);
 
   protected abstract Session getSession();
 

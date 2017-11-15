@@ -7,16 +7,27 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
+import server.controllers.rest.response.GeneralResponse;
+import server.entities.dto.GroupInvitation;
 import server.entities.dto.User;
 import server.entities.dto.UserToGroupRelationship;
 import server.entities.dto.team.Team;
+import server.entities.dto.team.TeamInvitation;
 import server.entities.dto.team.TeamMember;
 import server.permissions.PermissionFactory;
 import server.permissions.UserToGroupPermission;
+import server.repositories.UserRepository;
+import server.repositories.team.TeamInvitationRepository;
 import server.repositories.team.TeamMemberRepository;
 import server.repositories.team.TeamRepository;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 @Controller
 @RequestMapping(value = "/team")
@@ -30,15 +41,13 @@ public class TeamController extends GroupController<Team> {
   private TeamMemberRepository teamMemberRepository;
 
   @Autowired
+  private TeamInvitationRepository teamInvitationRepository;
+
+  @Autowired
   private PermissionFactory permissionFactory;
 
   @Autowired
   private SessionFactory sessionFactory;
-
-  @Autowired
-  public TeamController(FuseSessionController fuseSessionController) {
-    super(fuseSessionController);
-  }
 
   @Override
   protected CrudRepository<Team, Long> getGroupRepository() {
@@ -56,13 +65,25 @@ public class TeamController extends GroupController<Team> {
   }
 
   @Override
-  protected void addMember(User user, Team team) {
+  protected void addMember(User user, Team team, int role) {
     TeamMember member = new TeamMember();
     member.setUser(user);
     member.setTeam(team);
-    member.setRoleId(DEFAULT_USER);
+    member.setRoleId(role);
 
     teamMemberRepository.save(member);
+  }
+
+  @PostMapping(path = "/invite")
+  @ResponseBody
+  public GeneralResponse invite(@RequestBody TeamInvitation teamInvitation,
+                                HttpServletRequest request, HttpServletResponse response) {
+    return generalInvite(teamInvitation, request, response);
+  }
+
+  @Override
+  protected void saveInvitation(GroupInvitation<Team> invitation) {
+    teamInvitationRepository.save(((TeamInvitation) invitation));
   }
 
   @Override

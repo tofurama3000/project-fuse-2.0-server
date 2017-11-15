@@ -52,7 +52,7 @@ public abstract class UserToGroupPermission<T extends Group> {
 
   protected boolean isMember() {
     String queryString = "SELECT sum(id) FROM " + group.getRelationshipTableName() + " r WHERE r." + getGroupFieldName()
-        + " = :group AND r.user = :user AND r.role_id != :invited";
+        + " = :group AND r.user = :user AND r.roleId != :invited";
     Query query = getSession().createQuery(queryString);
 
     query.setParameter("group", group);
@@ -91,7 +91,7 @@ public abstract class UserToGroupPermission<T extends Group> {
 
   @SuppressWarnings("unchecked")
   private List<Integer> getRoles() {
-    String queryString = "SELECT role_id FROM " + group.getRelationshipTableName() + " r WHERE r." + getGroupFieldName()
+    String queryString = "SELECT roleId FROM " + group.getRelationshipTableName() + " r WHERE r." + getGroupFieldName()
         + " = :group AND r.user= :user";
 
     Query query = getSession().createQuery(queryString);

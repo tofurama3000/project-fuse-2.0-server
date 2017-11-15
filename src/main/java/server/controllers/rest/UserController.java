@@ -1,5 +1,7 @@
 package server.controllers.rest;
 
+import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
+import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +12,9 @@ import server.permissions.UserPermission;
 import server.entities.dto.FuseSession;
 import server.entities.dto.User;
 import server.repositories.UserRepository;
+import server.repositories.organization.OrganizationInvitationRepository;
+import server.repositories.project.ProjectInvitationRepository;
+import server.repositories.team.TeamInvitationRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -29,6 +34,15 @@ public class UserController {
 
   @Autowired
   private PermissionFactory permissionFactory;
+
+  @Autowired
+  private TeamInvitationRepository teamInvitationRepository;
+
+  @Autowired
+  private ProjectInvitationRepository projectInvitationRepository;
+
+  @Autowired
+  private OrganizationInvitationRepository organizationInvitationRepository;
 
   @PostMapping(path = "/add")
   @ResponseBody
@@ -105,6 +119,23 @@ public class UserController {
   @ResponseBody
   public GeneralResponse getAllUsers(HttpServletResponse response) {
     return new GeneralResponse(response, GeneralResponse.Status.OK, null, userRepository.findAll());
+  }
+
+  @GetMapping(path = "/incoming/invites/project")
+  @ResponseBody
+  public GeneralResponse getInvites(HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+
+    User user = session.get().getUser();
+
+    return new GeneralResponse(response, GeneralResponse.Status.OK, null,
+        projectInvitationRepository.findByReceiver(user));
   }
 
   private boolean logoutIfLoggedIn(User user, HttpServletRequest request) {
