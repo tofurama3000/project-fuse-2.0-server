@@ -4,7 +4,7 @@ import lombok.Setter;
 import org.hibernate.Session;
 import server.entities.dto.User;
 import server.entities.dto.group.organization.Organization;
-import server.repositories.organization.OrganizationMemberRepository;
+import server.repositories.group.organization.OrganizationMemberRepository;
 
 public class UserToOrganizationPermission extends UserToGroupPermission<Organization> {
 

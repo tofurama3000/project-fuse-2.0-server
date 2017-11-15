@@ -1,7 +1,6 @@
 package server.entities.dto.group;
 
 import lombok.Data;
-import server.entities.Group;
 import server.entities.dto.User;
 
 import javax.persistence.GeneratedValue;

@@ -4,7 +4,7 @@ import lombok.Setter;
 import org.hibernate.Session;
 import server.entities.dto.User;
 import server.entities.dto.group.project.Project;
-import server.repositories.project.ProjectMemberRepository;
+import server.repositories.group.project.ProjectMemberRepository;
 
 public class UserToProjectPermission extends UserToGroupPermission<Project> {
 

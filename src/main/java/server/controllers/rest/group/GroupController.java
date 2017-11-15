@@ -23,7 +23,6 @@ import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,13 +32,14 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.CannedResponse;
 import server.controllers.rest.response.GeneralResponse;
-import server.entities.Group;
+import server.entities.dto.group.Group;
 import server.entities.dto.FuseSession;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.User;
-import server.entities.dto.UserToGroupRelationship;
+import server.entities.dto.GroupMember;
 import server.permissions.UserToGroupPermission;
-import server.repositories.GroupRepository;
+import server.repositories.group.GroupMemberRepository;
+import server.repositories.group.GroupRepository;
 import server.repositories.UserRepository;
 import server.utility.UserFindHelper;
 
@@ -50,7 +50,7 @@ import java.util.List;
 import java.util.Optional;
 
 @SuppressWarnings("unused")
-public abstract class GroupController<T extends Group> {
+public abstract class GroupController<T extends Group, R extends GroupMember<T>> {
 
   @Autowired
   private FuseSessionController fuseSessionController;
@@ -271,7 +271,7 @@ public abstract class GroupController<T extends Group> {
 
   protected abstract GroupRepository<T> getGroupRepository();
 
-  protected abstract CrudRepository<? extends UserToGroupRelationship, Long> getRelationshipRepository();
+  protected abstract GroupMemberRepository<T,R> getRelationshipRepository();
 
   protected abstract UserToGroupPermission getUserToGroupPermission(User user, T group);
 
@@ -300,14 +300,11 @@ public abstract class GroupController<T extends Group> {
     query.executeUpdate();
   }
 
-  @SuppressWarnings("unchecked")
-  private List<T> getMembersOf(T group) {
-    Query query = getSession()
-        .createQuery("SELECT user FROM " + group.getRelationshipTableName() + " e WHERE e." + group.getTableName().toLowerCase() + "= :group");
-
-    query.setParameter("group", group);
-
-    return query.list();
+  private List<User> getMembersOf(T group) {
+    List<User> users = new ArrayList<>();
+    Iterable<User> usersByGroup = getRelationshipRepository().getUsersByGroup(group);
+    usersByGroup.forEach(users::add);
+    return users;
   }
 
   private List<T> toList(Iterable<T> iterable) {

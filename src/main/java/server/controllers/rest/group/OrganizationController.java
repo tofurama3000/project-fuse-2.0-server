@@ -2,7 +2,6 @@ package server.controllers.rest.group;
 
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,16 +11,16 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.User;
-import server.entities.dto.UserToGroupRelationship;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.organization.OrganizationInvitation;
 import server.entities.dto.group.organization.OrganizationMember;
 import server.permissions.PermissionFactory;
 import server.permissions.UserToGroupPermission;
-import server.repositories.GroupRepository;
-import server.repositories.organization.OrganizationInvitationRepository;
-import server.repositories.organization.OrganizationMemberRepository;
-import server.repositories.organization.OrganizationRepository;
+import server.repositories.group.GroupMemberRepository;
+import server.repositories.group.GroupRepository;
+import server.repositories.group.organization.OrganizationInvitationRepository;
+import server.repositories.group.organization.OrganizationMemberRepository;
+import server.repositories.group.organization.OrganizationRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -30,7 +29,7 @@ import javax.servlet.http.HttpServletResponse;
 @RequestMapping(value = "/organization")
 @Transactional
 @SuppressWarnings("unused")
-public class OrganizationController extends GroupController<Organization> {
+public class OrganizationController extends GroupController<Organization, OrganizationMember> {
 
   @Autowired
   private PermissionFactory permissionFactory;
@@ -58,7 +57,7 @@ public class OrganizationController extends GroupController<Organization> {
   }
 
   @Override
-  protected CrudRepository<? extends UserToGroupRelationship, Long> getRelationshipRepository() {
+  protected GroupMemberRepository<Organization, OrganizationMember> getRelationshipRepository() {
     return organizationMemberRepository;
   }
 

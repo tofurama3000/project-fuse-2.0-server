@@ -12,16 +12,17 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.User;
-import server.entities.dto.UserToGroupRelationship;
+import server.entities.dto.GroupMember;
 import server.entities.dto.group.project.Project;
 import server.entities.dto.group.project.ProjectInvitation;
 import server.entities.dto.group.project.ProjectMember;
 import server.permissions.PermissionFactory;
 import server.permissions.UserToGroupPermission;
-import server.repositories.GroupRepository;
-import server.repositories.project.ProjectInvitationRepository;
-import server.repositories.project.ProjectMemberRepository;
-import server.repositories.project.ProjectRepository;
+import server.repositories.group.GroupMemberRepository;
+import server.repositories.group.GroupRepository;
+import server.repositories.group.project.ProjectInvitationRepository;
+import server.repositories.group.project.ProjectMemberRepository;
+import server.repositories.group.project.ProjectRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -30,7 +31,7 @@ import javax.servlet.http.HttpServletResponse;
 @RequestMapping(value = "/project")
 @Transactional
 @SuppressWarnings("unused")
-public class ProjectController extends GroupController<Project> {
+public class ProjectController extends GroupController<Project, ProjectMember> {
 
   @Autowired
   private PermissionFactory permissionFactory;
@@ -58,7 +59,7 @@ public class ProjectController extends GroupController<Project> {
   }
 
   @Override
-  protected CrudRepository<? extends UserToGroupRelationship, Long> getRelationshipRepository() {
+  protected GroupMemberRepository<Project, ProjectMember> getRelationshipRepository() {
     return projectMemberRepository;
   }
 

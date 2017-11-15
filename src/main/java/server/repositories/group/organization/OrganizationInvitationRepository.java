@@ -1,4 +1,4 @@
-package server.repositories.organization;
+package server.repositories.group.organization;
 
 import org.springframework.data.repository.CrudRepository;
 import server.entities.dto.User;

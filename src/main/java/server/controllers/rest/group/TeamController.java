@@ -12,16 +12,17 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.User;
-import server.entities.dto.UserToGroupRelationship;
+import server.entities.dto.GroupMember;
 import server.entities.dto.group.team.Team;
 import server.entities.dto.group.team.TeamInvitation;
 import server.entities.dto.group.team.TeamMember;
 import server.permissions.PermissionFactory;
 import server.permissions.UserToGroupPermission;
-import server.repositories.GroupRepository;
-import server.repositories.team.TeamInvitationRepository;
-import server.repositories.team.TeamMemberRepository;
-import server.repositories.team.TeamRepository;
+import server.repositories.group.GroupMemberRepository;
+import server.repositories.group.GroupRepository;
+import server.repositories.group.team.TeamInvitationRepository;
+import server.repositories.group.team.TeamMemberRepository;
+import server.repositories.group.team.TeamRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -30,7 +31,7 @@ import javax.servlet.http.HttpServletResponse;
 @RequestMapping(value = "/team")
 @Transactional
 @SuppressWarnings("unused")
-public class TeamController extends GroupController<Team> {
+public class TeamController extends GroupController<Team, TeamMember> {
 
   @Autowired
   private TeamRepository teamRepository;
@@ -58,7 +59,7 @@ public class TeamController extends GroupController<Team> {
   }
 
   @Override
-  protected CrudRepository<? extends UserToGroupRelationship, Long> getRelationshipRepository() {
+  protected GroupMemberRepository<Team, TeamMember> getRelationshipRepository() {
     return teamMemberRepository;
   }
 

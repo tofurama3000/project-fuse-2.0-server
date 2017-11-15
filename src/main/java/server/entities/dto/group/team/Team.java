@@ -1,6 +1,6 @@
 package server.entities.dto.group.team;
 
-import server.entities.Group;
+import server.entities.dto.group.Group;
 
 import javax.persistence.Entity;
 import javax.persistence.Table;

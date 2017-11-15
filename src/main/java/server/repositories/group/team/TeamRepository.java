@@ -1,11 +1,11 @@
-package server.repositories.team;
+package server.repositories.group.team;
 
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import server.entities.dto.group.team.Team;
 import server.entities.dto.User;
-import server.repositories.GroupRepository;
+import server.repositories.group.GroupRepository;
 
 @Transactional
 public interface TeamRepository extends GroupRepository<Team> {
