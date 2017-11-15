@@ -32,6 +32,7 @@ import server.permissions.UserToGroupPermission;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
@@ -166,6 +167,17 @@ public abstract class GroupController<T extends Group> {
   @ResponseBody
   protected GeneralResponse getAll(HttpServletResponse response) {
     return new GeneralResponse(response, GeneralResponse.Status.OK, null, getGroupRepository().findAll());
+  }
+
+  @GetMapping(path = "/{id}")
+  @ResponseBody
+  protected GeneralResponse getById(@PathVariable(value = "id") Long id, HttpServletResponse response) {
+    Group res = getGroupRepository().findOne(id);
+    if(res != null)
+      return new GeneralResponse(response, GeneralResponse.Status.OK, null, res);
+    List<String> errors = new LinkedList<String>();
+    errors.add("Invalid ID! Object does not exist!");
+    return new GeneralResponse(response, GeneralResponse.Status.BAD_DATA, errors);
   }
 
   protected boolean validFieldsForCreate(T entity) {
