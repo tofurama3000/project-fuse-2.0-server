@@ -11,4 +11,5 @@ import server.entities.dto.User;
 @NoRepositoryBean
 public interface GroupMemberRepository<R extends Group, T extends GroupMember<R>> extends CrudRepository<T, Long> {
   Iterable<User> getUsersByGroup(@Param("group") R group);
+  Iterable<Integer> getRoles(@Param("group") R group, @Param("user") User user);
 }

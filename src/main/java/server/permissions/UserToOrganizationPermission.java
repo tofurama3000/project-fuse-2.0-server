@@ -28,4 +28,9 @@ public class UserToOrganizationPermission extends UserToGroupPermission<Organiza
     return "organization";
   }
 
+  @Override
+  protected Iterable<Integer> getRoles() {
+    return repository.getRoles(group, user);
+  }
+
 }

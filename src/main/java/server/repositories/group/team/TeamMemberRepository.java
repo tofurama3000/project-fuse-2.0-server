@@ -12,4 +12,7 @@ import server.repositories.group.GroupMemberRepository;
 public interface TeamMemberRepository extends GroupMemberRepository<Team, TeamMember> {
   @Query("SELECT user FROM TeamMember a where a.team = :group")
   Iterable<User> getUsersByGroup(@Param("group") Team group);
+
+  @Query("SELECT roleId FROM TeamMember a where a.team = :group AND a.user = :user")
+  Iterable<Integer> getRoles(@Param("group") Team group, @Param("user") User user);
 }

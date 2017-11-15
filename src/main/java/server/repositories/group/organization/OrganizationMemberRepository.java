@@ -12,4 +12,7 @@ import server.repositories.group.GroupMemberRepository;
 public interface OrganizationMemberRepository extends GroupMemberRepository<Organization, OrganizationMember> {
   @Query("SELECT user From OrganizationMember a where a.organization = :group")
   Iterable<User> getUsersByGroup(@Param("group") Organization group);
+
+  @Query("SELECT roleId FROM OrganizationMember a where a.organization = :group AND a.user = :user")
+  Iterable<Integer> getRoles(@Param("group") Organization group, @Param("user") User user);
 }

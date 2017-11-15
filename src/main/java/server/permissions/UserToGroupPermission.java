@@ -47,26 +47,21 @@ public abstract class UserToGroupPermission<T extends Group> {
 
   protected abstract Session getSession();
 
+  @Deprecated
   protected abstract String getGroupFieldName();
 
+
   protected boolean isMember() {
-    String queryString = "SELECT sum(id) FROM " + group.getRelationshipTableName() + " r WHERE r." + getGroupFieldName()
-        + " = :group AND r.user = :user AND r.roleId != :invited";
-    Query query = getSession().createQuery(queryString);
-
-    query.setParameter("group", group);
-    query.setParameter("user", user);
-    query.setParameter("invited", INVITED);
-
-
-    Object result = query.uniqueResult();
-    return result != null;
+    for (Integer roleId : getRoles()) {
+      if (roleId != INVITED) {
+        return true;
+      }
+    }
+    return false;
   }
 
-  @SuppressWarnings("unchecked")
   protected boolean hasInvite() {
-    List<Integer> roleIds = getRoles();
-    for (Integer roleId : roleIds) {
+    for (Integer roleId : getRoles()) {
       if (roleId == INVITED) {
         return true;
       }
@@ -75,8 +70,7 @@ public abstract class UserToGroupPermission<T extends Group> {
   }
 
   public boolean canInvite() {
-    List<Integer> roleIds = getRoles();
-    for (Integer roleId : roleIds) {
+    for (Integer roleId : getRoles()) {
       if (roleId == ADMIN || roleId == OWNER) {
         return true;
       }
@@ -85,18 +79,12 @@ public abstract class UserToGroupPermission<T extends Group> {
   }
 
   public boolean canAcceptInvite() {
-    return getRoles().size() == 0;
+    // Just checking if there already exists a role for user
+    for (Integer ignored : getRoles()) {
+      return false;
+    }
+    return true;
   }
 
-  @SuppressWarnings("unchecked")
-  private List<Integer> getRoles() {
-    String queryString = "SELECT roleId FROM " + group.getRelationshipTableName() + " r WHERE r." + getGroupFieldName()
-        + " = :group AND r.user= :user";
-
-    Query query = getSession().createQuery(queryString);
-
-    query.setParameter("group", group);
-    query.setParameter("user", user);
-    return query.list();
-  }
+  protected abstract Iterable<Integer> getRoles();
 }
