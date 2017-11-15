@@ -20,7 +20,7 @@ public abstract class Group {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
-  private long id;
+  private Long id;
 
   @ManyToOne
   @JoinColumn(name = "owner_id", referencedColumnName = "id")

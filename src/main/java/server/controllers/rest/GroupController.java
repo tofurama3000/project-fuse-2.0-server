@@ -130,17 +130,22 @@ public abstract class GroupController<T extends Group> {
       return new GeneralResponse(response, DENIED, errors);
     }
 
-    User owner = group.getOwner();
-    List<T> matching = getEntitiesWith(owner, group);
-    if (matching.size() == 0) {
-      errors.add(NO_GROUP_FOUND);
-      return new GeneralResponse(response, BAD_DATA, errors);
-    } else if (matching.size() != 1) {
-      errors.add(SERVER_ERROR);
-      return new GeneralResponse(response, ERROR, errors);
+    if (group.getId() == null) {
+      group = getGroupRepository().findOne(group.getId());
+    } else {
+      User owner = group.getOwner();
+      List<T> matching = getEntitiesWith(owner, group);
+      if (matching.size() == 0) {
+        errors.add(NO_GROUP_FOUND);
+        return new GeneralResponse(response, BAD_DATA, errors);
+      } else if (matching.size() != 1) {
+        errors.add(SERVER_ERROR);
+        return new GeneralResponse(response, ERROR, errors);
+      }
+
+      group = matching.get(0);
     }
 
-    group = matching.get(0);
 
     User user = session.get().getUser();
 

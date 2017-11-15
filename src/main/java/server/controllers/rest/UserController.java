@@ -143,7 +143,7 @@ public class UserController {
         projectInvitationRepository.findByReceiver(user));
   }
 
-  @GetMapping(path = "/incoming/invites/project")
+  @GetMapping(path = "/incoming/invites/organization")
   @ResponseBody
   public GeneralResponse getOrganizationInvites(HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
@@ -160,7 +160,7 @@ public class UserController {
         organizationInvitationRepository.findByReceiver(user));
   }
 
-  @GetMapping(path = "/incoming/invites/project")
+  @GetMapping(path = "/incoming/invites/team")
   @ResponseBody
   public GeneralResponse getTeamInvites(HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();

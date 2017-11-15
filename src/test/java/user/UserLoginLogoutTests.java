@@ -33,18 +33,15 @@ public class UserLoginLogoutTests extends RestTester {
     String contents = getContentsFromResources("addUser/addUser2");
     primaryUser = new ObjectMapper().readValue(contents, User.class);
 
-    MvcResult mvcResult = mockMvc.perform(post("/user/add")
+    mockMvc.perform(post("/user/add")
         .contentType(MediaType.APPLICATION_JSON_UTF8)
         .content(contents)).andReturn();
-
-    String jsonString = mvcResult.getResponse().getContentAsString();
-    System.out.println(jsonString);
   }
 
   @Test
   public void testLoginCreatesValidSession() throws Exception {
 
-    String contents = getContentsFromResources("login/loginBodyRequest2");
+    String contents = getContentsFromResources("login/loginUser2");
     MvcResult mvcResult = mockMvc.perform(post("/user/login")
         .contentType(MediaType.APPLICATION_JSON_UTF8)
         .content(contents)).andReturn();
