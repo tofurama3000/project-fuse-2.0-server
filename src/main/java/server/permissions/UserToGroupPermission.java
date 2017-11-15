@@ -1,6 +1,6 @@
 package server.permissions;
 
-import static server.constants.RoleValue.INVITED;
+import static server.constants.RoleValue.*;
 import static server.permissions.results.JoinResult.ALREADY_JOINED;
 import static server.permissions.results.JoinResult.HAS_INVITE;
 import static server.permissions.results.JoinResult.NEED_INVITE;
@@ -23,6 +23,17 @@ public abstract class UserToGroupPermission<T extends Group> {
   public UserToGroupPermission(User user, T group) {
     this.user = user;
     this.group = group;
+  }
+
+
+  public boolean canUpdate() {
+    List<Integer> roleIds = getRoles();
+    for (Integer roleId : roleIds) {
+      if (roleId == ADMIN || roleId == OWNER) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public JoinResult canJoin() {
@@ -77,5 +88,15 @@ public abstract class UserToGroupPermission<T extends Group> {
     }
     return false;
   }
+  @SuppressWarnings("unchecked")
+  private List<Integer> getRoles() {
+    String queryString = "SELECT roleId FROM " + group.getRelationshipTableName() + " r WHERE r." + getGroupFieldName()
+            + " = :group AND r.user= :user";
 
+    Query query = getSession().createQuery(queryString);
+
+    query.setParameter("group", group);
+    query.setParameter("user", user);
+    return query.list();
+  }
 }

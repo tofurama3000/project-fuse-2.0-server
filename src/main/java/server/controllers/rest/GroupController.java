@@ -14,20 +14,19 @@ import org.hibernate.Query;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.Group;
 import server.entities.dto.FuseSession;
 import server.entities.dto.User;
 import server.entities.dto.UserToGroupRelationship;
+import server.entities.dto.team.Team;
 import server.permissions.UserToGroupPermission;
+import server.repositories.UserRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -36,11 +35,12 @@ import java.util.List;
 import java.util.Optional;
 
 @Transactional
-public abstract class GroupController<T extends Group> {
+public abstract class GroupController<T extends Group>  {
 
   private final FuseSessionController fuseSessionController;
 
   private static Logger logger = LoggerFactory.getLogger(TeamController.class);
+
 
 
   protected GroupController(FuseSessionController fuseSessionController) {
@@ -76,6 +76,9 @@ public abstract class GroupController<T extends Group> {
       return new GeneralResponse(response, errors);
     }
   }
+
+
+
 
   @PostMapping(path = "/delete")
   @ResponseBody
