@@ -103,9 +103,9 @@ public class TeamTest extends RestTester {
   }
 
   private boolean inviteUser2ToTeam1(String sessionId, User user, Team team) throws Exception {
-    jsonHelper.createInvitation(userRepository.findByEmail(user.getEmail()).getId(), team.getId());
+    String invitation = jsonHelper.createInvitation(userRepository.findByEmail(user.getEmail()).getId(), team.getId());
 
-    GeneralResponse generalResponse = requestHelper.makePostRequestWithFile(sessionId, "invite/inviteUser2ToTeam1", "/team/invite");
+    GeneralResponse generalResponse = requestHelper.makePostRequest(sessionId, invitation, "/team/invite");
     return generalResponse.getStatus() == OK;
   }
 

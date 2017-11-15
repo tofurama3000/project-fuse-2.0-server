@@ -290,6 +290,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
 
   private void removeRelationship(User user, T group, int role) {
+    // TODO make me repository method
     Query query = getSession()
         .createQuery("Delete FROM " + group.getRelationshipTableName() + " e WHERE e."
             + group.getTableName().toLowerCase() + "= :group AND user = :user AND roleId = :roleId");
