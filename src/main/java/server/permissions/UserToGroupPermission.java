@@ -10,7 +10,6 @@ import static server.permissions.results.JoinResult.OK;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.springframework.transaction.annotation.Transactional;
-import server.constants.RoleValue;
 import server.entities.Group;
 import server.entities.dto.User;
 import server.permissions.results.JoinResult;

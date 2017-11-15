@@ -2,7 +2,6 @@ package server.entities.dto.team;
 
 
 import lombok.Data;
-import lombok.Getter;
 import server.entities.dto.User;
 import server.entities.dto.UserToGroupRelationship;
 

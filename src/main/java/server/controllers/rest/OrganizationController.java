@@ -1,6 +1,5 @@
 package server.controllers.rest;
 
-import static server.constants.RoleValue.DEFAULT_USER;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +10,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
-import server.controllers.FuseSessionController;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.GroupInvitation;
 import server.entities.dto.User;
@@ -21,7 +19,6 @@ import server.entities.dto.organization.OrganizationInvitation;
 import server.entities.dto.organization.OrganizationMember;
 import server.permissions.PermissionFactory;
 import server.permissions.UserToGroupPermission;
-import server.repositories.UserRepository;
 import server.repositories.organization.OrganizationInvitationRepository;
 import server.repositories.organization.OrganizationMemberRepository;
 import server.repositories.organization.OrganizationRepository;

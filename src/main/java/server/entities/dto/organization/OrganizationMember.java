@@ -5,7 +5,6 @@ import lombok.Data;
 import lombok.Getter;
 import server.entities.dto.User;
 import server.entities.dto.UserToGroupRelationship;
-import server.entities.dto.team.Team;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

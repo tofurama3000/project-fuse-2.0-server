@@ -27,16 +27,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
-import server.constants.RoleValue;
 import server.controllers.FuseSessionController;
-import server.controllers.rest.response.CannedResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.Group;
 import server.entities.dto.FuseSession;
 import server.entities.dto.GroupInvitation;
 import server.entities.dto.User;
 import server.entities.dto.UserToGroupRelationship;
-import server.permissions.UserPermission;
 import server.permissions.UserToGroupPermission;
 import server.repositories.UserRepository;
 
@@ -209,7 +206,7 @@ public abstract class GroupController<T extends Group> {
   @GetMapping(path = "/{id}/members")
   @ResponseBody
   public GeneralResponse getMembersOfGroup(@PathVariable(value = "id") T group, HttpServletRequest request, HttpServletResponse response) {
-    return new GeneralResponse(response, GeneralResponse.Status.OK, null,  getMembersOf(group));
+    return new GeneralResponse(response, GeneralResponse.Status.OK, null, getMembersOf(group));
   }
 
   @GetMapping(path = "/all")
@@ -233,6 +230,7 @@ public abstract class GroupController<T extends Group> {
   protected abstract UserToGroupPermission getUserToGroupPermission(User user, T group);
 
   protected abstract void addMember(User user, T group, int role);
+
   protected abstract void saveInvitation(GroupInvitation<T> invitation);
 
   protected abstract Session getSession();
