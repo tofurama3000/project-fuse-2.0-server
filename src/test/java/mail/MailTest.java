@@ -1,30 +1,29 @@
-package framework;
+package mail;
 
+import org.junit.Ignore;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
 import server.Application;
 import server.config.Dependencies;
+import server.email.MailSender;
 
+@Ignore
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ContextConfiguration(classes = {Dependencies.class, Application.class})
 @ComponentScan("framework")
-@Transactional
-@AutoConfigureMockMvc
-public abstract class RestTester {
+public class MailTest {
 
   @Autowired
-  private MockMvc mockMvc;
+  private MailSender mailSender;
 
-
-
-
-
+  @Test
+  public void sendSimpleEmail() {
+    mailSender.sendMail("me@gmail.com", "cole.gordon57@gmail.com", "test", "test");
+  }
 }

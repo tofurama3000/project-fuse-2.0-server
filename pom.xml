@@ -68,6 +68,12 @@
             <artifactId>jackson-core</artifactId>
         </dependency>
 
+        <!--Mailing-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
         <!--- LOGGING -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
