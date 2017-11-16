@@ -12,6 +12,5 @@ public class CannedResponse {
   public static final String NO_GROUP_FOUND = "Could not find group";
   public static final String ALREADY_JOINED_OR_INVITED = "User already joined, or received invite";
   public static final String NO_USER_FOUND = "Could not find user";
-
-
+  public static final String INVALID_REGISTRATION_KEY = "invalid registration key";
 }

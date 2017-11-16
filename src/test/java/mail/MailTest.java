@@ -24,6 +24,6 @@ public class MailTest {
 
   @Test
   public void sendSimpleEmail() {
-    mailSender.sendMail("me@gmail.com", "cole.gordon57@gmail.com", "test", "test");
+    mailSender.sendBasicEmail("me@gmail.com", "cole.gordon57@gmail.com", "test", "test");
   }
 }
