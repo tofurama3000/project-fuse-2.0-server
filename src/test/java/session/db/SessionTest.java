@@ -78,7 +78,7 @@ public class SessionTest {
   public void sessionNotCreatedWithNotRealUser() {
 
     User fakeUser = new User();
-    fakeUser.setId(100);
+    fakeUser.setId(100L);
     fakeUser.setEmail("fakeUser@test.com");
     fakeUser.setName("fake");
     fakeUser.set_password("test");

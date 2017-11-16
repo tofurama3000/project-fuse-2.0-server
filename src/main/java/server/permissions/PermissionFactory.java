@@ -2,17 +2,16 @@ package server.permissions;
 
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import server.controllers.FuseSessionController;
 import server.entities.dto.User;
-import server.entities.dto.organization.Organization;
-import server.entities.dto.project.Project;
-import server.entities.dto.team.Team;
-import server.repositories.OrganizationMemberRepository;
-import server.repositories.ProjectMemberRepository;
-import server.repositories.TeamMemberRepository;
+import server.entities.dto.group.organization.Organization;
+import server.entities.dto.group.project.Project;
+import server.entities.dto.group.team.Team;
+import server.repositories.group.organization.OrganizationMemberRepository;
+import server.repositories.group.project.ProjectMemberRepository;
+import server.repositories.group.team.TeamMemberRepository;
 
 @Service
 @Transactional

@@ -1,7 +1,6 @@
 package server.controllers.rest.response;
 
 import lombok.Data;
-import lombok.Getter;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -16,7 +15,7 @@ public class GeneralResponse {
     DENIED,
   }
 
-  private  Status status;
+  private Status status;
   private List<String> errors;
   private Object data;
 
