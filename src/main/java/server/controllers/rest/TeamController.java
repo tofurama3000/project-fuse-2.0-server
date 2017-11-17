@@ -106,27 +106,27 @@ public class TeamController extends GroupController<Team> {
     return new GeneralResponse(response, GeneralResponse.Status.OK);
   }
 
-  @PutMapping
-  @ResponseBody
-  public GeneralResponse updateGroup(@RequestBody Team team, HttpServletRequest request, HttpServletResponse response) {
-
-    List<String> errors = new ArrayList<>();
-    Optional<FuseSession> session = fuseSessionController.getSession(request);
-    if (!session.isPresent()) {
-      errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, DENIED, errors);
-    }
-    User user = null;
-    user.setId(session.get().getUser().getId());
-    // UserToGroupPermission permission = new UserToGroupPermission(user, team);
-    boolean  permission = getUserToGroupPermission(user, team).canUpdate();
-    if(!permission){
-      errors.add("Insufficient right");
-      return new GeneralResponse(response, DENIED, errors);
-    }
-    teamRepository.save(team);
-    return new GeneralResponse(response, GeneralResponse.Status.OK);
-  }
+//  @PutMapping
+//  @ResponseBody
+//  public GeneralResponse updateGroup(@RequestBody Team team, HttpServletRequest request, HttpServletResponse response) {
+//
+//    List<String> errors = new ArrayList<>();
+//    Optional<FuseSession> session = fuseSessionController.getSession(request);
+//    if (!session.isPresent()) {
+//      errors.add(INVALID_SESSION);
+//      return new GeneralResponse(response, DENIED, errors);
+//    }
+//    User user = null;
+//    user.setId(session.get().getUser().getId());
+//    // UserToGroupPermission permission = new UserToGroupPermission(user, team);
+//    boolean  permission = getUserToGroupPermission(user, team).canUpdate();
+//    if(!permission){
+//      errors.add("Insufficient right");
+//      return new GeneralResponse(response, DENIED, errors);
+//    }
+//    teamRepository.save(team);
+//    return new GeneralResponse(response, GeneralResponse.Status.OK);
+//  }
   @Override
   protected Session getSession() {
     return sessionFactory.openSession();
