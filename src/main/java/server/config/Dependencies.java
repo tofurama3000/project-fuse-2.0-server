@@ -24,4 +24,5 @@ public class Dependencies {
   public SessionFactory sessionFactory(HibernateEntityManagerFactory hemf) {
     return hemf.getSessionFactory();
   }
+
 }
