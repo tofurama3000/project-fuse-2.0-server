@@ -106,8 +106,8 @@ public class UserController {
       user.setRegistrationStatus(REGISTERED);
     }
 
-    userRepository.save(user);
-    Long id = userRepository.findByEmail(user.getEmail()).getId();
+    User savedUser = userRepository.save(user);
+    Long id = savedUser.getId();
 
     if (requireRegistration) {
       String registrationKey = generator.generateId().toString();
@@ -121,7 +121,7 @@ public class UserController {
       emailSender.sendRegistrationEmail(user.getEmail(), registrationKey);
     }
 
-    return new GeneralResponse(response, errors);
+    return new GeneralResponse(response, GeneralResponse.Status.OK, errors, savedUser);
   }
 
   @PostMapping(path = "/login")
