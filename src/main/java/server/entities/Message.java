@@ -18,11 +18,9 @@ public class Message {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
 
-
     @ManyToOne
     @JoinColumn(name = "sender_id", referencedColumnName = "id")
     private User sender;
-
 
     @ManyToOne
     @JoinColumn(name = "receiver_id", referencedColumnName = "id")
@@ -30,9 +28,5 @@ public class Message {
 
     @Column(name = "message")
     private String message;
-
-
-
-
 
 }

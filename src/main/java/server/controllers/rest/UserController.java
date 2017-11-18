@@ -14,13 +14,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.AlternativeJdkIdGenerator;
 import org.springframework.util.IdGenerator;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import server.controllers.FuseSessionController;
+import server.controllers.rest.response.CannedResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.email.StandardEmailSender;
 import server.entities.dto.FuseSession;
@@ -208,7 +204,7 @@ public class UserController {
     return new GeneralResponse(response, OK, null, byEmail);
   }
 
-  @PutMapping
+  @PutMapping(path = "/update")
   @ResponseBody
   public GeneralResponse updateUser(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
 
@@ -218,6 +214,13 @@ public class UserController {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, DENIED, errors);
     }
+
+    User byEmail = userRepository.findByEmail(user.getEmail());
+    if (byEmail != null && !byEmail.getEmail().equals(user.getEmail())) {
+      errors.add(CannedResponse.EMAIL_ALREADY_EXISTS);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+
     user.setId(session.get().getUser().getId());
     userRepository.save(user);
     return new GeneralResponse(response, GeneralResponse.Status.OK);
