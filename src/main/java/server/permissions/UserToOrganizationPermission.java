@@ -2,10 +2,9 @@ package server.permissions;
 
 import lombok.Setter;
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
 import server.entities.dto.User;
-import server.entities.dto.organization.Organization;
-import server.repositories.OrganizationMemberRepository;
+import server.entities.dto.group.organization.Organization;
+import server.repositories.group.organization.OrganizationMemberRepository;
 
 public class UserToOrganizationPermission extends UserToGroupPermission<Organization> {
 
@@ -27,6 +26,11 @@ public class UserToOrganizationPermission extends UserToGroupPermission<Organiza
   @Override
   protected String getGroupFieldName() {
     return "organization";
+  }
+
+  @Override
+  protected Iterable<Integer> getRoles() {
+    return repository.getRoles(group, user);
   }
 
 }

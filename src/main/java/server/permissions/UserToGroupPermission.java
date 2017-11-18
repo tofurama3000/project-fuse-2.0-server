@@ -1,18 +1,17 @@
 package server.permissions;
 
-import static server.constants.RoleValue.*;
+import static server.constants.RoleValue.ADMIN;
+import static server.constants.RoleValue.INVITED;
+import static server.constants.RoleValue.OWNER;
 import static server.permissions.results.JoinResult.ALREADY_JOINED;
 import static server.permissions.results.JoinResult.HAS_INVITE;
 import static server.permissions.results.JoinResult.NEED_INVITE;
 import static server.permissions.results.JoinResult.OK;
-import org.hibernate.Query;
 import org.hibernate.Session;
 import org.springframework.transaction.annotation.Transactional;
-import server.entities.Group;
 import server.entities.dto.User;
+import server.entities.dto.group.Group;
 import server.permissions.results.JoinResult;
-
-import java.util.List;
 
 @Transactional
 public abstract class UserToGroupPermission<T extends Group> {
@@ -23,17 +22,6 @@ public abstract class UserToGroupPermission<T extends Group> {
   public UserToGroupPermission(User user, T group) {
     this.user = user;
     this.group = group;
-  }
-
-
-  public boolean canUpdate() {
-    List<Integer> roleIds = getRoles();
-    for (Integer roleId : roleIds) {
-      if (roleId == ADMIN || roleId == OWNER) {
-        return true;
-      }
-    }
-    return false;
   }
 
   public JoinResult canJoin() {
@@ -56,47 +44,44 @@ public abstract class UserToGroupPermission<T extends Group> {
 
   protected abstract Session getSession();
 
+  @Deprecated
   protected abstract String getGroupFieldName();
 
+
   protected boolean isMember() {
-    String queryString = "SELECT sum(id) FROM " + group.getRelationshipTableName() + " r WHERE r." + getGroupFieldName()
-        + " = :group AND r.user = :user";
-    Query query = getSession().createQuery(queryString);
-
-    query.setParameter("group", group);
-    query.setParameter("user", user);
-
-    Object result = query.uniqueResult();
-    return result != null;
+    for (Integer roleId : getRoles()) {
+      if (roleId != INVITED) {
+        return true;
+      }
+    }
+    return false;
   }
 
-  @SuppressWarnings("unchecked")
   protected boolean hasInvite() {
-    String queryString = "SELECT role_id FROM " + group.getRelationshipTableName() + " r WHERE r." + getGroupFieldName()
-        + " = :group AND r.user= :user";
-
-    Query query = getSession().createQuery(queryString);
-
-    query.setParameter("group", group);
-    query.setParameter("user", user);
-
-    List<Integer> roleIds = query.list();
-    for (Integer roleId : roleIds) {
+    for (Integer roleId : getRoles()) {
       if (roleId == INVITED) {
         return true;
       }
     }
     return false;
   }
-  @SuppressWarnings("unchecked")
-  private List<Integer> getRoles() {
-    String queryString = "SELECT roleId FROM " + group.getRelationshipTableName() + " r WHERE r." + getGroupFieldName()
-            + " = :group AND r.user= :user";
 
-    Query query = getSession().createQuery(queryString);
-
-    query.setParameter("group", group);
-    query.setParameter("user", user);
-    return query.list();
+  public boolean canInvite() {
+    for (Integer roleId : getRoles()) {
+      if (roleId == ADMIN || roleId == OWNER) {
+        return true;
+      }
+    }
+    return false;
   }
+
+  public boolean canAcceptInvite() {
+    // Just checking if there already exists a role for user
+    for (Integer ignored : getRoles()) {
+      return false;
+    }
+    return true;
+  }
+
+  protected abstract Iterable<Integer> getRoles();
 }

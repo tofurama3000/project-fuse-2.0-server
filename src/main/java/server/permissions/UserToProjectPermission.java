@@ -2,10 +2,9 @@ package server.permissions;
 
 import lombok.Setter;
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
 import server.entities.dto.User;
-import server.entities.dto.project.Project;
-import server.repositories.ProjectMemberRepository;
+import server.entities.dto.group.project.Project;
+import server.repositories.group.project.ProjectMemberRepository;
 
 public class UserToProjectPermission extends UserToGroupPermission<Project> {
 
@@ -27,6 +26,11 @@ public class UserToProjectPermission extends UserToGroupPermission<Project> {
   @Override
   protected String getGroupFieldName() {
     return "project";
+  }
+
+  @Override
+  protected Iterable<Integer> getRoles() {
+    return repository.getRoles(group, user);
   }
 
 }

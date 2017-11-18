@@ -3,8 +3,8 @@ package server.permissions;
 import lombok.Setter;
 import org.hibernate.Session;
 import server.entities.dto.User;
-import server.entities.dto.team.Team;
-import server.repositories.TeamMemberRepository;
+import server.entities.dto.group.team.Team;
+import server.repositories.group.team.TeamMemberRepository;
 
 public class UserToTeamPermission extends UserToGroupPermission<Team> {
 
@@ -26,6 +26,11 @@ public class UserToTeamPermission extends UserToGroupPermission<Team> {
   @Override
   protected String getGroupFieldName() {
     return "team";
+  }
+
+  @Override
+  protected Iterable<Integer> getRoles() {
+    return repository.getRoles(group, user);
   }
 
 }
