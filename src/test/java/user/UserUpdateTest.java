@@ -42,8 +42,6 @@ public class UserUpdateTest extends RestTester {
     @Autowired
     private SessionHelper sessionHelper;
 
-   // private User primaryUser;
-
     @Test
 
     public void updateUser() throws Exception {

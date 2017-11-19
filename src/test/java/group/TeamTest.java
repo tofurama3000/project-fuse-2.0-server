@@ -48,6 +48,7 @@ public class TeamTest extends RestTester {
 
   @Autowired
   private TeamRepository teamRepository;
+
   @Autowired
   private TeamHelper teamHelper;
 

@@ -211,14 +211,14 @@ public class UserController {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
-      errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, DENIED, errors);
+      errors.add(CannedResponse.INVALID_SESSION);
+      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
     }
 
     User byEmail = userRepository.findByEmail(user.getEmail());
     if (byEmail == null || !byEmail.getEmail().equals(user.getEmail())) {
       errors.add(CannedResponse.EMAIL_ALREADY_EXISTS);
-      return new GeneralResponse(response, DENIED, errors);
+      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
     }
 
     user.setId(session.get().getUser().getId());
