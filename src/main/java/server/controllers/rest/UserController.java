@@ -216,7 +216,7 @@ public class UserController {
     }
 
     User byEmail = userRepository.findByEmail(user.getEmail());
-    if (byEmail != null && !byEmail.getEmail().equals(user.getEmail())) {
+    if (byEmail == null || !byEmail.getEmail().equals(user.getEmail())) {
       errors.add(CannedResponse.EMAIL_ALREADY_EXISTS);
       return new GeneralResponse(response, DENIED, errors);
     }

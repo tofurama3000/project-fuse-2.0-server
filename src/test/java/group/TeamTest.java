@@ -1,8 +1,11 @@
 package group;
 
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertNull;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
 import static server.controllers.rest.response.GeneralResponse.Status.OK;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import framework.JsonHelper;
@@ -10,6 +13,7 @@ import framework.RequestHelper;
 import framework.RestTester;
 import framework.SessionHelper;
 import framework.TeamHelper;
+import junit.framework.TestCase;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +25,7 @@ import server.entities.dto.FuseSession;
 import server.entities.dto.User;
 import server.entities.dto.group.team.Team;
 import server.repositories.UserRepository;
+import server.repositories.group.team.TeamRepository;
 
 import java.util.Optional;
 
@@ -41,6 +46,8 @@ public class TeamTest extends RestTester {
   @Autowired
   private UserRepository userRepository;
 
+  @Autowired
+  private TeamRepository teamRepository;
   @Autowired
   private TeamHelper teamHelper;
 
@@ -84,6 +91,30 @@ public class TeamTest extends RestTester {
 
   }
 
+  @Test
+  public void updateTeam() throws Exception {
+    Optional<FuseSession> fuseSession1 = sessionHelper.loginAndGetSession("login/loginUser1");
+    assertTrue(fuseSession1.isPresent());
+
+    Optional<Team> team1 = createTeam1(fuseSession1.get().getSessionId());
+    assertTrue(team1.isPresent());
+
+    Optional<FuseSession> fuseSession2 = sessionHelper.loginAndGetSession("login/loginUser2");
+    assertTrue(fuseSession2.isPresent());
+
+    Optional<Team> team = teamHelper.getTeam(user1.getEmail(), team1.get().getName());
+
+
+    String putContents = "{\"id\":" + team.get().getId()  +"," + requestHelper.getContentsFromResources("updateGroup/updateGroup1");
+
+    GeneralResponse generalResponse = requestHelper.makePutRequest(fuseSession1.get().getSessionId(), putContents, "/team/update");
+    TestCase.assertTrue(generalResponse.getStatus() == OK);
+    assertNull(generalResponse.getErrors());
+    assertEquals( teamRepository.findOne(team.get().getId()).getName(),"fusion");
+
+    GeneralResponse generalResponse2 = requestHelper.makePutRequest(fuseSession2.get().getSessionId(), putContents, "/team/update");
+    TestCase.assertTrue(generalResponse2.getStatus() == DENIED);
+  }
   private Optional<Team> createTeam1(String sessionId) throws Exception {
     GeneralResponse generalResponse = requestHelper.makePostRequestWithFile(sessionId,
         "team/createRestrictedTeam1", "/team/create");

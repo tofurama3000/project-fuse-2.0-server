@@ -31,6 +31,7 @@ import server.entities.dto.GroupMember;
 import server.entities.dto.User;
 import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupInvitation;
+import server.entities.dto.group.team.Team;
 import server.permissions.UserToGroupPermission;
 import server.repositories.UserRepository;
 import server.repositories.group.GroupMemberRepository;
@@ -125,7 +126,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     }
   }
 
-  @PutMapping
+  @PutMapping(path = "/update")
   @ResponseBody
   public GeneralResponse updateGroup(@RequestBody T group, HttpServletRequest request, HttpServletResponse response) {
 
@@ -135,9 +136,28 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, DENIED, errors);
     }
-    User user = null;
-    user.setId(session.get().getUser().getId());
-    boolean canUpdate = getUserToGroupPermission(user, group).canUpdate();
+
+    User user = session.get().getUser();
+
+ //   if (group.getId() != null) {
+      Group grouptem = getGroupRepository().findOne(group.getId());
+      group.setOwner(grouptem.getOwner());
+//    } else {
+//      User owner = group.getOwner();
+//      List<T> matching = getGroupsWith(owner, group);
+//      if (matching.size() == 0) {
+//        errors.add(NO_GROUP_FOUND);
+//        return new GeneralResponse(response, BAD_DATA, errors);
+//      } else if (matching.size() != 1) {
+//        errors.add(SERVER_ERROR);
+//        return new GeneralResponse(response, ERROR, errors);
+//      }
+//      group = matching.get(0);
+//    }
+
+
+     UserToGroupPermission permission =  getUserToGroupPermission(user, group);
+    boolean canUpdate = permission.canUpdate();
     if(!canUpdate){
       errors.add(INSUFFICIENT_PRIVELAGES);
       return new GeneralResponse(response, DENIED, errors);
@@ -156,6 +176,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, DENIED, errors);
     }
+
 
     if (group.getId() != null) {
       group = getGroupRepository().findOne(group.getId());
