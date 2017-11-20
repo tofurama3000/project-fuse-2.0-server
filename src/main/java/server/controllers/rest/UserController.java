@@ -121,7 +121,7 @@ public class UserController {
       emailSender.sendRegistrationEmail(user.getEmail(), registrationKey);
     }
 
-    return new GeneralResponse(response, GeneralResponse.Status.OK, errors, savedUser);
+    return new GeneralResponse(response, OK, errors, savedUser);
   }
 
   @PostMapping(path = "/login")
