@@ -14,9 +14,8 @@ import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import static server.controllers.rest.response.CannedResponse.NEED_INVITE_MSG;
 import static server.controllers.rest.response.CannedResponse.NO_GROUP_FOUND;
 import static server.controllers.rest.response.CannedResponse.SERVER_ERROR;
-import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
-import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
-import static server.controllers.rest.response.GeneralResponse.Status.ERROR;
+import static server.controllers.rest.response.GeneralResponse.Status.*;
+
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
@@ -87,10 +86,10 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     entity.setOwner(user);
 
     if (entities.size() == 0) {
-      getGroupRepository().save(entity);
+      Group savedEntity = getGroupRepository().save(entity);
       addRelationship(user, entity, OWNER);
 
-      return new GeneralResponse(response);
+      return new GeneralResponse(response, OK, null, savedEntity);
     } else {
       errors.add("entity name already exists for user");
       return new GeneralResponse(response, errors);
