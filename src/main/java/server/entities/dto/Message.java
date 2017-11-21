@@ -1,4 +1,4 @@
-package server.entities;
+package server.entities.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AccessLevel;
@@ -10,7 +10,7 @@ import server.entities.dto.User;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "Message")
+@Table(name = "message")
 @Data
 public class Message {
 
