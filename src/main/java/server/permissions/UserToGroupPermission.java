@@ -1,17 +1,13 @@
 package server.permissions;
 
-import static server.constants.RoleValue.ADMIN;
-import static server.constants.RoleValue.INVITED;
-import static server.constants.RoleValue.OWNER;
-import static server.permissions.results.JoinResult.ALREADY_JOINED;
-import static server.permissions.results.JoinResult.HAS_INVITE;
-import static server.permissions.results.JoinResult.NEED_INVITE;
-import static server.permissions.results.JoinResult.OK;
 import org.hibernate.Session;
 import org.springframework.transaction.annotation.Transactional;
 import server.entities.dto.User;
 import server.entities.dto.group.Group;
 import server.permissions.results.JoinResult;
+
+import static server.constants.RoleValue.*;
+import static server.permissions.results.JoinResult.*;
 
 @Transactional
 public abstract class UserToGroupPermission<T extends Group> {
@@ -67,12 +63,7 @@ public abstract class UserToGroupPermission<T extends Group> {
   }
 
   public boolean canInvite() {
-    for (Integer roleId : getRoles()) {
-      if (roleId == ADMIN || roleId == OWNER) {
-        return true;
-      }
-    }
-    return false;
+    return isAdmin();
   }
 
   public boolean canAcceptInvite() {
@@ -84,4 +75,17 @@ public abstract class UserToGroupPermission<T extends Group> {
   }
 
   protected abstract Iterable<Integer> getRoles();
+
+  public boolean canUpdate() {
+    return isAdmin();
+    }
+
+    private boolean isAdmin() {
+      for (Integer roleId : getRoles()) {
+        if (roleId == ADMIN || roleId == OWNER) {
+          return true;
+        }
+      }
+      return false;
+    }
 }

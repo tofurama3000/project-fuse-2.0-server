@@ -22,12 +22,7 @@ import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.CannedResponse;
 import server.controllers.rest.response.GeneralResponse;
@@ -36,6 +31,7 @@ import server.entities.dto.GroupMember;
 import server.entities.dto.User;
 import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupInvitation;
+import server.entities.dto.group.team.Team;
 import server.permissions.UserToGroupPermission;
 import server.repositories.UserRepository;
 import server.repositories.group.GroupMemberRepository;
@@ -130,6 +126,33 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     }
   }
 
+  @PutMapping(path = "/update")
+  @ResponseBody
+  public GeneralResponse updateGroup(@RequestBody T group, HttpServletRequest request, HttpServletResponse response) {
+
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+
+    User user = session.get().getUser();
+
+
+      Group originalGroup  = getGroupRepository().findOne(group.getId());
+      group.setOwner(originalGroup.getOwner());
+
+     UserToGroupPermission permission =  getUserToGroupPermission(user, group);
+    boolean canUpdate = permission.canUpdate();
+    if(!canUpdate){
+      errors.add(INSUFFICIENT_PRIVELAGES);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+    getGroupRepository().save(group);
+    return new GeneralResponse(response, GeneralResponse.Status.OK);
+  }
+
   @PostMapping(path = "/join")
   @ResponseBody
   protected synchronized GeneralResponse join(@RequestBody T group, HttpServletRequest request, HttpServletResponse response) {
@@ -140,6 +163,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, DENIED, errors);
     }
+
 
     if (group.getId() != null) {
       group = getGroupRepository().findOne(group.getId());
