@@ -125,9 +125,9 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     }
   }
 
-  @PutMapping(path = "/update")
+  @PutMapping(path = "/{id}/update")
   @ResponseBody
-  public GeneralResponse updateGroup(@RequestBody T group, HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse updateGroup(@PathVariable(value = "id") long id, @RequestBody T groupData, HttpServletRequest request, HttpServletResponse response) {
 
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -138,17 +138,21 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
     User user = session.get().getUser();
 
+    T groupToSave  = getGroupRepository().findOne(id);
 
-      Group originalGroup  = getGroupRepository().findOne(group.getId());
-      group.setOwner(originalGroup.getOwner());
-
-     UserToGroupPermission permission =  getUserToGroupPermission(user, group);
+    UserToGroupPermission permission =  getUserToGroupPermission(user, groupToSave);
     boolean canUpdate = permission.canUpdate();
     if(!canUpdate){
       errors.add(INSUFFICIENT_PRIVELAGES);
       return new GeneralResponse(response, DENIED, errors);
     }
-    getGroupRepository().save(group);
+
+    // Merging instead of direct copying ensures we're very clear about what can be edited, and it provides easy checks
+
+    if(groupData.getName() != null)
+      groupToSave.setName(groupData.getName());
+
+    getGroupRepository().save(groupToSave);
     return new GeneralResponse(response, GeneralResponse.Status.OK);
   }
 

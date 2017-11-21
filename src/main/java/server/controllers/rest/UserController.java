@@ -204,9 +204,9 @@ public class UserController {
     return new GeneralResponse(response, OK, null, byEmail);
   }
 
-  @PutMapping(path = "/update")
+  @PutMapping(path = "/update_current")
   @ResponseBody
-  public GeneralResponse updateUser(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse updateCurrentUser(@RequestBody User userData, HttpServletRequest request, HttpServletResponse response) {
 
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -215,14 +215,17 @@ public class UserController {
       return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
     }
 
-    User byEmail = userRepository.findByEmail(user.getEmail());
-    if (byEmail == null || !byEmail.getEmail().equals(user.getEmail())) {
-      errors.add(CannedResponse.EMAIL_ALREADY_EXISTS);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
-    }
+    User userToSave = session.get().getUser();
 
-    user.setId(session.get().getUser().getId());
-    userRepository.save(user);
+    // Merging instead of direct copying ensures we're very clear about what can be edited, and it provides easy checks
+
+    if(userData.getName() != null)
+      userToSave.setName(userData.getName());
+
+    if(userData.getEncoded_password() != null)
+      userToSave.setEncoded_password(userData.getEncoded_password());
+
+    userRepository.save(userToSave);
     return new GeneralResponse(response, GeneralResponse.Status.OK);
   }
 
