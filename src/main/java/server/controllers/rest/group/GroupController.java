@@ -181,7 +181,6 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     }
   }
 
-
   protected GeneralResponse generalInvite(GroupInvitation<T> groupInvitation, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 

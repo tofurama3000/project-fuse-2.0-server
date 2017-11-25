@@ -4,6 +4,7 @@ import static server.entities.Restriction.INVITE;
 import static server.entities.Restriction.NONE;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import server.entities.Interviewable;
 import server.entities.Restriction;
 import server.entities.dto.User;
 
@@ -17,7 +18,7 @@ import javax.persistence.MappedSuperclass;
 
 @Data
 @MappedSuperclass
-public abstract class Group {
+public abstract class Group implements Interviewable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
@@ -43,11 +44,5 @@ public abstract class Group {
   public void setRestriction(String restriction) {
     restrictionString = restriction;
   }
-
-  @JsonIgnore
-  public abstract String getTableName();
-
-  @JsonIgnore
-  public abstract String getRelationshipTableName();
 
 }

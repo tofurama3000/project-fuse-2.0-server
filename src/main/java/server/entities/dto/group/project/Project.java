@@ -8,13 +8,9 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "project")
 public class Project extends Group {
-  @Override
-  public String getTableName() {
-    return "Project";
-  }
 
   @Override
-  public String getRelationshipTableName() {
-    return "ProjectMember";
+  public String getGroupType() {
+    return "Project";
   }
 }
