@@ -3,6 +3,7 @@ package server.entities.dto.group;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import server.entities.dto.User;
+import server.entities.dto.group.interview.Interview;
 
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -28,6 +29,12 @@ public abstract class GroupInvitation<T extends Group> {
   private User sender;
 
   private String status;
+
+  private String type;
+
+  @ManyToOne
+  @JoinColumn(name = "interview_id", referencedColumnName = "id")
+  private Interview interview;
 
   @JsonIgnore
   public abstract T getGroup();
