@@ -1,4 +1,7 @@
 package server.repositories.group;
 
-public interface InterviewRepository {
+import org.springframework.data.repository.CrudRepository;
+import server.entities.dto.group.interview.Interview;
+
+public interface InterviewRepository extends CrudRepository<Interview, Long> {
 }

@@ -2,7 +2,8 @@ package server.controllers.rest.group;
 
 import static server.constants.InvitationStatus.PENDING;
 import static server.constants.RoleValue.DEFAULT_USER;
-import static server.constants.RoleValue.INVITED;
+import static server.constants.RoleValue.INVITED_TO_INTERVIEW;
+import static server.constants.RoleValue.INVITED_TO_JOIN;
 import static server.constants.RoleValue.OWNER;
 import static server.controllers.rest.response.CannedResponse.ALREADY_JOINED_MSG;
 import static server.controllers.rest.response.CannedResponse.ALREADY_JOINED_OR_INVITED;
@@ -14,14 +15,22 @@ import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import static server.controllers.rest.response.CannedResponse.NEED_INVITE_MSG;
 import static server.controllers.rest.response.CannedResponse.NO_GROUP_FOUND;
 import static server.controllers.rest.response.CannedResponse.SERVER_ERROR;
-import static server.controllers.rest.response.GeneralResponse.Status.*;
-
+import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
+import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
+import static server.controllers.rest.response.GeneralResponse.Status.ERROR;
+import static server.controllers.rest.response.GeneralResponse.Status.OK;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.CannedResponse;
 import server.controllers.rest.response.GeneralResponse;
@@ -30,11 +39,12 @@ import server.entities.dto.GroupMember;
 import server.entities.dto.User;
 import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupInvitation;
-import server.entities.dto.group.team.Team;
+import server.entities.dto.group.interview.Interview;
 import server.permissions.UserToGroupPermission;
 import server.repositories.UserRepository;
 import server.repositories.group.GroupMemberRepository;
 import server.repositories.group.GroupRepository;
+import server.repositories.group.InterviewRepository;
 import server.utility.UserFindHelper;
 
 import javax.servlet.http.HttpServletRequest;
@@ -52,6 +62,9 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
   @Autowired
   private UserRepository userRepository;
+
+  @Autowired
+  private InterviewRepository interviewRepository;
 
   @Autowired
   private UserFindHelper userFindHelper;
@@ -138,18 +151,18 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
     User user = session.get().getUser();
 
-    T groupToSave  = getGroupRepository().findOne(id);
+    T groupToSave = getGroupRepository().findOne(id);
 
-    UserToGroupPermission permission =  getUserToGroupPermission(user, groupToSave);
+    UserToGroupPermission permission = getUserToGroupPermission(user, groupToSave);
     boolean canUpdate = permission.canUpdate();
-    if(!canUpdate){
+    if (!canUpdate) {
       errors.add(INSUFFICIENT_PRIVELAGES);
       return new GeneralResponse(response, DENIED, errors);
     }
 
     // Merging instead of direct copying ensures we're very clear about what can be edited, and it provides easy checks
 
-    if(groupData.getName() != null)
+    if (groupData.getName() != null)
       groupToSave.setName(groupData.getName());
 
     getGroupRepository().save(groupToSave);
@@ -193,7 +206,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
         return new GeneralResponse(response);
       case HAS_INVITE:
         addRelationship(user, group, DEFAULT_USER);
-        removeRelationship(user, group, INVITED);
+        removeRelationship(user, group, INVITED_TO_JOIN);
         return new GeneralResponse(response);
       case NEED_INVITE:
         errors.add(NEED_INVITE_MSG);
@@ -242,7 +255,25 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     groupInvitation.setStatus(PENDING);
     groupInvitation.setSender(sessionUser);
     saveInvitation(groupInvitation);
-    addRelationship(receiver.get(), groupInvitation.getGroup(), INVITED);
+
+    switch (groupInvitation.getType()) {
+      case "Join":
+        addRelationship(receiver.get(), groupInvitation.getGroup(), INVITED_TO_JOIN);
+        break;
+      case "Interview":
+        if (groupInvitation.getInterview() == null) {
+          errors.add(INVALID_FIELDS);
+          return new GeneralResponse(response, errors);
+        }
+
+        Interview interview = interviewRepository.save(groupInvitation.getInterview());
+        groupInvitation.setInterview(interview);
+        addRelationship(receiver.get(), groupInvitation.getGroup(), INVITED_TO_INTERVIEW);
+        break;
+      default:
+        errors.add("Unrecognized type");
+        return new GeneralResponse(response, BAD_DATA, errors);
+    }
 
     return new GeneralResponse(response);
   }
@@ -291,11 +322,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   @ResponseBody
   protected GeneralResponse getById(@PathVariable(value = "id") Long id, HttpServletResponse response) {
     Group res = getGroupRepository().findOne(id);
-    if(res != null)
+    if (res != null)
       return new GeneralResponse(response, GeneralResponse.Status.OK, null, res);
     List<String> errors = new LinkedList<String>();
     errors.add("Invalid ID! Object does not exist!");
-    return new GeneralResponse(response, GeneralResponse.Status.BAD_DATA, errors);
+    return new GeneralResponse(response, BAD_DATA, errors);
   }
 
   protected boolean validFieldsForCreate(T entity) {

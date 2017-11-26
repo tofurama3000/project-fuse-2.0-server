@@ -2,24 +2,27 @@ package server.entities.dto.group.interview;
 
 import lombok.Data;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
 
 @Data
-@Table(name = "interview_time_slot")
-public class InterviewTimeSlot {
+@Entity
+@Table(name = "interview")
+public class Interview {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   private Long id;
 
-  private LocalDateTime startDateTime;
+  @Column(name = "start_time")
+  private Timestamp startDateTime;
 
-  private LocalDateTime endDateTime;
-
-  // How to represent end time (just another datetime, or do we just include length?)
+  @Column(name = "end_time")
+  private Timestamp endDateTime;
 
 }
