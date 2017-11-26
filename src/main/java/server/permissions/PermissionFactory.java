@@ -58,5 +58,4 @@ public class PermissionFactory {
     permission.setRepository(teamMemberRepository);
     return permission;
   }
-
 }
