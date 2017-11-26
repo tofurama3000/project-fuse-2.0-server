@@ -299,6 +299,28 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     return new GeneralResponse(response, GeneralResponse.Status.BAD_DATA, errors);
   }
 
+
+  @GetMapping(path = "/{id}/can_edit")
+  @ResponseBody
+  protected GeneralResponse canEdit(@PathVariable(value = "id") Long id, @RequestBody T groupData, HttpServletRequest request,HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+    User user = session.get().getUser();
+    T groupToSave  = getGroupRepository().findOne(id);
+    UserToGroupPermission permission =  getUserToGroupPermission(user, groupToSave);
+    boolean canUpdate = permission.canUpdate();
+    if(!canUpdate){
+      errors.add(INSUFFICIENT_PRIVELAGES);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+    return new GeneralResponse(response, GeneralResponse.Status.OK);
+
+  }
+
   protected boolean validFieldsForCreate(T entity) {
     return entity.getName() != null;
   }

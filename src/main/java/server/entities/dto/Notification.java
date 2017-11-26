@@ -1,20 +1,15 @@
 package server.entities.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Getter;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import server.entities.dto.User;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "message")
+@Table(name = "notification")
 @Data
-public class Message {
-
+public class Notification {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
@@ -30,7 +25,9 @@ public class Message {
     @Column(name = "message")
     private String message;
 
-    @Getter
-    private Timestamp sent;
+    @Column(name = "time")
+    private Timestamp time;
 
+    @Column(name = "hasRead")
+    private short hasRead;
 }
