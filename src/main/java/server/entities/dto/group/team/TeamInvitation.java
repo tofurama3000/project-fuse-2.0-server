@@ -1,7 +1,8 @@
 package server.entities.dto.group.team;
 
 import lombok.Data;
-import server.entities.dto.group.GroupInvitation;
+import server.entities.dto.group.GroupProfile;
+
 
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
@@ -12,7 +13,7 @@ import javax.persistence.Transient;
 @Data
 @Entity
 @Table(name = "team_invitation")
-public class TeamInvitation extends GroupInvitation<Team> {
+public class TeamInvitation extends GroupProfile<Team> {
   @ManyToOne
   @JoinColumn(name = "team_id", referencedColumnName = "id")
   private Team team;
