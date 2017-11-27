@@ -13,7 +13,7 @@ public abstract class GroupProfile<T extends Group>  {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
 
-   private  String headline;
+    private  String headline;
 
     private  String summary;
 
