@@ -27,9 +27,8 @@ public abstract class Group {
   @JoinColumn(name = "owner_id", referencedColumnName = "id")
   private User owner;
 
-    private String name;
-
-  @ManyToOne
+  private String name;
+    
   @JoinColumn(name = "profile_id", referencedColumnName = "id")
   private GroupProfile profile;
 

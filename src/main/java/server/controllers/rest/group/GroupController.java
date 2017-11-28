@@ -31,7 +31,6 @@ import server.entities.dto.User;
 import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.GroupProfile;
-import server.entities.dto.group.team.Team;
 import server.permissions.UserToGroupPermission;
 import server.repositories.UserRepository;
 import server.repositories.group.GroupMemberRepository;
@@ -53,6 +52,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
   @Autowired
   private UserRepository userRepository;
+
 
   @Autowired
   private UserFindHelper userFindHelper;
@@ -154,8 +154,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       groupToSave.setName(groupData.getName());
 
     if(groupData.getProfile()!=null){
-        GroupProfile p = groupToSave.getProfile();
-        p.merge(groupToSave.getProfile(),groupData.getProfile());
+        //GroupProfile p = groupProfileRepository.findOne(groupData.getProfile().getId());
+        groupToSave.getProfile().merge(groupToSave.getProfile(),groupData.getProfile());
     }
     getGroupRepository().save(groupToSave);
     return new GeneralResponse(response, GeneralResponse.Status.OK);

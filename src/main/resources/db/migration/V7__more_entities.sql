@@ -1,3 +1,9 @@
+ALTER TABLE message ADD time DATETIME;
+ALTER TABLE user ADD user_profile INT(11);
+ALTER TABLE team ADD team_profile INT(11);
+ALTER TABLE project ADD project_profile INT(11);
+ALTER TABLE organization ADD organization_profile INT(11);
+
 CREATE TABLE IF NOT EXISTS Notification (
   id INT(11) PRIMARY KEY AUTO_INCREMENT,
   sender_id INT(11),
@@ -42,4 +48,5 @@ CREATE TABLE IF NOT EXISTS user_profile (
   FOREIGN KEY (user_id) REFERENCES user(id)
 );
 
-ALTER TABLE message ADD time DATETIME;
+
+

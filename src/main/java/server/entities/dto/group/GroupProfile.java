@@ -5,13 +5,18 @@ import lombok.Data;
 import server.entities.dto.User;
 import server.entities.dto.group.Group;
 import server.entities.dto.group.project.ProjectProfile;
-
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.MappedSuperclass;
 import javax.persistence.*;
 
-@Entity
 @Data
 @MappedSuperclass
 public abstract class GroupProfile<T extends Group>  {
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;

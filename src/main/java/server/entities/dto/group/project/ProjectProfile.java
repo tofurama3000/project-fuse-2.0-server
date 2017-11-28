@@ -13,7 +13,7 @@ import javax.persistence.Table;
 @Table(name = "project_profile")
 public class ProjectProfile extends GroupProfile<Project> {
     @ManyToOne
-    @JoinColumn(name = "project_id", referencedColumnName = "id")
+   @JoinColumn(name = "project_id", referencedColumnName = "id")
     private Project project;
 
     @Override

@@ -1,14 +1,14 @@
 package server.entities.dto.group.team;
 
 import lombok.Data;
-import server.entities.dto.group.GroupInvitation;
+import server.entities.dto.group.GroupProfile;
 
 import javax.persistence.*;
 
 @Data
 @Entity
 @Table(name = "team_profile")
-public class TeamProfile  extends GroupInvitation<Team> {
+public class TeamProfile  extends GroupProfile<Team> {
 
     @ManyToOne
     @JoinColumn(name = "team_id", referencedColumnName = "id")

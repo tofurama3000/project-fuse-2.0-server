@@ -6,7 +6,7 @@ import server.entities.dto.group.GroupProfile;
 
 import javax.persistence.*;
 
-@Entity
+
 @Table(name = "user_profile")
 @Data
 public class UserProfile {
