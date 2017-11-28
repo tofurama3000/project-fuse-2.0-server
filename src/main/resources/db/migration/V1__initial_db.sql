@@ -3,9 +3,11 @@ CREATE DATABASE IF NOT EXISTS project_fuse;
 CREATE TABLE IF NOT EXISTS user (
   id INT(11) PRIMARY KEY AUTO_INCREMENT,
   name TEXT,
+  profile_id INT(11),
   global_role TEXT,
   encoded_password TEXT,
-  email VARCHAR(500)
+  email VARCHAR(500),
+  FOREIGN KEY (profile_id) REFERENCES user_profile(id)
 );
 
 CREATE TABLE IF NOT EXISTS role (
@@ -16,21 +18,27 @@ CREATE TABLE IF NOT EXISTS role (
 CREATE TABLE IF NOT EXISTS organization (
    id INT(11) PRIMARY KEY AUTO_INCREMENT,
    owner_id INT(11),
+   profile_id INT(11),
    name TEXT,
-   FOREIGN KEY (owner_id) REFERENCES user(id)
+   FOREIGN KEY (owner_id) REFERENCES user(id),
+  FOREIGN KEY (profile_id) REFERENCES organization_profile(id)
 );
 
 CREATE TABLE IF NOT EXISTS project (
    id INT(11) PRIMARY KEY AUTO_INCREMENT,
    owner_id INT(11),
+  profile_id INT(11),
    name TEXT,
+  FOREIGN KEY (profile_id) REFERENCES project_profile(id),
    FOREIGN KEY (owner_id) REFERENCES user(id)
 );
 
 CREATE TABLE IF NOT EXISTS team (
   id INT(11) PRIMARY KEY AUTO_INCREMENT,
   owner_id INT(11),
+  profile_id INT(11),
   name TEXT,
+  FOREIGN KEY (profile_id) REFERENCES team_profile(id),
   FOREIGN KEY (owner_id) REFERENCES user(id)
 );
 

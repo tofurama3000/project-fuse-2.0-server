@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS Notification (
   sender_id INT(11),
   receiver_id INT(11),
   message TEXT,
-  time TIMESTAMP,
+  time DATETIME,
   hasRead    tinyint,
   FOREIGN KEY (sender_id ) REFERENCES user(id),
   FOREIGN KEY (receiver_id ) REFERENCES user(id)
@@ -42,4 +42,4 @@ CREATE TABLE IF NOT EXISTS user_profile (
   FOREIGN KEY (user_id) REFERENCES user(id)
 );
 
-ALTER TABLE message ADD time timestamp;
+ALTER TABLE message ADD time DATETIME;

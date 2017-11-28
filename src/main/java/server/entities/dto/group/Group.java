@@ -27,7 +27,11 @@ public abstract class Group {
   @JoinColumn(name = "owner_id", referencedColumnName = "id")
   private User owner;
 
-  private String name;
+    private String name;
+
+  @ManyToOne
+  @JoinColumn(name = "profile_id", referencedColumnName = "id")
+  private GroupProfile profile;
 
   @Column(name = "restriction")
   @JsonIgnore

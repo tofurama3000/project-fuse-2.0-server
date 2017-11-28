@@ -1,7 +1,6 @@
 package server.entities.dto.group.project;
 
 import lombok.Data;
-import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.GroupProfile;
 
 import javax.persistence.Entity;
@@ -26,4 +25,5 @@ public class ProjectProfile extends GroupProfile<Project> {
     public void setGroup(Project group) {
         project = group;
     }
+
 }

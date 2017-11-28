@@ -30,6 +30,7 @@ import server.entities.dto.GroupMember;
 import server.entities.dto.User;
 import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupInvitation;
+import server.entities.dto.group.GroupProfile;
 import server.entities.dto.group.team.Team;
 import server.permissions.UserToGroupPermission;
 import server.repositories.UserRepository;
@@ -152,6 +153,10 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     if(groupData.getName() != null)
       groupToSave.setName(groupData.getName());
 
+    if(groupData.getProfile()!=null){
+        GroupProfile p = groupToSave.getProfile();
+        p.merge(groupToSave.getProfile(),groupData.getProfile());
+    }
     getGroupRepository().save(groupToSave);
     return new GeneralResponse(response, GeneralResponse.Status.OK);
   }
