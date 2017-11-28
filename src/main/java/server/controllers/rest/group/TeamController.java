@@ -11,15 +11,19 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.User;
 import server.entities.dto.group.GroupInvitation;
+import server.entities.dto.group.GroupProfile;
 import server.entities.dto.group.team.Team;
 import server.entities.dto.group.team.TeamInvitation;
 import server.entities.dto.group.team.TeamMember;
+import server.entities.dto.group.team.TeamProfile;
 import server.permissions.PermissionFactory;
 import server.permissions.UserToGroupPermission;
 import server.repositories.group.GroupMemberRepository;
+import server.repositories.group.GroupProfileRepository;
 import server.repositories.group.GroupRepository;
 import server.repositories.group.team.TeamInvitationRepository;
 import server.repositories.group.team.TeamMemberRepository;
+import server.repositories.group.team.TeamProfileRepository;
 import server.repositories.group.team.TeamRepository;
 
 import javax.servlet.http.HttpServletRequest;
@@ -33,6 +37,9 @@ public class TeamController extends GroupController<Team, TeamMember> {
 
   @Autowired
   private TeamRepository teamRepository;
+
+  @Autowired
+  private TeamProfileRepository teamProfileRepository;
 
   @Autowired
   private TeamMemberRepository teamMemberRepository;
@@ -51,10 +58,13 @@ public class TeamController extends GroupController<Team, TeamMember> {
     return new Team();
   }
 
+  //@Override
+  //protected GroupProfileRepository<TeamProfile> getGroupProfileRepository() {
+  //  return teamProfileRepository;
+  //}
+  
   @Override
-  protected GroupRepository<Team> getGroupRepository() {
-    return teamRepository;
-  }
+  protected GroupRepository<Team> getGroupRepository(){ return teamRepository;}
 
   @Override
   protected GroupMemberRepository<Team, TeamMember> getRelationshipRepository() {

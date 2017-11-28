@@ -6,7 +6,7 @@ import server.entities.dto.group.GroupProfile;
 
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 @Data
@@ -14,17 +14,17 @@ import javax.persistence.Table;
 @Table(name = "organization_profile")
 public class OrganizationProfile extends GroupProfile<Organization> {
 
-    @ManyToOne
-    @JoinColumn(name = "organization_id", referencedColumnName = "id")
-    private Organization organization;
+  @OneToOne
+  @JoinColumn(name = "organization_id", referencedColumnName = "id")
+  private Organization organization;
 
-    @Override
-    public Organization getGroup() {
-        return organization;
-    }
+  @Override
+  public Organization getGroup() {
+    return organization;
+  }
 
-    @Override
-    public void setGroup(Organization group) {
-        organization = group;
-    }
+  @Override
+  public void setGroup(Organization group) {
+    organization = group;
+  }
 }

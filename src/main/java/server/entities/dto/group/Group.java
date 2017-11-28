@@ -17,7 +17,7 @@ import javax.persistence.MappedSuperclass;
 
 @Data
 @MappedSuperclass
-public abstract class Group {
+public abstract class Group<Profile extends  GroupProfile> {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
@@ -28,9 +28,6 @@ public abstract class Group {
   private User owner;
 
   private String name;
-    
-  @JoinColumn(name = "profile_id", referencedColumnName = "id")
-  private GroupProfile profile;
 
   @Column(name = "restriction")
   @JsonIgnore
@@ -53,4 +50,9 @@ public abstract class Group {
   @JsonIgnore
   public abstract String getRelationshipTableName();
 
+  @JsonIgnore
+  public abstract Profile getProfile();
+
+  @JsonIgnore
+  public abstract void setProfile(Profile p);
 }
