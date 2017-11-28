@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS interview (
     id INT(11) PRIMARY KEY AUTO_INCREMENT,
-    start_time TIMESTAMP,
-    end_time TIMESTAMP
+    start_time DATETIME,
+    end_time DATETIME
 );
 
 ALTER table project_invitation
