@@ -49,6 +49,7 @@ import server.utility.UserFindHelper;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -232,7 +233,6 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
     User sessionUser = session.get().getUser();
     UserToGroupPermission senderPermission = getUserToGroupPermission(sessionUser, groupInvitation.getGroup());
-
     if (!senderPermission.canInvite()) {
       errors.add(INSUFFICIENT_PRIVELAGES);
       return new GeneralResponse(response, DENIED, errors);
