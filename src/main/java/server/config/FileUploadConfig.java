@@ -12,7 +12,7 @@ import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 public class FileUploadConfig {
 
     @Autowired
-    @Bean(name = "FileRepository")
+    @Bean(name = "fileRepository")
     public FileRepository getUser(SessionFactory sessionFactory) {
         return new FileRepositoryImp(sessionFactory);
     }
