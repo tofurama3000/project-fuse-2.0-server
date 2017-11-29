@@ -10,12 +10,15 @@ import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
 import static server.controllers.rest.response.GeneralResponse.Status.OK;
 
+import com.google.common.hash.Hashing;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.AlternativeJdkIdGenerator;
 import org.springframework.util.IdGenerator;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.CannedResponse;
 import server.controllers.rest.response.GeneralResponse;
@@ -37,6 +40,7 @@ import org.springframework.web.multipart.commons.CommonsMultipartFile;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.sql.Timestamp;
 import java.text.DateFormat;
@@ -81,6 +85,9 @@ public class UserController {
 
     @Autowired
     private FileRepository fileRepository;
+
+    @Value("${fuse.fileUploadPath}")
+    private String fileUploadPath;
 
     private static IdGenerator generator = new AlternativeJdkIdGenerator();
 
@@ -331,9 +338,8 @@ public class UserController {
                 teamInvitationRepository.findByReceiver(user));
     }
 
-    @RequestMapping(value = "/fileUpload", method = RequestMethod.POST)
-    public String fileUpload(HttpServletRequest request,
-                             @RequestParam CommonsMultipartFile[] uploadFiles) throws Exception {
+    @RequestMapping(value = "/fileUpload", method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public String fileUpload( @RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request) throws Exception {
 
         String absPath;
         Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -341,27 +347,26 @@ public class UserController {
             return "Not Current User";
         }
         User currentUser = session.get().getUser();
-        String fileName;
         UploadFile uploadFile;
-        if (uploadFiles != null && uploadFiles.length > 0) {
-            for (CommonsMultipartFile aFile : uploadFiles) {
-                if (aFile.getSize() > 0) {
-                    uploadFile = new UploadFile();
-                    fileName = aFile.getOriginalFilename();
-                    absPath = request.getSession().getServletContext().getRealPath("/files");
-                    File file = new File(absPath, fileName);
-                    aFile.transferTo(file);
-                    Timestamp ts = new Timestamp(System.currentTimeMillis());
-                    DateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-                    String tsStr = sdf.format(ts);
-                    ts = Timestamp.valueOf(tsStr);
-                    uploadFile.setUpload_time(ts);
-                    uploadFile.setFile_size(aFile.getSize());
-                    uploadFile.setFileName(fileName);
-                    uploadFile.setMime_type(Files.probeContentType(file.toPath()));
-                    uploadFile.setUser(currentUser);
-                    fileRepository.save(uploadFile);
-                }
+        if (fileToUpload != null) {
+            if (fileToUpload.getSize() > 0 && fileToUpload.getName().equals("file")) {
+                uploadFile = new UploadFile();
+
+                String fileName = Hashing.sha256()
+                        .hashString(currentUser.getEmail() + fileToUpload.getOriginalFilename(), StandardCharsets.UTF_8)
+                        .toString();
+
+                File fileToSave = new File(fileUploadPath, fileName);
+                fileToUpload.transferTo(fileToSave);
+
+                Timestamp ts = new Timestamp(System.currentTimeMillis());
+                uploadFile.setHash(fileName);
+                uploadFile.setUpload_time(ts);
+                uploadFile.setFile_size(fileToUpload.getSize());
+                uploadFile.setFileName(fileToUpload.getOriginalFilename());
+                uploadFile.setMime_type(fileToUpload.getContentType());
+                uploadFile.setUser(currentUser);
+                fileRepository.save(uploadFile);
             }
         }
         return "Success";
