@@ -14,14 +14,23 @@ import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import static server.controllers.rest.response.CannedResponse.NEED_INVITE_MSG;
 import static server.controllers.rest.response.CannedResponse.NO_GROUP_FOUND;
 import static server.controllers.rest.response.CannedResponse.SERVER_ERROR;
-import static server.controllers.rest.response.GeneralResponse.Status.*;
-
+import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
+import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
+import static server.controllers.rest.response.GeneralResponse.Status.ERROR;
+import static server.controllers.rest.response.GeneralResponse.Status.OK;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.CannedResponse;
 import server.controllers.rest.response.GeneralResponse;
@@ -34,6 +43,7 @@ import server.entities.dto.group.GroupProfile;
 import server.permissions.UserToGroupPermission;
 import server.repositories.UserRepository;
 import server.repositories.group.GroupMemberRepository;
+import server.repositories.group.GroupProfileRepository;
 import server.repositories.group.GroupRepository;
 import server.utility.UserFindHelper;
 
@@ -45,7 +55,7 @@ import java.util.List;
 import java.util.Optional;
 
 @SuppressWarnings("unused")
-public abstract class GroupController<T extends Group, R extends GroupMember<T>> {
+public abstract class GroupController<T extends Group, R extends GroupMember<T>, P extends GroupProfile> {
 
   @Autowired
   private FuseSessionController fuseSessionController;
@@ -53,9 +63,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   @Autowired
   private UserRepository userRepository;
 
-
   @Autowired
   private UserFindHelper userFindHelper;
+
+  @Autowired
+  private  GroupProfileRepository groupProfileRepository;
 
   @Autowired
   private SessionFactory sessionFactory;
@@ -127,6 +139,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   }
 
   @PutMapping(path = "/{id}/update")
+  @CrossOrigin
   @ResponseBody
   public GeneralResponse updateGroup(@PathVariable(value = "id") long id, @RequestBody T groupData, HttpServletRequest request, HttpServletResponse response) {
 
@@ -139,23 +152,27 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
     User user = session.get().getUser();
 
-    T groupToSave  = getGroupRepository().findOne(id);
+    T groupToSave = getGroupRepository().findOne(id);
 
-    UserToGroupPermission permission =  getUserToGroupPermission(user, groupToSave);
+    UserToGroupPermission permission = getUserToGroupPermission(user, groupToSave);
     boolean canUpdate = permission.canUpdate();
-    if(!canUpdate){
+    if (!canUpdate) {
       errors.add(INSUFFICIENT_PRIVELAGES);
       return new GeneralResponse(response, DENIED, errors);
     }
 
     // Merging instead of direct copying ensures we're very clear about what can be edited, and it provides easy checks
 
-    if(groupData.getName() != null)
+    if (groupData.getName() != null)
       groupToSave.setName(groupData.getName());
 
-    if(groupData.getProfile()!=null){
-        //GroupProfile p = groupProfileRepository.findOne(groupData.getProfile().getId());
-        groupToSave.getProfile().merge(groupToSave.getProfile(),groupData.getProfile());
+    if (groupData.getProfile() != null) {
+
+      Group p = getGroupRepository().findOne(groupData.getId());
+
+      if(groupData.getProfile()==null)groupToSave.setProfile(groupData.getProfile());
+      else groupToSave.getProfile().merge(groupToSave.getProfile(), groupData.getProfile());
+
     }
     getGroupRepository().save(groupToSave);
     return new GeneralResponse(response, GeneralResponse.Status.OK);
@@ -297,7 +314,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   @ResponseBody
   protected GeneralResponse getById(@PathVariable(value = "id") Long id, HttpServletResponse response) {
     Group res = getGroupRepository().findOne(id);
-    if(res != null)
+    if (res != null)
       return new GeneralResponse(response, GeneralResponse.Status.OK, null, res);
     List<String> errors = new LinkedList<String>();
     errors.add("Invalid ID! Object does not exist!");
@@ -307,7 +324,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
   @GetMapping(path = "/{id}/can_edit")
   @ResponseBody
-  protected GeneralResponse canEdit(@PathVariable(value = "id") Long id, @RequestBody T groupData, HttpServletRequest request,HttpServletResponse response) {
+  protected GeneralResponse canEdit(@PathVariable(value = "id") Long id, @RequestBody T groupData, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -315,10 +332,10 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       return new GeneralResponse(response, DENIED, errors);
     }
     User user = session.get().getUser();
-    T groupToSave  = getGroupRepository().findOne(id);
-    UserToGroupPermission permission =  getUserToGroupPermission(user, groupToSave);
+    T groupToSave = getGroupRepository().findOne(id);
+    UserToGroupPermission permission = getUserToGroupPermission(user, groupToSave);
     boolean canUpdate = permission.canUpdate();
-    if(!canUpdate){
+    if (!canUpdate) {
       errors.add(INSUFFICIENT_PRIVELAGES);
       return new GeneralResponse(response, DENIED, errors);
     }
@@ -335,6 +352,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   }
 
   protected abstract GroupRepository<T> getGroupRepository();
+
+ // protected abstract GroupProfileRepository<P> getGroupProfileRepository();
 
   protected abstract GroupMemberRepository<T, R> getRelationshipRepository();
 

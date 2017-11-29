@@ -14,7 +14,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.AlternativeJdkIdGenerator;
 import org.springframework.util.IdGenerator;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.CannedResponse;
 import server.controllers.rest.response.GeneralResponse;
@@ -35,9 +41,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
-import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
 
 @Controller
 @RequestMapping(value = "/user")
@@ -219,10 +222,10 @@ public class UserController {
 
     // Merging instead of direct copying ensures we're very clear about what can be edited, and it provides easy checks
 
-    if(userData.getName() != null)
+    if (userData.getName() != null)
       userToSave.setName(userData.getName());
 
-    if(userData.getEncoded_password() != null)
+    if (userData.getEncoded_password() != null)
       userToSave.setEncoded_password(userData.getEncoded_password());
 
     userRepository.save(userToSave);

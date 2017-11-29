@@ -15,7 +15,6 @@ public class StandardEmailSender {
   private MailSender mailSender;
 
 
-
   @Value("${spring.mail.username}")
   private String sender;
 

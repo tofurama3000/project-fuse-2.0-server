@@ -2,8 +2,6 @@ package server.entities.dto.group.team;
 
 import lombok.Data;
 import server.entities.dto.group.GroupInvitation;
-import server.entities.dto.group.GroupProfile;
-
 
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;

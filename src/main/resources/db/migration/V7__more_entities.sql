@@ -1,10 +1,10 @@
 ALTER TABLE message ADD time DATETIME;
-ALTER TABLE user ADD user_profile INT(11);
-ALTER TABLE team ADD team_profile INT(11);
-ALTER TABLE project ADD project_profile INT(11);
-ALTER TABLE organization ADD organization_profile INT(11);
+ALTER TABLE user ADD user_profile_id INT(11);
+ALTER TABLE team ADD team_profile_id INT(11);
+ALTER TABLE project ADD project_profile_id INT(11);
+ALTER TABLE organization ADD organization_profile_id INT(11);
 
-CREATE TABLE IF NOT EXISTS Notification (
+CREATE TABLE IF NOT EXISTS notification (
   id INT(11) PRIMARY KEY AUTO_INCREMENT,
   sender_id INT(11),
   receiver_id INT(11),
