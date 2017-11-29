@@ -35,6 +35,9 @@ public class Interview {
   @Column(name = "group_id")
   private Long groupId;
 
+  @Column(name = "available")
+  private char availability;
+
   public void setStartDateTime(String dateTime) {
     ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateTime);
     startDateTime = zonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();

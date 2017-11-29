@@ -1,5 +1,6 @@
 package server.controllers.rest.group;
 
+import static server.constants.Availability.AVAILABLE;
 import static server.constants.InvitationStatus.PENDING;
 import static server.constants.RoleValue.DEFAULT_USER;
 import static server.constants.RoleValue.INVITED_TO_INTERVIEW;
@@ -50,8 +51,10 @@ import server.utility.UserFindHelper;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
@@ -167,7 +170,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       groupToSave.setName(groupData.getName());
 
     getGroupRepository().save(groupToSave);
-    return new GeneralResponse(response, GeneralResponse.Status.OK);
+    return new GeneralResponse(response, OK);
   }
 
   @PostMapping(path = "/join")
@@ -273,6 +276,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
           errors.add(INVALID_FIELDS);
           return new GeneralResponse(response, errors);
         }
+        presaveInterview.setAvailability(AVAILABLE);
         presaveInterview.setGroupType(groupInvitation.getGroup().getGroupType());
         presaveInterview.setGroupId(groupInvitation.getGroup().getId());
 
@@ -283,6 +287,17 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     }
 
     return new GeneralResponse(response);
+  }
+
+  @PostMapping(path = "/interview_slots")
+  @ResponseBody
+  public GeneralResponse getAvailableInterviews(@RequestBody T group, HttpServletRequest request, HttpServletResponse response) {
+    LocalDateTime currentDateTime = ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime();
+
+    List<Interview> availableInterviewsAfterDate =
+        interviewRepository.getAvailableInterviewsAfterDate(group.getId(), group.getGroupType(), currentDateTime);
+
+    return new GeneralResponse(response, OK, new ArrayList<>(), availableInterviewsAfterDate);
   }
 
   @GetMapping(path = "/find", params = {"name", "email"})
@@ -308,7 +323,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       return new GeneralResponse(response, errors);
     }
 
-    return new GeneralResponse(response, GeneralResponse.Status.OK, null, matching.get(0));
+    return new GeneralResponse(response, OK, null, matching.get(0));
   }
 
   protected abstract T createGroup();
@@ -316,13 +331,13 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   @GetMapping(path = "/{id}/members")
   @ResponseBody
   public GeneralResponse getMembersOfGroup(@PathVariable(value = "id") T group, HttpServletRequest request, HttpServletResponse response) {
-    return new GeneralResponse(response, GeneralResponse.Status.OK, null, getMembersOf(group));
+    return new GeneralResponse(response, OK, null, getMembersOf(group));
   }
 
   @GetMapping(path = "/all")
   @ResponseBody
   protected GeneralResponse getAll(HttpServletResponse response) {
-    return new GeneralResponse(response, GeneralResponse.Status.OK, null, getGroupRepository().findAll());
+    return new GeneralResponse(response, OK, null, getGroupRepository().findAll());
   }
 
   @GetMapping(path = "/{id}")
@@ -330,7 +345,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   protected GeneralResponse getById(@PathVariable(value = "id") Long id, HttpServletResponse response) {
     Group res = getGroupRepository().findOne(id);
     if (res != null)
-      return new GeneralResponse(response, GeneralResponse.Status.OK, null, res);
+      return new GeneralResponse(response, OK, null, res);
     List<String> errors = new ArrayList<>();
     errors.add("Invalid ID! Object does not exist!");
     return new GeneralResponse(response, BAD_DATA, errors);
