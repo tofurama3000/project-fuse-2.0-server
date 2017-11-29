@@ -182,46 +182,6 @@ public class UserController {
         }
     }
 
-    @GetMapping(path = "/{id}")
-    @ResponseBody
-    public GeneralResponse getUserbyID(@PathVariable(value = "id") Long id, HttpServletResponse response) {
-
-        List<String> errors = new ArrayList<>();
-
-        if (id == null) {
-            errors.add(INVALID_FIELDS);
-            return new GeneralResponse(response, BAD_DATA, errors);
-        }
-
-        User byId = userRepository.findOne(id);
-        if (byId == null) {
-            errors.add(NO_USER_FOUND);
-            return new GeneralResponse(response, BAD_DATA, errors);
-        }
-
-        return new GeneralResponse(response, OK, null, byId);
-    }
-
-    @GetMapping(path = "/{email}")
-    @ResponseBody
-    public GeneralResponse getUserbyEmail(@PathVariable(value = "email") String email, HttpServletResponse response) {
-
-        List<String> errors = new ArrayList<>();
-
-        if (email == null) {
-            errors.add(INVALID_FIELDS);
-            return new GeneralResponse(response, BAD_DATA, errors);
-        }
-
-        User byEmail = userRepository.findByEmail(email);
-        if (byEmail == null) {
-            errors.add(NO_USER_FOUND);
-            return new GeneralResponse(response, BAD_DATA, errors);
-        }
-
-        return new GeneralResponse(response, OK, null, byEmail);
-    }
-
     @PutMapping(path = "/update_current")
     @ResponseBody
     public GeneralResponse updateCurrentUser(@RequestBody User userData, HttpServletRequest request, HttpServletResponse response) {
@@ -338,13 +298,15 @@ public class UserController {
                 teamInvitationRepository.findByReceiver(user));
     }
 
-    @RequestMapping(value = "/fileUpload", method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public String fileUpload( @RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request) throws Exception {
+    @PostMapping(path = "/fileUpload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public GeneralResponse fileUpload( @RequestParam("file") CommonsMultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
+        List<String> errors = new ArrayList<>();
 
-        String absPath;
         Optional<FuseSession> session = fuseSessionController.getSession(request);
         if (!session.isPresent()) {
-            return "Not Current User";
+          errors.add(INVALID_SESSION);
+          return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
         }
         User currentUser = session.get().getUser();
         UploadFile uploadFile;
@@ -366,10 +328,31 @@ public class UserController {
                 uploadFile.setFileName(fileToUpload.getOriginalFilename());
                 uploadFile.setMime_type(fileToUpload.getContentType());
                 uploadFile.setUser(currentUser);
-                fileRepository.save(uploadFile);
+                return new GeneralResponse(response, OK, null, fileRepository.save(uploadFile));
             }
         }
-        return "Success";
+        errors.add("Invalid file, unable to save");
+        return new GeneralResponse(response, BAD_DATA, errors);
+    }
+
+    @GetMapping(path = "/{id}")
+    @ResponseBody
+    public GeneralResponse getUserbyID(@PathVariable(value = "id") Long id, HttpServletResponse response) {
+
+        List<String> errors = new ArrayList<>();
+
+        if (id == null) {
+            errors.add(INVALID_FIELDS);
+            return new GeneralResponse(response, BAD_DATA, errors);
+        }
+
+        User byId = userRepository.findOne(id);
+        if (byId == null) {
+            errors.add(NO_USER_FOUND);
+            return new GeneralResponse(response, BAD_DATA, errors);
+        }
+
+        return new GeneralResponse(response, OK, null, byId);
     }
 
     private boolean logoutIfLoggedIn(User user, HttpServletRequest request) {
