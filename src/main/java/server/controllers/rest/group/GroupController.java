@@ -19,6 +19,7 @@ import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
 import static server.controllers.rest.response.GeneralResponse.Status.ERROR;
 import static server.controllers.rest.response.GeneralResponse.Status.OK;
+import static server.utility.RolesUtility.getRoleFromInterviewType;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
@@ -49,7 +50,6 @@ import server.utility.UserFindHelper;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -247,7 +247,14 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
     UserToGroupPermission receiverPermission = getUserToGroupPermission(receiver.get(), groupInvitation.getGroup());
 
-    if (!receiverPermission.canAcceptInvite()) {
+    Optional<Integer> role = getRoleFromInterviewType(groupInvitation.getType());
+
+    if (!role.isPresent()) {
+      errors.add("Unrecognized type");
+      return new GeneralResponse(response, BAD_DATA, errors);
+    }
+
+    if (receiverPermission.isMember() || receiverPermission.hasRole(role.get())) {
       errors.add(ALREADY_JOINED_OR_INVITED);
       return new GeneralResponse(response, DENIED, errors);
     }
@@ -256,23 +263,23 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     groupInvitation.setSender(sessionUser);
     saveInvitation(groupInvitation);
 
-    switch (groupInvitation.getType()) {
-      case "Join":
+    switch (role.get()) {
+      case INVITED_TO_JOIN:
         addRelationship(receiver.get(), groupInvitation.getGroup(), INVITED_TO_JOIN);
         break;
-      case "Interview":
-        if (groupInvitation.getInterview() == null) {
+      case INVITED_TO_INTERVIEW:
+        Interview presaveInterview = groupInvitation.getInterview();
+        if (presaveInterview == null) {
           errors.add(INVALID_FIELDS);
           return new GeneralResponse(response, errors);
         }
+        presaveInterview.setGroupType(groupInvitation.getGroup().getGroupType());
+        presaveInterview.setGroupId(groupInvitation.getGroup().getId());
 
-        Interview interview = interviewRepository.save(groupInvitation.getInterview());
+        Interview interview = interviewRepository.save(presaveInterview);
         groupInvitation.setInterview(interview);
         addRelationship(receiver.get(), groupInvitation.getGroup(), INVITED_TO_INTERVIEW);
         break;
-      default:
-        errors.add("Unrecognized type");
-        return new GeneralResponse(response, BAD_DATA, errors);
     }
 
     return new GeneralResponse(response);
@@ -324,7 +331,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     Group res = getGroupRepository().findOne(id);
     if (res != null)
       return new GeneralResponse(response, GeneralResponse.Status.OK, null, res);
-    List<String> errors = new LinkedList<String>();
+    List<String> errors = new ArrayList<>();
     errors.add("Invalid ID! Object does not exist!");
     return new GeneralResponse(response, BAD_DATA, errors);
   }

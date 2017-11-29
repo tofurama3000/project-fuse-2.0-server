@@ -1,6 +1,7 @@
 package server.permissions;
 
 import static server.constants.RoleValue.ADMIN;
+import static server.constants.RoleValue.DEFAULT_USER;
 import static server.constants.RoleValue.INVITED_TO_JOIN;
 import static server.constants.RoleValue.OWNER;
 import static server.permissions.results.JoinResult.ALREADY_JOINED;
@@ -48,9 +49,9 @@ public abstract class UserToGroupPermission<T extends Group> {
   protected abstract String getGroupFieldName();
 
 
-  protected boolean isMember() {
+  public boolean isMember() {
     for (Integer roleId : getRoles()) {
-      if (roleId != INVITED_TO_JOIN) {
+      if (roleId == ADMIN || roleId == DEFAULT_USER) {
         return true;
       }
     }
@@ -70,13 +71,15 @@ public abstract class UserToGroupPermission<T extends Group> {
     return isAdmin();
   }
 
-  public boolean canAcceptInvite() {
-    // Just checking if there already exists a role for user
-    for (Integer ignored : getRoles()) {
-      return false;
+  public boolean hasRole(int roleToCheck) {
+    for (Integer role : getRoles()) {
+      if (role == roleToCheck) {
+        return true;
+      }
     }
-    return true;
+    return false;
   }
+
 
   protected abstract Iterable<Integer> getRoles();
 

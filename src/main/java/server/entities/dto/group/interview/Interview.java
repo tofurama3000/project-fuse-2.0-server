@@ -2,7 +2,6 @@ package server.entities.dto.group.interview;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-import lombok.Getter;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -24,12 +23,17 @@ public class Interview {
   private Long id;
 
   @Column(name = "start_time")
-  @Getter
   private LocalDateTime startDateTime;
 
   @Column(name = "end_time")
-  @Getter
   private LocalDateTime endDateTime;
+
+  @Column(name = "group_type")
+  @JsonIgnore
+  private String groupType;
+
+  @Column(name = "group_id")
+  private Long groupId;
 
   public void setStartDateTime(String dateTime) {
     ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateTime);
