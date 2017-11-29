@@ -28,7 +28,7 @@ public abstract class Group {
   private User owner;
 
   private String name;
-    
+
   @JoinColumn(name = "profile_id", referencedColumnName = "id")
   private GroupProfile profile;
 
