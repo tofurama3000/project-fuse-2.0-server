@@ -12,6 +12,7 @@ import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.User;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.GroupProfile;
+import server.entities.dto.group.organization.OrganizationProfile;
 import server.entities.dto.group.team.Team;
 import server.entities.dto.group.team.TeamInvitation;
 import server.entities.dto.group.team.TeamMember;
@@ -41,6 +42,7 @@ public class TeamController extends GroupController<Team, TeamMember> {
   @Autowired
   private TeamProfileRepository teamProfileRepository;
 
+
   @Autowired
   private TeamMemberRepository teamMemberRepository;
 
@@ -62,9 +64,15 @@ public class TeamController extends GroupController<Team, TeamMember> {
   //protected GroupProfileRepository<TeamProfile> getGroupProfileRepository() {
   //  return teamProfileRepository;
   //}
-  
+
   @Override
   protected GroupRepository<Team> getGroupRepository(){ return teamRepository;}
+
+  @Override
+  protected GroupProfile<Team> saveProfile(Team team) {
+    return teamProfileRepository.save(team.getProfile());
+
+  }
 
   @Override
   protected GroupMemberRepository<Team, TeamMember> getRelationshipRepository() {

@@ -10,16 +10,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.User;
+import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupInvitation;
+import server.entities.dto.group.GroupProfile;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.organization.OrganizationInvitation;
 import server.entities.dto.group.organization.OrganizationMember;
+import server.entities.dto.group.organization.OrganizationProfile;
 import server.permissions.PermissionFactory;
 import server.permissions.UserToGroupPermission;
 import server.repositories.group.GroupMemberRepository;
+import server.repositories.group.GroupProfileRepository;
 import server.repositories.group.GroupRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
 import server.repositories.group.organization.OrganizationMemberRepository;
+import server.repositories.group.organization.OrganizationProfileRepository;
 import server.repositories.group.organization.OrganizationRepository;
 
 import javax.servlet.http.HttpServletRequest;
@@ -38,6 +43,9 @@ public class OrganizationController extends GroupController<Organization, Organi
   private OrganizationRepository organizationRepository;
 
   @Autowired
+  OrganizationProfileRepository organizationProfileRepository;
+
+  @Autowired
   private OrganizationMemberRepository organizationMemberRepository;
 
   @Autowired
@@ -54,6 +62,11 @@ public class OrganizationController extends GroupController<Organization, Organi
   @Override
   protected GroupRepository<Organization> getGroupRepository() {
     return organizationRepository;
+  }
+
+  @Override
+  protected GroupProfile<Organization> saveProfile(Organization org) {
+    return organizationProfileRepository.save(org.getProfile());
   }
 
   @Override

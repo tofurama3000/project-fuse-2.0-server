@@ -25,14 +25,14 @@ public abstract class GroupProfile<T extends Group> {
 
   public abstract void setGroup(T group);
 
-  public void merge(GroupProfile p0, GroupProfile p) {
-    if (p.getHeadline() != null) {
-      p0.setHeadline(p.getHeadline());
+  public GroupProfile merge(GroupProfile profileToSave, GroupProfile profile) {
+    if (profile.getHeadline() != null) {
+      profileToSave.setHeadline(profile.getHeadline());
     }
-    if (p.getSummary() != null) {
-      p0.setSummary(p.getSummary());
+    if (profile.getSummary() != null) {
+      profileToSave.setSummary(profile.getSummary());
     }
-
+ return profileToSave;
   }
 
 }

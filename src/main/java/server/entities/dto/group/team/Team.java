@@ -13,7 +13,7 @@ import javax.persistence.Table;
 public class Team extends Group<TeamProfile> {
 
   @OneToOne
-  @JoinColumn(name = "id", referencedColumnName = "team_profile_id")
+  @JoinColumn(name = "team_profile_id", referencedColumnName = "id")
   private TeamProfile profile;
 
   @Override
@@ -33,7 +33,6 @@ public class Team extends Group<TeamProfile> {
 
   @Override
   public  void setProfile (TeamProfile p){
-   profile.setHeadline( p.getHeadline());
-   profile.setSummary(p.getSummary());
+    profile = p;
   }
 }
