@@ -67,7 +67,7 @@ public class OrganizationController extends GroupController<Organization, Organi
   }
 
   @Override
-  protected void addRelationship(User user, Organization group, int role) {
+  public void addRelationship(User user, Organization group, int role) {
     OrganizationMember member = new OrganizationMember();
     member.setUser(user);
     member.setOrganization(group);

@@ -47,6 +47,16 @@ public class TeamController extends GroupController<Team, TeamMember> {
   private SessionFactory sessionFactory;
 
   @Override
+  public void addRelationship(User user, Team team, int role) {
+    TeamMember member = new TeamMember();
+    member.setUser(user);
+    member.setTeam(team);
+    member.setRoleId(role);
+
+    teamMemberRepository.save(member);
+  }
+
+  @Override
   protected Team createGroup() {
     return new Team();
   }
@@ -64,16 +74,6 @@ public class TeamController extends GroupController<Team, TeamMember> {
   @Override
   protected UserToGroupPermission getUserToGroupPermission(User user, Team team) {
     return permissionFactory.createUserToTeamPermission(user, team);
-  }
-
-  @Override
-  protected void addRelationship(User user, Team team, int role) {
-    TeamMember member = new TeamMember();
-    member.setUser(user);
-    member.setTeam(team);
-    member.setRoleId(role);
-
-    teamMemberRepository.save(member);
   }
 
   @PostMapping(path = "/invite")

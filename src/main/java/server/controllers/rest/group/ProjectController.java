@@ -67,7 +67,7 @@ public class ProjectController extends GroupController<Project, ProjectMember> {
   }
 
   @Override
-  protected void addRelationship(User user, Project group, int role) {
+  public void addRelationship(User user, Project group, int role) {
     ProjectMember member = new ProjectMember();
 
     member.setUser(user);

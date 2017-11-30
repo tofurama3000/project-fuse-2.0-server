@@ -8,10 +8,13 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import server.entities.dto.User;
 
 @Data
 @Entity
@@ -37,6 +40,10 @@ public class Interview {
 
   @Column(name = "available")
   private char availability;
+
+  @ManyToOne
+  @JoinColumn(name = "user_id", referencedColumnName = "id")
+  private User user;
 
   public void setStartDateTime(String dateTime) {
     ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateTime);

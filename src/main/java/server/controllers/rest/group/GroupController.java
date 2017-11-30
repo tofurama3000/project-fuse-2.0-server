@@ -22,7 +22,7 @@ import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
 import static server.controllers.rest.response.GeneralResponse.Status.ERROR;
 import static server.controllers.rest.response.GeneralResponse.Status.OK;
-import static server.utility.RolesUtility.getRoleFromInterviewType;
+import static server.utility.RolesUtility.getRoleFromInvitationType;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
@@ -187,7 +187,6 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       return new GeneralResponse(response, DENIED, errors);
     }
 
-
     if (group.getId() != null) {
       group = getGroupRepository().findOne(group.getId());
     } else {
@@ -252,7 +251,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
     UserToGroupPermission receiverPermission = getUserToGroupPermission(receiver.get(), groupInvitation.getGroup());
 
-    Optional<Integer> role = getRoleFromInterviewType(groupInvitation.getType());
+    Optional<Integer> role = getRoleFromInvitationType(groupInvitation.getType());
 
     if (!role.isPresent()) {
       errors.add("Unrecognized type");
@@ -399,7 +398,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
   protected abstract UserToGroupPermission getUserToGroupPermission(User user, T group);
 
-  protected abstract void addRelationship(User user, T group, int role);
+  public abstract void addRelationship(User user, T group, int role);
 
   protected abstract void saveInvitation(GroupInvitation<T> invitation);
 
@@ -412,7 +411,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     return toList(getGroupRepository().getGroups(owner, group.getName()));
   }
 
-  private void removeRelationship(User user, T group, int role) {
+  public void removeRelationship(User user, T group, int role) {
     getRelationshipRepository().delete(group, user, role);
   }
 
