@@ -2,6 +2,7 @@ package server.controllers.rest.group;
 
 import static server.constants.Availability.AVAILABLE;
 import static server.constants.InvitationStatus.PENDING;
+import static server.constants.RoleValue.ADMIN;
 import static server.constants.RoleValue.DEFAULT_USER;
 import static server.constants.RoleValue.INVITED_TO_INTERVIEW;
 import static server.constants.RoleValue.INVITED_TO_JOIN;
@@ -9,6 +10,7 @@ import static server.constants.RoleValue.OWNER;
 import static server.controllers.rest.response.CannedResponse.ALREADY_JOINED_MSG;
 import static server.controllers.rest.response.CannedResponse.ALREADY_JOINED_OR_INVITED;
 import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
+import static server.controllers.rest.response.CannedResponse.INTERVIEW_NOT_AVAILABLE;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS_FOR_CREATE;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS_FOR_DELETE;
@@ -101,6 +103,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     if (entities.size() == 0) {
       Group savedEntity = getGroupRepository().save(entity);
       addRelationship(user, entity, OWNER);
+      addRelationship(user, entity, ADMIN);
 
       return new GeneralResponse(response, OK, null, savedEntity);
     } else {
@@ -201,7 +204,6 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       group = matching.get(0);
     }
 
-
     User user = session.get().getUser();
 
     switch (getUserToGroupPermission(user, group).canJoin()) {
@@ -264,24 +266,29 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
     groupInvitation.setStatus(PENDING);
     groupInvitation.setSender(sessionUser);
-    saveInvitation(groupInvitation);
 
     switch (role.get()) {
       case INVITED_TO_JOIN:
         addRelationship(receiver.get(), groupInvitation.getGroup(), INVITED_TO_JOIN);
+        saveInvitation(groupInvitation);
         break;
       case INVITED_TO_INTERVIEW:
-        Interview presaveInterview = groupInvitation.getInterview();
-        if (presaveInterview == null) {
-          errors.add(INVALID_FIELDS);
-          return new GeneralResponse(response, errors);
-        }
-        presaveInterview.setAvailability(AVAILABLE);
-        presaveInterview.setGroupType(groupInvitation.getGroup().getGroupType());
-        presaveInterview.setGroupId(groupInvitation.getGroup().getId());
+        Interview interview = interviewRepository.findOne(groupInvitation.getInterview().getId());
 
-        Interview interview = interviewRepository.save(presaveInterview);
+        if (interview == null) {
+          errors.add(INVALID_FIELDS);
+          return new GeneralResponse(response, BAD_DATA, errors);
+        }
+
+        LocalDateTime currentDateTime = ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime();
+
+        if (interview.getAvailability() != AVAILABLE || interview.getStartDateTime().isBefore(currentDateTime)) {
+          errors.add(INTERVIEW_NOT_AVAILABLE);
+          return new GeneralResponse(response, BAD_DATA, errors);
+        }
+
         groupInvitation.setInterview(interview);
+        saveInvitation(groupInvitation);
         addRelationship(receiver.get(), groupInvitation.getGroup(), INVITED_TO_INTERVIEW);
         break;
     }
@@ -289,7 +296,34 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     return new GeneralResponse(response);
   }
 
-  @PostMapping(path = "/interview_slots")
+  @PostMapping(path = "/interview_slots/add")
+  @ResponseBody
+  public GeneralResponse addInterviewSlots(@RequestBody List<Interview> interviews, HttpServletRequest request,
+                                           HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+
+    if (!isValidInterviewSlots(interviews, session.get().getUser())) {
+      errors.add(INVALID_FIELDS);
+      return new GeneralResponse(response, errors);
+    }
+
+    T group = getGroupRepository().findOne(interviews.get(0).getGroupId());
+    for (Interview interview : interviews) {
+      interview.setGroupType(group.getGroupType());
+      interview.setAvailability(AVAILABLE);
+    }
+
+    interviewRepository.save(interviews);
+    return new GeneralResponse(response, OK);
+  }
+
+  @PostMapping(path = "/interview_slots/available")
   @ResponseBody
   public GeneralResponse getAvailableInterviews(@RequestBody T group, HttpServletRequest request, HttpServletResponse response) {
     LocalDateTime currentDateTime = ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime();
@@ -393,6 +427,47 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     List<T> list = new ArrayList<>();
     iterable.forEach(list::add);
     return list;
+  }
+
+  private boolean isValidInterviewSlots(List<Interview> interviews, User user) {
+    LocalDateTime currentDateTime = ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime();
+
+    if (interviews.size() <= 0) {
+      return false;
+    }
+
+    Interview firstInterview = interviews.get(0);
+    Long groupId = firstInterview.getGroupId();
+    if (groupId == null) {
+      return false;
+    }
+
+    T group = getGroupRepository().findOne(groupId);
+    if (group == null) {
+      return false;
+    }
+
+    UserToGroupPermission permission = getUserToGroupPermission(user, group);
+    if (!permission.hasRole(ADMIN)) {
+      return false;
+    }
+
+    for (Interview interview : interviews) {
+      if (!interview.getGroupId().equals(groupId)) {
+        return false;
+      }
+      if (interview.getStartDateTime() == null || interview.getEndDateTime() == null) {
+        return false;
+      }
+      if (interview.getStartDateTime().isAfter(interview.getEndDateTime())) {
+        return false;
+      }
+      if (interview.getStartDateTime().isBefore(currentDateTime)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
 }
