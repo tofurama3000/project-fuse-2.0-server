@@ -55,7 +55,7 @@ import java.util.List;
 import java.util.Optional;
 
 @SuppressWarnings("unused")
-public abstract class GroupController<T extends Group, R extends GroupMember<T>, P extends GroupProfile> {
+public abstract class GroupController<T extends Group, R extends GroupMember<T>> {
 
   @Autowired
   private FuseSessionController fuseSessionController;
@@ -154,30 +154,25 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
 
     T groupToSave = getGroupRepository().findOne(id);
 
-
-//    UserToGroupPermission permission = getUserToGroupPermission(user, groupToSave);
-//    boolean canUpdate = permission.canUpdate();
-//    if (!canUpdate) {
-//      errors.add(INSUFFICIENT_PRIVELAGES);
-//      return new GeneralResponse(response, DENIED, errors);
-//    }
-
+    UserToGroupPermission permission = getUserToGroupPermission(user, groupToSave);
+    boolean canUpdate = permission.canUpdate();
+    if (!canUpdate) {
+      errors.add(INSUFFICIENT_PRIVELAGES);
+      return new GeneralResponse(response, DENIED, errors);
+    }
 
     // Merging instead of direct copying ensures we're very clear about what can be edited, and it provides easy checks
 
-    if (groupData.getName() != null)
-      groupToSave.setName(groupData.getName());
-
     if (groupData.getProfile() != null) {
 
-
-
-      if(groupToSave.getProfile()==null) {
-
-      GroupProfile save= getGroupProfileRepository().save(groupData.getProfile());
-       // groupToSave.setProfile(save);
+      if(groupToSave.getProfile()==null){
+        groupData.getProfile().setGroup(groupToSave);
+        GroupProfile profile =saveProfile(groupData);
+        groupToSave.setProfile(profile);
       }
-      else groupToSave.getProfile().merge(groupToSave.getProfile(), groupData.getProfile());
+      else {
+        groupToSave.setProfile( groupToSave.getProfile().merge(groupToSave.getProfile(), groupData.getProfile()));
+      }
 
     }
     getGroupRepository().save(groupToSave);
@@ -359,7 +354,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
 
   protected abstract GroupRepository<T> getGroupRepository();
 
-  protected abstract GroupProfileRepository<P> getGroupProfileRepository();
+  protected abstract GroupProfile saveProfile(T group);
 
   protected abstract GroupMemberRepository<T, R> getRelationshipRepository();
 
