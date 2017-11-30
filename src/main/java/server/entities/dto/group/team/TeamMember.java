@@ -14,17 +14,17 @@ import javax.persistence.Table;
 @Data
 public class TeamMember extends GroupMember<Team> {
 
-    @ManyToOne
-    @JoinColumn(name = "team_id", referencedColumnName = "id")
-    private Team team;
+  @ManyToOne
+  @JoinColumn(name = "team_id", referencedColumnName = "id")
+  private Team team;
 
-    @Override
-    public void setGroup(Team group) {
-        team = group;
-    }
+  @Override
+  public void setGroup(Team group) {
+    team = group;
+  }
 
-    @Override
-    public Team getGroup() {
-        return team;
-    }
+  @Override
+  public Team getGroup() {
+    return team;
+  }
 }

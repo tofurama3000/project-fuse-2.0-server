@@ -13,19 +13,19 @@ import javax.persistence.Transient;
 @Entity
 @Table(name = "team_invitation")
 public class TeamInvitation extends GroupInvitation<Team> {
-    @ManyToOne
-    @JoinColumn(name = "team_id", referencedColumnName = "id")
-    private Team team;
+  @ManyToOne
+  @JoinColumn(name = "team_id", referencedColumnName = "id")
+  private Team team;
 
-    @Override
-    @Transient
-    public Team getGroup() {
-        return team;
-    }
+  @Override
+  @Transient
+  public Team getGroup() {
+    return team;
+  }
 
-    @Override
-    @Transient
-    public void setGroup(Team group) {
-        team = group;
-    }
+  @Override
+  @Transient
+  public void setGroup(Team group) {
+    team = group;
+  }
 }

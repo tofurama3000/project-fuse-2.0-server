@@ -11,15 +11,15 @@ import server.repositories.group.GroupMemberRepository;
 
 @Transactional
 public interface ProjectMemberRepository extends GroupMemberRepository<Project, ProjectMember> {
-    @Query("SELECT user From ProjectMember a where a.project = :group")
-    Iterable<User> getUsersByGroup(@Param("group") Project group);
+  @Query("SELECT user From ProjectMember a where a.project = :group")
+  Iterable<User> getUsersByGroup(@Param("group") Project group);
 
-    @Query("SELECT roleId FROM ProjectMember a where a.project = :group AND a.user = :user")
-    Iterable<Integer> getRoles(@Param("group") Project group, @Param("user") User user);
+  @Query("SELECT roleId FROM ProjectMember a where a.project = :group AND a.user = :user")
+  Iterable<Integer> getRoles(@Param("group") Project group, @Param("user") User user);
 
-    @Modifying(clearAutomatically = true)
-    @Query("DELETE from ProjectMember a where a.project =:group AND a.user =:user and a.roleId = :roleId")
-    void delete(@Param("group") Project group, @Param("user") User user, @Param("roleId") int roleId);
+  @Modifying(clearAutomatically = true)
+  @Query("DELETE from ProjectMember a where a.project =:group AND a.user =:user and a.roleId = :roleId")
+  void delete(@Param("group") Project group, @Param("user") User user, @Param("roleId") int roleId);
 
 
 }

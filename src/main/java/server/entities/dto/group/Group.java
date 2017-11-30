@@ -21,40 +21,40 @@ import javax.persistence.MappedSuperclass;
 @MappedSuperclass
 public abstract class Group<Profile extends GroupProfile> {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private Long id;
 
 
-    @ManyToOne
-    @JoinColumn(name = "owner_id", referencedColumnName = "id")
-    private User owner;
-    private String name;
+  @ManyToOne
+  @JoinColumn(name = "owner_id", referencedColumnName = "id")
+  private User owner;
+  private String name;
 
-    @Column(name = "restriction")
-    @JsonIgnore
-    private String restrictionString;
+  @Column(name = "restriction")
+  @JsonIgnore
+  private String restrictionString;
 
-    public Restriction getRestriction() {
-        if (restrictionString != null && restrictionString.equals("INVITE")) {
-            return INVITE;
-        }
-        return NONE;
+  public Restriction getRestriction() {
+    if (restrictionString != null && restrictionString.equals("INVITE")) {
+      return INVITE;
     }
+    return NONE;
+  }
 
-    public void setRestriction(String restriction) {
-        restrictionString = restriction;
-    }
+  public void setRestriction(String restriction) {
+    restrictionString = restriction;
+  }
 
-    @JsonIgnore
-    public abstract String getTableName();
+  @JsonIgnore
+  public abstract String getTableName();
 
-    @JsonIgnore
-    public abstract String getRelationshipTableName();
-
-
-    public abstract Profile getProfile();
+  @JsonIgnore
+  public abstract String getRelationshipTableName();
 
 
-    public abstract void setProfile(Profile p);
+  public abstract Profile getProfile();
+
+
+  public abstract void setProfile(Profile p);
 }

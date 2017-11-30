@@ -36,75 +36,75 @@ import javax.servlet.http.HttpServletResponse;
 @SuppressWarnings("unused")
 public class TeamController extends GroupController<Team, TeamMember> {
 
-    @Autowired
-    private TeamRepository teamRepository;
+  @Autowired
+  private TeamRepository teamRepository;
 
-    @Autowired
-    private TeamProfileRepository teamProfileRepository;
+  @Autowired
+  private TeamProfileRepository teamProfileRepository;
 
 
-    @Autowired
-    private TeamMemberRepository teamMemberRepository;
+  @Autowired
+  private TeamMemberRepository teamMemberRepository;
 
-    @Autowired
-    private TeamInvitationRepository teamInvitationRepository;
+  @Autowired
+  private TeamInvitationRepository teamInvitationRepository;
 
-    @Autowired
-    private PermissionFactory permissionFactory;
+  @Autowired
+  private PermissionFactory permissionFactory;
 
-    @Autowired
-    private SessionFactory sessionFactory;
+  @Autowired
+  private SessionFactory sessionFactory;
 
-    @Override
-    protected Team createGroup() {
-        return new Team();
-    }
+  @Override
+  protected Team createGroup() {
+    return new Team();
+  }
 
-    //@Override
-    //protected GroupProfileRepository<TeamProfile> getGroupProfileRepository() {
-    //  return teamProfileRepository;
-    //}
+  //@Override
+  //protected GroupProfileRepository<TeamProfile> getGroupProfileRepository() {
+  //  return teamProfileRepository;
+  //}
 
-    @Override
-    protected GroupRepository<Team> getGroupRepository() {
-        return teamRepository;
-    }
+  @Override
+  protected GroupRepository<Team> getGroupRepository() {
+    return teamRepository;
+  }
 
-    @Override
-    protected GroupProfile<Team> saveProfile(Team team) {
-        return teamProfileRepository.save(team.getProfile());
-    }
+  @Override
+  protected GroupProfile<Team> saveProfile(Team team) {
+    return teamProfileRepository.save(team.getProfile());
+  }
 
-    @Override
-    protected GroupMemberRepository<Team, TeamMember> getRelationshipRepository() {
-        return teamMemberRepository;
-    }
+  @Override
+  protected GroupMemberRepository<Team, TeamMember> getRelationshipRepository() {
+    return teamMemberRepository;
+  }
 
-    @Override
-    protected UserToGroupPermission getUserToGroupPermission(User user, Team team) {
-        return permissionFactory.createUserToTeamPermission(user, team);
-    }
+  @Override
+  protected UserToGroupPermission getUserToGroupPermission(User user, Team team) {
+    return permissionFactory.createUserToTeamPermission(user, team);
+  }
 
-    @Override
-    protected void addRelationship(User user, Team team, int role) {
-        TeamMember member = new TeamMember();
-        member.setUser(user);
-        member.setTeam(team);
-        member.setRoleId(role);
+  @Override
+  protected void addRelationship(User user, Team team, int role) {
+    TeamMember member = new TeamMember();
+    member.setUser(user);
+    member.setTeam(team);
+    member.setRoleId(role);
 
-        teamMemberRepository.save(member);
-    }
+    teamMemberRepository.save(member);
+  }
 
-    @PostMapping(path = "/invite")
-    @ResponseBody
-    public GeneralResponse invite(@RequestBody TeamInvitation teamInvitation,
-                                  HttpServletRequest request, HttpServletResponse response) {
-        return generalInvite(teamInvitation, request, response);
-    }
+  @PostMapping(path = "/invite")
+  @ResponseBody
+  public GeneralResponse invite(@RequestBody TeamInvitation teamInvitation,
+                                HttpServletRequest request, HttpServletResponse response) {
+    return generalInvite(teamInvitation, request, response);
+  }
 
-    @Override
-    protected void saveInvitation(GroupInvitation<Team> invitation) {
-        teamInvitationRepository.save(((TeamInvitation) invitation));
-    }
+  @Override
+  protected void saveInvitation(GroupInvitation<Team> invitation) {
+    teamInvitationRepository.save(((TeamInvitation) invitation));
+  }
 
 }

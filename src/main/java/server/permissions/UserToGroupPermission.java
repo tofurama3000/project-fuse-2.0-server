@@ -7,6 +7,7 @@ import static server.permissions.results.JoinResult.ALREADY_JOINED;
 import static server.permissions.results.JoinResult.HAS_INVITE;
 import static server.permissions.results.JoinResult.NEED_INVITE;
 import static server.permissions.results.JoinResult.OK;
+
 import org.hibernate.Session;
 import org.springframework.transaction.annotation.Transactional;
 import server.entities.dto.User;

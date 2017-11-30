@@ -36,69 +36,69 @@ import javax.servlet.http.HttpServletResponse;
 @SuppressWarnings("unused")
 public class OrganizationController extends GroupController<Organization, OrganizationMember> {
 
-    @Autowired
-    private PermissionFactory permissionFactory;
+  @Autowired
+  private PermissionFactory permissionFactory;
 
-    @Autowired
-    private OrganizationRepository organizationRepository;
+  @Autowired
+  private OrganizationRepository organizationRepository;
 
-    @Autowired
-    OrganizationProfileRepository organizationProfileRepository;
+  @Autowired
+  OrganizationProfileRepository organizationProfileRepository;
 
-    @Autowired
-    private OrganizationMemberRepository organizationMemberRepository;
+  @Autowired
+  private OrganizationMemberRepository organizationMemberRepository;
 
-    @Autowired
-    private OrganizationInvitationRepository organizationInvitationRepository;
+  @Autowired
+  private OrganizationInvitationRepository organizationInvitationRepository;
 
-    @Autowired
-    private SessionFactory sessionFactory;
+  @Autowired
+  private SessionFactory sessionFactory;
 
-    @Override
-    protected Organization createGroup() {
-        return new Organization();
-    }
+  @Override
+  protected Organization createGroup() {
+    return new Organization();
+  }
 
-    @Override
-    protected GroupRepository<Organization> getGroupRepository() {
-        return organizationRepository;
-    }
+  @Override
+  protected GroupRepository<Organization> getGroupRepository() {
+    return organizationRepository;
+  }
 
-    @Override
-    protected GroupProfile<Organization> saveProfile(Organization org) {
-        return organizationProfileRepository.save(org.getProfile());
-    }
+  @Override
+  protected GroupProfile<Organization> saveProfile(Organization org) {
+    return organizationProfileRepository.save(org.getProfile());
+  }
 
-    @Override
-    protected GroupMemberRepository<Organization, OrganizationMember> getRelationshipRepository() {
-        return organizationMemberRepository;
-    }
+  @Override
+  protected GroupMemberRepository<Organization, OrganizationMember> getRelationshipRepository() {
+    return organizationMemberRepository;
+  }
 
-    @Override
-    protected UserToGroupPermission getUserToGroupPermission(User user, Organization group) {
-        return permissionFactory.createUserToOrganizationPermission(user, group);
-    }
+  @Override
+  protected UserToGroupPermission getUserToGroupPermission(User user, Organization group) {
+    return permissionFactory.createUserToOrganizationPermission(user, group);
+  }
 
-    @Override
-    protected void addRelationship(User user, Organization group, int role) {
-        OrganizationMember member = new OrganizationMember();
-        member.setUser(user);
-        member.setOrganization(group);
-        member.setRoleId(role);
+  @Override
+  protected void addRelationship(User user, Organization group, int role) {
+    OrganizationMember member = new OrganizationMember();
+    member.setUser(user);
+    member.setOrganization(group);
+    member.setRoleId(role);
 
-        organizationMemberRepository.save(member);
-    }
+    organizationMemberRepository.save(member);
+  }
 
-    @PostMapping(path = "/invite")
-    @ResponseBody
-    public GeneralResponse invite(@RequestBody OrganizationInvitation organizationInvitation,
-                                  HttpServletRequest request, HttpServletResponse response) {
-        return generalInvite(organizationInvitation, request, response);
-    }
+  @PostMapping(path = "/invite")
+  @ResponseBody
+  public GeneralResponse invite(@RequestBody OrganizationInvitation organizationInvitation,
+                                HttpServletRequest request, HttpServletResponse response) {
+    return generalInvite(organizationInvitation, request, response);
+  }
 
-    @Override
-    protected void saveInvitation(GroupInvitation<Organization> invitation) {
-        organizationInvitationRepository.save((OrganizationInvitation) invitation);
-    }
+  @Override
+  protected void saveInvitation(GroupInvitation<Organization> invitation) {
+    organizationInvitationRepository.save((OrganizationInvitation) invitation);
+  }
 
 }

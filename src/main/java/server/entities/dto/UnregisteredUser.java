@@ -11,9 +11,9 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "unregistered_user")
 public class UnregisteredUser {
-    @Id
-    @Column(name = "user_id")
-    private Long userId;
+  @Id
+  @Column(name = "user_id")
+  private Long userId;
 
-    private String registrationKey;
+  private String registrationKey;
 }

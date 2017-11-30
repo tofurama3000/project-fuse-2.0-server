@@ -14,22 +14,22 @@ import javax.persistence.Transient;
 @Table(name = "team_profile")
 public class TeamProfile extends GroupProfile<Team> {
 
-    @OneToOne
-    @JoinColumn(name = "team_id", referencedColumnName = "id")
-    private Team team;
+  @OneToOne
+  @JoinColumn(name = "team_id", referencedColumnName = "id")
+  private Team team;
 
 
-    @Override
-    @Transient
-    public Team getGroup() {
-        return team;
-    }
+  @Override
+  @Transient
+  public Team getGroup() {
+    return team;
+  }
 
-    @Override
-    @Transient
-    public void setGroup(Team group) {
-        team = group;
-    }
+  @Override
+  @Transient
+  public void setGroup(Team group) {
+    team = group;
+  }
 
 
 }

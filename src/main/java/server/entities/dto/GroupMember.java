@@ -16,20 +16,20 @@ import javax.persistence.MappedSuperclass;
 @MappedSuperclass
 public abstract class GroupMember<T extends Group> {
 
-    @JsonIgnore
-    public abstract void setGroup(T group);
+  @JsonIgnore
+  public abstract void setGroup(T group);
 
-    @JsonIgnore
-    public abstract T getGroup();
+  @JsonIgnore
+  public abstract T getGroup();
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private int id;
 
-    @Column(name = "role_id")
-    private int roleId;
+  @Column(name = "role_id")
+  private int roleId;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "id")
-    private User user;
+  @ManyToOne
+  @JoinColumn(name = "user_id", referencedColumnName = "id")
+  private User user;
 }

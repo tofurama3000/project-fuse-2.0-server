@@ -18,22 +18,22 @@ import java.sql.Timestamp;
 @Data
 public class Message {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private long id;
 
-    @ManyToOne
-    @JoinColumn(name = "sender_id", referencedColumnName = "id")
-    private User sender;
+  @ManyToOne
+  @JoinColumn(name = "sender_id", referencedColumnName = "id")
+  private User sender;
 
-    @ManyToOne
-    @JoinColumn(name = "receiver_id", referencedColumnName = "id")
-    private User receiver;
+  @ManyToOne
+  @JoinColumn(name = "receiver_id", referencedColumnName = "id")
+  private User receiver;
 
-    @Column(name = "message")
-    private String message;
+  @Column(name = "message")
+  private String message;
 
-    @Getter
-    private Timestamp sent;
+  @Getter
+  private Timestamp sent;
 
 }

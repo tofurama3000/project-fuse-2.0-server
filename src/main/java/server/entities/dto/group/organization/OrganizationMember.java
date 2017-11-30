@@ -15,18 +15,18 @@ import javax.persistence.Table;
 @Data
 public class OrganizationMember extends GroupMember<Organization> {
 
-    @ManyToOne
-    @JoinColumn(name = "organization_id", referencedColumnName = "id")
-    @Getter
-    private Organization organization;
+  @ManyToOne
+  @JoinColumn(name = "organization_id", referencedColumnName = "id")
+  @Getter
+  private Organization organization;
 
-    @Override
-    public void setGroup(Organization group) {
-        organization = group;
-    }
+  @Override
+  public void setGroup(Organization group) {
+    organization = group;
+  }
 
-    @Override
-    public Organization getGroup() {
-        return organization;
-    }
+  @Override
+  public Organization getGroup() {
+    return organization;
+  }
 }

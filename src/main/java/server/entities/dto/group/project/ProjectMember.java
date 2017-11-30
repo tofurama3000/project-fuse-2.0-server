@@ -13,17 +13,17 @@ import javax.persistence.Table;
 @Table(name = "project_member")
 @Data
 public class ProjectMember extends GroupMember<Project> {
-    @ManyToOne
-    @JoinColumn(name = "project_id", referencedColumnName = "id")
-    private Project project;
+  @ManyToOne
+  @JoinColumn(name = "project_id", referencedColumnName = "id")
+  private Project project;
 
-    @Override
-    public void setGroup(Project group) {
-        project = group;
-    }
+  @Override
+  public void setGroup(Project group) {
+    project = group;
+  }
 
-    @Override
-    public Project getGroup() {
-        return project;
-    }
+  @Override
+  public Project getGroup() {
+    return project;
+  }
 }
