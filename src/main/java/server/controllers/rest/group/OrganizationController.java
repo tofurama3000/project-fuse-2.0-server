@@ -14,13 +14,17 @@ import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.organization.OrganizationInvitation;
 import server.entities.dto.group.organization.OrganizationMember;
+import server.entities.dto.group.organization.OrganizationProfile;
 import server.permissions.PermissionFactory;
 import server.permissions.UserToGroupPermission;
 import server.repositories.group.GroupMemberRepository;
+import server.repositories.group.GroupProfileRepository;
 import server.repositories.group.GroupRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
 import server.repositories.group.organization.OrganizationMemberRepository;
+import server.repositories.group.organization.OrganizationProfileRepository;
 import server.repositories.group.organization.OrganizationRepository;
+import server.repositories.group.team.TeamRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -29,13 +33,16 @@ import javax.servlet.http.HttpServletResponse;
 @RequestMapping(value = "/organization")
 @Transactional
 @SuppressWarnings("unused")
-public class OrganizationController extends GroupController<Organization, OrganizationMember> {
+public class OrganizationController extends GroupController<Organization, OrganizationMember,OrganizationProfile> {
 
   @Autowired
   private PermissionFactory permissionFactory;
 
   @Autowired
   private OrganizationRepository organizationRepository;
+
+  @Autowired
+  private OrganizationProfileRepository organizationProfileRepository;
 
   @Autowired
   private OrganizationMemberRepository organizationMemberRepository;
@@ -49,6 +56,11 @@ public class OrganizationController extends GroupController<Organization, Organi
   @Override
   protected Organization createGroup() {
     return new Organization();
+  }
+
+  @Override
+  protected GroupProfileRepository<OrganizationProfile> getGroupProfileRepository() {
+    return organizationProfileRepository;
   }
 
   @Override

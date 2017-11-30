@@ -154,12 +154,14 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
 
     T groupToSave = getGroupRepository().findOne(id);
 
-    UserToGroupPermission permission = getUserToGroupPermission(user, groupToSave);
-    boolean canUpdate = permission.canUpdate();
-    if (!canUpdate) {
-      errors.add(INSUFFICIENT_PRIVELAGES);
-      return new GeneralResponse(response, DENIED, errors);
-    }
+
+//    UserToGroupPermission permission = getUserToGroupPermission(user, groupToSave);
+//    boolean canUpdate = permission.canUpdate();
+//    if (!canUpdate) {
+//      errors.add(INSUFFICIENT_PRIVELAGES);
+//      return new GeneralResponse(response, DENIED, errors);
+//    }
+
 
     // Merging instead of direct copying ensures we're very clear about what can be edited, and it provides easy checks
 
@@ -168,9 +170,13 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
 
     if (groupData.getProfile() != null) {
 
-      Group p = getGroupRepository().findOne(groupData.getId());
 
-      if(groupData.getProfile()==null)groupToSave.setProfile(groupData.getProfile());
+
+      if(groupToSave.getProfile()==null) {
+
+      GroupProfile save= getGroupProfileRepository().save(groupData.getProfile());
+       // groupToSave.setProfile(save);
+      }
       else groupToSave.getProfile().merge(groupToSave.getProfile(), groupData.getProfile());
 
     }
@@ -353,7 +359,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
 
   protected abstract GroupRepository<T> getGroupRepository();
 
- // protected abstract GroupProfileRepository<P> getGroupProfileRepository();
+  protected abstract GroupProfileRepository<P> getGroupProfileRepository();
 
   protected abstract GroupMemberRepository<T, R> getRelationshipRepository();
 

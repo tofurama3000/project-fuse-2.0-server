@@ -12,6 +12,7 @@ import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.User;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.GroupProfile;
+import server.entities.dto.group.organization.OrganizationProfile;
 import server.entities.dto.group.team.Team;
 import server.entities.dto.group.team.TeamInvitation;
 import server.entities.dto.group.team.TeamMember;
@@ -21,6 +22,7 @@ import server.permissions.UserToGroupPermission;
 import server.repositories.group.GroupMemberRepository;
 import server.repositories.group.GroupProfileRepository;
 import server.repositories.group.GroupRepository;
+import server.repositories.group.organization.OrganizationProfileRepository;
 import server.repositories.group.team.TeamInvitationRepository;
 import server.repositories.group.team.TeamMemberRepository;
 import server.repositories.group.team.TeamProfileRepository;
@@ -33,7 +35,7 @@ import javax.servlet.http.HttpServletResponse;
 @RequestMapping(value = "/team")
 @Transactional
 @SuppressWarnings("unused")
-public class TeamController extends GroupController<Team, TeamMember> {
+public class TeamController extends GroupController<Team, TeamMember,TeamProfile> {
 
   @Autowired
   private TeamRepository teamRepository;
@@ -58,11 +60,11 @@ public class TeamController extends GroupController<Team, TeamMember> {
     return new Team();
   }
 
-  //@Override
-  //protected GroupProfileRepository<TeamProfile> getGroupProfileRepository() {
-  //  return teamProfileRepository;
-  //}
-  
+
+  @Override
+  protected GroupProfileRepository<TeamProfile> getGroupProfileRepository() {
+    return teamProfileRepository;
+  }
   @Override
   protected GroupRepository<Team> getGroupRepository(){ return teamRepository;}
 

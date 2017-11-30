@@ -11,15 +11,20 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.User;
 import server.entities.dto.group.GroupInvitation;
+import server.entities.dto.group.organization.OrganizationProfile;
 import server.entities.dto.group.project.Project;
 import server.entities.dto.group.project.ProjectInvitation;
 import server.entities.dto.group.project.ProjectMember;
+import server.entities.dto.group.project.ProjectProfile;
 import server.permissions.PermissionFactory;
 import server.permissions.UserToGroupPermission;
 import server.repositories.group.GroupMemberRepository;
+import server.repositories.group.GroupProfileRepository;
 import server.repositories.group.GroupRepository;
+import server.repositories.group.organization.OrganizationProfileRepository;
 import server.repositories.group.project.ProjectInvitationRepository;
 import server.repositories.group.project.ProjectMemberRepository;
+import server.repositories.group.project.ProjectProfileRepository;
 import server.repositories.group.project.ProjectRepository;
 
 import javax.servlet.http.HttpServletRequest;
@@ -29,13 +34,16 @@ import javax.servlet.http.HttpServletResponse;
 @RequestMapping(value = "/project")
 @Transactional
 @SuppressWarnings("unused")
-public class ProjectController extends GroupController<Project, ProjectMember> {
+public class ProjectController extends GroupController<Project, ProjectMember, ProjectProfile> {
 
   @Autowired
   private PermissionFactory permissionFactory;
 
   @Autowired
   private ProjectRepository projectRepository;
+
+  @Autowired
+  private ProjectProfileRepository projectProfileRepository;
 
   @Autowired
   private ProjectMemberRepository projectMemberRepository;
@@ -52,10 +60,14 @@ public class ProjectController extends GroupController<Project, ProjectMember> {
   }
 
   @Override
+  protected GroupProfileRepository<ProjectProfile> getGroupProfileRepository() {
+    return projectProfileRepository;
+  }
+
+  @Override
   protected GroupRepository<Project> getGroupRepository() {
     return projectRepository;
   }
-
   @Override
   protected GroupMemberRepository<Project, ProjectMember> getRelationshipRepository() {
     return projectMemberRepository;
