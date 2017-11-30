@@ -12,17 +12,17 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "organization_invitation")
 public class OrganizationInvitation extends GroupInvitation<Organization> {
-  @ManyToOne
-  @JoinColumn(name = "organization_id", referencedColumnName = "id")
-  private Organization organization;
+    @ManyToOne
+    @JoinColumn(name = "organization_id", referencedColumnName = "id")
+    private Organization organization;
 
-  @Override
-  public Organization getGroup() {
-    return organization;
-  }
+    @Override
+    public Organization getGroup() {
+        return organization;
+    }
 
-  @Override
-  public void setGroup(Organization group) {
-    organization = group;
-  }
+    @Override
+    public void setGroup(Organization group) {
+        organization = group;
+    }
 }

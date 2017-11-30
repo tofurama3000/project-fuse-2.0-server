@@ -15,22 +15,22 @@ import javax.persistence.MappedSuperclass;
 @MappedSuperclass
 public abstract class GroupInvitation<T extends Group> {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
-  private long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private long id;
 
-  @ManyToOne
-  @JoinColumn(name = "receiver_id", referencedColumnName = "id")
-  private User receiver;
+    @ManyToOne
+    @JoinColumn(name = "receiver_id", referencedColumnName = "id")
+    private User receiver;
 
-  @ManyToOne
-  @JoinColumn(name = "sender_id", referencedColumnName = "id")
-  private User sender;
+    @ManyToOne
+    @JoinColumn(name = "sender_id", referencedColumnName = "id")
+    private User sender;
 
-  private String status;
+    private String status;
 
-  @JsonIgnore
-  public abstract T getGroup();
+    @JsonIgnore
+    public abstract T getGroup();
 
-  public abstract void setGroup(T group);
+    public abstract void setGroup(T group);
 }

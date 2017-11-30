@@ -12,28 +12,28 @@ import javax.persistence.Table;
 @Table(name = "project")
 public class Project extends Group<ProjectProfile> {
 
-  @OneToOne
-  @JoinColumn(name = "id", referencedColumnName = "project_profile_id")
-  private ProjectProfile profile;
+    @OneToOne
+    @JoinColumn(name = "id", referencedColumnName = "project_profile_id")
+    private ProjectProfile profile;
 
-  @Override
-  public String getTableName() {
-    return "Project";
-  }
+    @Override
+    public String getTableName() {
+        return "Project";
+    }
 
-  @Override
-  public String getRelationshipTableName() {
-    return "ProjectMember";
-  }
+    @Override
+    public String getRelationshipTableName() {
+        return "ProjectMember";
+    }
 
-  @Override
-  public ProjectProfile getProfile() {
-    return profile;
-  }
+    @Override
+    public ProjectProfile getProfile() {
+        return profile;
+    }
 
-  @Override
-  public  void setProfile (ProjectProfile p){
-    profile.setHeadline( p.getHeadline());
-    profile.setSummary(p.getSummary());
-  }
+    @Override
+    public void setProfile(ProjectProfile p) {
+        profile.setHeadline(p.getHeadline());
+        profile.setSummary(p.getSummary());
+    }
 }

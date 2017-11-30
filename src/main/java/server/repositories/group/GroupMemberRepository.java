@@ -10,9 +10,9 @@ import server.entities.dto.group.Group;
 
 @NoRepositoryBean
 public interface GroupMemberRepository<R extends Group, T extends GroupMember<R>> extends CrudRepository<T, Long> {
-  Iterable<User> getUsersByGroup(@Param("group") R group);
+    Iterable<User> getUsersByGroup(@Param("group") R group);
 
-  Iterable<Integer> getRoles(@Param("group") R group, @Param("user") User user);
+    Iterable<Integer> getRoles(@Param("group") R group, @Param("user") User user);
 
-  void delete(@Param("group") R group, @Param("user") User user, @Param("roleId") int roleId);
+    void delete(@Param("group") R group, @Param("user") User user, @Param("roleId") int roleId);
 }

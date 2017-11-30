@@ -3,35 +3,37 @@ package server.entities.dto;
 
 import lombok.Data;
 
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
-
+@Entity
 @Table(name = "user_profile")
 @Data
 public class UserProfile {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
-  private long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private long id;
 
-  private String headline;
+    @ManyToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    private User user;
 
-  private String summary;
+    private String headline;
 
-  private String skills;
+    private String summary;
 
-  public void merge(UserProfile p0, UserProfile p) {
-    if (p.getHeadline() != null) {
-      p0.setHeadline(p.getHeadline());
+    private String skills;
+
+    public UserProfile merge(UserProfile original, UserProfile newUserProfile) {
+        if (newUserProfile.getHeadline() != null) {
+            original.setHeadline(newUserProfile.getHeadline());
+        }
+        if (newUserProfile.getSummary() != null) {
+            original.setSummary(newUserProfile.getSummary());
+        }
+        if (newUserProfile.getSkills() != null) {
+            original.setSkills(newUserProfile.getSkills());
+        }
+        return original;
     }
-    if (p.getSummary() != null) {
-      p0.setSummary(p.getSummary());
-    }
-    if (p.getSkills() != null) {
-      p0.setSkills(p.getSkills());
-    }
-  }
 }

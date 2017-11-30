@@ -16,30 +16,30 @@ import java.sql.Timestamp;
 @Data
 public class FuseSession {
 
-  public FuseSession(String sessionId, User sessionFor) {
-    this.user = sessionFor;
-    this.sessionId = sessionId;
-    this.created = new Timestamp(System.currentTimeMillis());
-  }
+    public FuseSession(String sessionId, User sessionFor) {
+        this.user = sessionFor;
+        this.sessionId = sessionId;
+        this.created = new Timestamp(System.currentTimeMillis());
+    }
 
-  public FuseSession() {
-  }
+    public FuseSession() {
+    }
 
-  @Getter
-  @Id
-  @Column(name = "session_id")
-  private String sessionId;
+    @Getter
+    @Id
+    @Column(name = "session_id")
+    private String sessionId;
 
-  @ManyToOne
-  @JoinColumn(name = "user_id", referencedColumnName = "id")
-  @Getter
-  private User user;
+    @ManyToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    @Getter
+    private User user;
 
-  @Getter
-  private Timestamp created;
+    @Getter
+    private Timestamp created;
 
-  @Override
-  public String toString() {
-    return this.sessionId;
-  }
+    @Override
+    public String toString() {
+        return this.sessionId;
+    }
 }

@@ -13,18 +13,18 @@ import javax.persistence.Table;
 @Table(name = "project_profile")
 public class ProjectProfile extends GroupProfile<Project> {
 
-  @OneToOne
-  @JoinColumn(name = "project_id", referencedColumnName = "id")
-  private Project project;
+    @OneToOne
+    @JoinColumn(name = "project_id", referencedColumnName = "id")
+    private Project project;
 
-  @Override
-  public Project getGroup() {
-    return project;
-  }
+    @Override
+    public Project getGroup() {
+        return project;
+    }
 
-  @Override
-  public void setGroup(Project group) {
-    project = group;
-  }
+    @Override
+    public void setGroup(Project group) {
+        project = group;
+    }
 
 }

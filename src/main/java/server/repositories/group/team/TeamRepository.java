@@ -9,6 +9,6 @@ import server.repositories.group.GroupRepository;
 
 @Transactional
 public interface TeamRepository extends GroupRepository<Team> {
-  @Query("From Team t WHERE t.owner =:owner AND t.name=:name")
-  Iterable<Team> getGroups(@Param("owner") User user, @Param("name") String name);
+    @Query("From Team t WHERE t.owner =:owner AND t.name=:name")
+    Iterable<Team> getGroups(@Param("owner") User user, @Param("name") String name);
 }

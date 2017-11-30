@@ -7,5 +7,5 @@ import server.entities.dto.group.project.ProjectProfile;
 import server.entities.dto.group.team.TeamProfile;
 import server.repositories.group.GroupProfileRepository;
 
-public interface ProjectProfileRepository  extends GroupProfileRepository<ProjectProfile> {
+public interface ProjectProfileRepository extends GroupProfileRepository<ProjectProfile> {
 }

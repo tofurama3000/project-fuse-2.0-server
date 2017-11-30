@@ -8,5 +8,5 @@ import java.util.List;
 
 
 public interface TeamInvitationRepository extends CrudRepository<TeamInvitation, Long> {
-  List<TeamInvitation> findByReceiver(User receiver);
+    List<TeamInvitation> findByReceiver(User receiver);
 }

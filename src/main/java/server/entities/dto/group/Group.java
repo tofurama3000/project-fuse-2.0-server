@@ -2,6 +2,7 @@ package server.entities.dto.group;
 
 import static server.entities.Restriction.INVITE;
 import static server.entities.Restriction.NONE;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import server.entities.Restriction;
@@ -18,42 +19,42 @@ import javax.persistence.MappedSuperclass;
 
 @Data
 @MappedSuperclass
-public abstract class Group<Profile extends  GroupProfile> {
+public abstract class Group<Profile extends GroupProfile> {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
-  private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
 
 
-  @ManyToOne
-  @JoinColumn(name = "owner_id", referencedColumnName = "id")
-  private User owner;
-  private String name;
+    @ManyToOne
+    @JoinColumn(name = "owner_id", referencedColumnName = "id")
+    private User owner;
+    private String name;
 
-  @Column(name = "restriction")
-  @JsonIgnore
-  private String restrictionString;
+    @Column(name = "restriction")
+    @JsonIgnore
+    private String restrictionString;
 
-  public Restriction getRestriction() {
-    if (restrictionString != null && restrictionString.equals("INVITE")) {
-      return INVITE;
+    public Restriction getRestriction() {
+        if (restrictionString != null && restrictionString.equals("INVITE")) {
+            return INVITE;
+        }
+        return NONE;
     }
-    return NONE;
-  }
 
-  public void setRestriction(String restriction) {
-    restrictionString = restriction;
-  }
+    public void setRestriction(String restriction) {
+        restrictionString = restriction;
+    }
 
-  @JsonIgnore
-  public abstract String getTableName();
+    @JsonIgnore
+    public abstract String getTableName();
 
-  @JsonIgnore
-  public abstract String getRelationshipTableName();
+    @JsonIgnore
+    public abstract String getRelationshipTableName();
 
 
-  public abstract Profile getProfile();
+    public abstract Profile getProfile();
 
 
-  public abstract void setProfile(Profile p);
+    public abstract void setProfile(Profile p);
 }

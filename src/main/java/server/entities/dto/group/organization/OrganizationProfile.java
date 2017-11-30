@@ -14,17 +14,17 @@ import javax.persistence.Table;
 @Table(name = "organization_profile")
 public class OrganizationProfile extends GroupProfile<Organization> {
 
-  @OneToOne
-  @JoinColumn(name = "organization_id", referencedColumnName = "id")
-  private Organization organization;
+    @OneToOne
+    @JoinColumn(name = "organization_id", referencedColumnName = "id")
+    private Organization organization;
 
-  @Override
-  public Organization getGroup() {
-    return organization;
-  }
+    @Override
+    public Organization getGroup() {
+        return organization;
+    }
 
-  @Override
-  public void setGroup(Organization group) {
-    organization = group;
-  }
+    @Override
+    public void setGroup(Organization group) {
+        organization = group;
+    }
 }

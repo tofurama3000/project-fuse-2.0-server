@@ -37,72 +37,71 @@ import javax.servlet.http.HttpServletResponse;
 @SuppressWarnings("unused")
 public class ProjectController extends GroupController<Project, ProjectMember> {
 
-  @Autowired
-  private PermissionFactory permissionFactory;
+    @Autowired
+    private PermissionFactory permissionFactory;
 
-  @Autowired
-  private ProjectProfileRepository projectProfileRepository;
+    @Autowired
+    private ProjectProfileRepository projectProfileRepository;
 
-  @Autowired
-  private ProjectRepository projectRepository;
+    @Autowired
+    private ProjectRepository projectRepository;
 
-  @Autowired
-  private ProjectMemberRepository projectMemberRepository;
+    @Autowired
+    private ProjectMemberRepository projectMemberRepository;
 
-  @Autowired
-  private ProjectInvitationRepository projectInvitationRepository;
+    @Autowired
+    private ProjectInvitationRepository projectInvitationRepository;
 
-  @Autowired
-  private SessionFactory sessionFactory;
+    @Autowired
+    private SessionFactory sessionFactory;
 
-  @Override
-  protected Project createGroup() {
-    return new Project();
-  }
+    @Override
+    protected Project createGroup() {
+        return new Project();
+    }
 
-  @Override
-  protected GroupRepository<Project> getGroupRepository() {
-    return projectRepository;
-  }
+    @Override
+    protected GroupRepository<Project> getGroupRepository() {
+        return projectRepository;
+    }
 
-  @Override
-  protected GroupProfile<Project> saveProfile(Project project) {
-  return   projectProfileRepository.save( project.getProfile());
-  }
+    @Override
+    protected GroupProfile<Project> saveProfile(Project project) {
+        return projectProfileRepository.save(project.getProfile());
+    }
 
-  @Override
-  protected GroupMemberRepository<Project, ProjectMember> getRelationshipRepository() {
-    return projectMemberRepository;
-  }
+    @Override
+    protected GroupMemberRepository<Project, ProjectMember> getRelationshipRepository() {
+        return projectMemberRepository;
+    }
 
-  @Override
-  protected UserToGroupPermission getUserToGroupPermission(User user, Project group) {
-    return permissionFactory.createUserToProjectPermission(user, group);
-  }
+    @Override
+    protected UserToGroupPermission getUserToGroupPermission(User user, Project group) {
+        return permissionFactory.createUserToProjectPermission(user, group);
+    }
 
-  @Override
-  protected void addRelationship(User user, Project group, int role) {
-    ProjectMember member = new ProjectMember();
+    @Override
+    protected void addRelationship(User user, Project group, int role) {
+        ProjectMember member = new ProjectMember();
 
-    member.setUser(user);
-    member.setProject(group);
-    member.setRoleId(role);
+        member.setUser(user);
+        member.setProject(group);
+        member.setRoleId(role);
 
-    projectMemberRepository.save(member);
-  }
+        projectMemberRepository.save(member);
+    }
 
-  @PostMapping(path = "/invite")
-  @ResponseBody
-  public GeneralResponse invite(@RequestBody ProjectInvitation projectInvitation,
-                                HttpServletRequest request, HttpServletResponse response) {
-    return generalInvite(projectInvitation, request, response);
-  }
+    @PostMapping(path = "/invite")
+    @ResponseBody
+    public GeneralResponse invite(@RequestBody ProjectInvitation projectInvitation,
+                                  HttpServletRequest request, HttpServletResponse response) {
+        return generalInvite(projectInvitation, request, response);
+    }
 
-  @Override
-  protected void saveInvitation(GroupInvitation<Project> invitation) {
-    projectInvitationRepository.save(((ProjectInvitation) invitation));
-  }
-
+    @Override
+    protected void saveInvitation(GroupInvitation<Project> invitation) {
+        projectInvitationRepository.save(((ProjectInvitation) invitation));
+    }
 
 
 }
