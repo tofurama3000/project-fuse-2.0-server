@@ -322,6 +322,7 @@ public class UserController {
                 fileToUpload.transferTo(fileToSave);
 
                 Timestamp ts = new Timestamp(System.currentTimeMillis());
+                fileName += ts.toString() + currentUser.getId().toString();
                 uploadFile.setHash(fileName);
                 uploadFile.setUpload_time(ts);
                 uploadFile.setFile_size(fileToUpload.getSize());
@@ -333,6 +334,12 @@ public class UserController {
         }
         errors.add("Invalid file, unable to save");
         return new GeneralResponse(response, BAD_DATA, errors);
+    }
+
+    @GetMapping(path = "/fileDownload/{id}")
+    @ResponseBody
+    public GeneralResponse fileDownload(@PathVariable(value = "id") Long id, HttpServletResponse response) throws Exception {
+        return null;
     }
 
     @GetMapping(path = "/{id}")
