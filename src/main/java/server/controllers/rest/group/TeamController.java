@@ -22,7 +22,6 @@ import server.permissions.UserToGroupPermission;
 import server.repositories.group.GroupMemberRepository;
 import server.repositories.group.GroupProfileRepository;
 import server.repositories.group.GroupRepository;
-import server.repositories.group.organization.OrganizationProfileRepository;
 import server.repositories.group.team.TeamInvitationRepository;
 import server.repositories.group.team.TeamMemberRepository;
 import server.repositories.group.team.TeamProfileRepository;
@@ -35,13 +34,14 @@ import javax.servlet.http.HttpServletResponse;
 @RequestMapping(value = "/team")
 @Transactional
 @SuppressWarnings("unused")
-public class TeamController extends GroupController<Team, TeamMember,TeamProfile> {
+public class TeamController extends GroupController<Team, TeamMember> {
 
   @Autowired
   private TeamRepository teamRepository;
 
   @Autowired
   private TeamProfileRepository teamProfileRepository;
+
 
   @Autowired
   private TeamMemberRepository teamMemberRepository;
@@ -60,13 +60,19 @@ public class TeamController extends GroupController<Team, TeamMember,TeamProfile
     return new Team();
   }
 
+  //@Override
+  //protected GroupProfileRepository<TeamProfile> getGroupProfileRepository() {
+  //  return teamProfileRepository;
+  //}
 
   @Override
-  protected GroupProfileRepository<TeamProfile> getGroupProfileRepository() {
-    return teamProfileRepository;
-  }
-  @Override
   protected GroupRepository<Team> getGroupRepository(){ return teamRepository;}
+
+  @Override
+  protected GroupProfile<Team> saveProfile(Team team) {
+    return teamProfileRepository.save(team.getProfile());
+
+  }
 
   @Override
   protected GroupMemberRepository<Team, TeamMember> getRelationshipRepository() {

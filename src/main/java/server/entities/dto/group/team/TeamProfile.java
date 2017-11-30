@@ -18,6 +18,7 @@ public class TeamProfile extends GroupProfile<Team> {
   @JoinColumn(name = "team_id", referencedColumnName = "id")
   private Team team;
 
+
   @Override
   @Transient
   public Team getGroup() {

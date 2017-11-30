@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.User;
 import server.entities.dto.group.GroupInvitation;
+import server.entities.dto.group.GroupProfile;
 import server.entities.dto.group.organization.OrganizationProfile;
 import server.entities.dto.group.project.Project;
 import server.entities.dto.group.project.ProjectInvitation;
@@ -21,7 +22,7 @@ import server.permissions.UserToGroupPermission;
 import server.repositories.group.GroupMemberRepository;
 import server.repositories.group.GroupProfileRepository;
 import server.repositories.group.GroupRepository;
-import server.repositories.group.organization.OrganizationProfileRepository;
+import server.repositories.group.organization.OrganizationRepository;
 import server.repositories.group.project.ProjectInvitationRepository;
 import server.repositories.group.project.ProjectMemberRepository;
 import server.repositories.group.project.ProjectProfileRepository;
@@ -34,16 +35,16 @@ import javax.servlet.http.HttpServletResponse;
 @RequestMapping(value = "/project")
 @Transactional
 @SuppressWarnings("unused")
-public class ProjectController extends GroupController<Project, ProjectMember, ProjectProfile> {
+public class ProjectController extends GroupController<Project, ProjectMember> {
 
   @Autowired
   private PermissionFactory permissionFactory;
 
   @Autowired
-  private ProjectRepository projectRepository;
+  private ProjectProfileRepository projectProfileRepository;
 
   @Autowired
-  private ProjectProfileRepository projectProfileRepository;
+  private ProjectRepository projectRepository;
 
   @Autowired
   private ProjectMemberRepository projectMemberRepository;
@@ -60,14 +61,15 @@ public class ProjectController extends GroupController<Project, ProjectMember, P
   }
 
   @Override
-  protected GroupProfileRepository<ProjectProfile> getGroupProfileRepository() {
-    return projectProfileRepository;
-  }
-
-  @Override
   protected GroupRepository<Project> getGroupRepository() {
     return projectRepository;
   }
+
+  @Override
+  protected GroupProfile<Project> saveProfile(Project project) {
+  return   projectProfileRepository.save( project.getProfile());
+  }
+
   @Override
   protected GroupMemberRepository<Project, ProjectMember> getRelationshipRepository() {
     return projectMemberRepository;
@@ -100,4 +102,7 @@ public class ProjectController extends GroupController<Project, ProjectMember, P
   protected void saveInvitation(GroupInvitation<Project> invitation) {
     projectInvitationRepository.save(((ProjectInvitation) invitation));
   }
+
+
+
 }

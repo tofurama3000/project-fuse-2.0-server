@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import server.entities.Restriction;
 import server.entities.dto.User;
+import server.entities.dto.group.project.Project;
 
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
@@ -23,10 +24,10 @@ public abstract class Group<Profile extends  GroupProfile> {
   @GeneratedValue(strategy = GenerationType.AUTO)
   private Long id;
 
+
   @ManyToOne
   @JoinColumn(name = "owner_id", referencedColumnName = "id")
   private User owner;
-
   private String name;
 
   @Column(name = "restriction")
@@ -50,9 +51,9 @@ public abstract class Group<Profile extends  GroupProfile> {
   @JsonIgnore
   public abstract String getRelationshipTableName();
 
-  @JsonIgnore
+
   public abstract Profile getProfile();
 
-  @JsonIgnore
+
   public abstract void setProfile(Profile p);
 }
