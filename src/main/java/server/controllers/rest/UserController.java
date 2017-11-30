@@ -12,7 +12,6 @@ import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVE
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_REGISTRATION_KEY;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
-import static server.controllers.rest.response.CannedResponse.NO_INTERVIEW_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_INVITATION_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
 import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
@@ -30,7 +29,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
-import server.constants.Availability;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.group.OrganizationController;
 import server.controllers.rest.group.ProjectController;
