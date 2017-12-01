@@ -1,18 +1,14 @@
-package server.permissions;
+package server.entities.user_to_group.permissions;
 
 import static server.constants.RoleValue.ADMIN;
 import static server.constants.RoleValue.DEFAULT_USER;
 import static server.constants.RoleValue.INVITED_TO_JOIN;
 import static server.constants.RoleValue.OWNER;
-import static server.permissions.results.JoinResult.ALREADY_JOINED;
-import static server.permissions.results.JoinResult.HAS_INVITE;
-import static server.permissions.results.JoinResult.NEED_INVITE;
-import static server.permissions.results.JoinResult.OK;
 import org.hibernate.Session;
 import org.springframework.transaction.annotation.Transactional;
 import server.entities.dto.User;
 import server.entities.dto.group.Group;
-import server.permissions.results.JoinResult;
+import server.entities.user_to_group.permissions.results.JoinResult;
 
 @Transactional
 public abstract class UserToGroupPermission<T extends Group> {
@@ -27,19 +23,19 @@ public abstract class UserToGroupPermission<T extends Group> {
 
   public JoinResult canJoin() {
     if (isMember()) {
-      return ALREADY_JOINED;
+      return JoinResult.ALREADY_JOINED;
     }
 
     switch (group.getRestriction()) {
       case INVITE:
         if (hasInvite()) {
-          return HAS_INVITE;
+          return JoinResult.HAS_INVITE;
         } else {
-          return NEED_INVITE;
+          return JoinResult.NEED_INVITE;
         }
       case NONE:
       default:
-        return OK;
+        return JoinResult.OK;
     }
   }
 

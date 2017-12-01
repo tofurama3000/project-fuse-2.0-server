@@ -6,5 +6,6 @@ public class RoleValue {
   public final static int ADMIN = 2;
   public final static int OWNER = 3;
   public final static int INVITED_TO_INTERVIEW = 4;
+  public final static int TO_INTERVIEW = 5;
 
 }

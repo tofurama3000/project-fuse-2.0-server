@@ -14,8 +14,9 @@ import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.organization.OrganizationInvitation;
 import server.entities.dto.group.organization.OrganizationMember;
-import server.permissions.PermissionFactory;
-import server.permissions.UserToGroupPermission;
+import server.entities.user_to_group.permissions.PermissionFactory;
+import server.entities.user_to_group.permissions.UserToGroupPermission;
+import server.entities.user_to_group.relationships.RelationshipFactory;
 import server.repositories.group.GroupMemberRepository;
 import server.repositories.group.GroupRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
@@ -46,6 +47,9 @@ public class OrganizationController extends GroupController<Organization, Organi
   @Autowired
   private SessionFactory sessionFactory;
 
+  @Autowired
+  private RelationshipFactory relationshipFactory;
+
   @Override
   protected Organization createGroup() {
     return new Organization();
@@ -67,13 +71,13 @@ public class OrganizationController extends GroupController<Organization, Organi
   }
 
   @Override
-  protected void addRelationship(User user, Organization group, int role) {
-    OrganizationMember member = new OrganizationMember();
-    member.setUser(user);
-    member.setOrganization(group);
-    member.setRoleId(role);
+  protected void removeRelationship(User user, Organization group, int role) {
+    relationshipFactory.createUserToOrganizationRelationship(user, group).removeRelationship(role);
+  }
 
-    organizationMemberRepository.save(member);
+  @Override
+  protected void addRelationship(User user, Organization group, int role) {
+    relationshipFactory.createUserToOrganizationRelationship(user, group).addRelationship(role);
   }
 
   @PostMapping(path = "/invite")

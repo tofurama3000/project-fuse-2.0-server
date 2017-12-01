@@ -18,7 +18,7 @@ public abstract class GroupInvitation<T extends Group> {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
-  private long id;
+  private Long id;
 
   @ManyToOne
   @JoinColumn(name = "receiver_id", referencedColumnName = "id")

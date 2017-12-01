@@ -14,8 +14,9 @@ import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.project.Project;
 import server.entities.dto.group.project.ProjectInvitation;
 import server.entities.dto.group.project.ProjectMember;
-import server.permissions.PermissionFactory;
-import server.permissions.UserToGroupPermission;
+import server.entities.user_to_group.permissions.PermissionFactory;
+import server.entities.user_to_group.permissions.UserToGroupPermission;
+import server.entities.user_to_group.relationships.RelationshipFactory;
 import server.repositories.group.GroupMemberRepository;
 import server.repositories.group.GroupRepository;
 import server.repositories.group.project.ProjectInvitationRepository;
@@ -44,6 +45,9 @@ public class ProjectController extends GroupController<Project, ProjectMember> {
   private ProjectInvitationRepository projectInvitationRepository;
 
   @Autowired
+  private RelationshipFactory relationshipFactory;
+
+  @Autowired
   private SessionFactory sessionFactory;
 
   @Override
@@ -67,14 +71,13 @@ public class ProjectController extends GroupController<Project, ProjectMember> {
   }
 
   @Override
+  protected void removeRelationship(User user, Project group, int role) {
+    relationshipFactory.createUserToProjectRelationship(user, group).addRelationship(role);
+  }
+
+  @Override
   protected void addRelationship(User user, Project group, int role) {
-    ProjectMember member = new ProjectMember();
-
-    member.setUser(user);
-    member.setProject(group);
-    member.setRoleId(role);
-
-    projectMemberRepository.save(member);
+    relationshipFactory.createUserToProjectRelationship(user, group).removeRelationship(role);
   }
 
   @PostMapping(path = "/invite")

@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public class RolesUtility {
 
-  public static Optional<Integer> getRoleFromInterviewType(String type) {
+  public static Optional<Integer> getRoleFromInvitationType(String type) {
     switch (type) {
       case "Join":
         return Optional.of(INVITED_TO_JOIN);
