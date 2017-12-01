@@ -44,7 +44,7 @@ import server.entities.dto.User;
 import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.interview.Interview;
-import server.permissions.UserToGroupPermission;
+import server.entities.user_to_group.permissions.UserToGroupPermission;
 import server.repositories.UserRepository;
 import server.repositories.group.GroupMemberRepository;
 import server.repositories.group.GroupRepository;
@@ -398,7 +398,9 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
   protected abstract UserToGroupPermission getUserToGroupPermission(User user, T group);
 
-  public abstract void addRelationship(User user, T group, int role);
+  protected abstract void removeRelationship(User user, T group, int role);
+
+  protected abstract void addRelationship(User user, T group, int role);
 
   protected abstract void saveInvitation(GroupInvitation<T> invitation);
 
@@ -409,10 +411,6 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   @SuppressWarnings("unchecked")
   private List<T> getGroupsWith(User owner, T group) {
     return toList(getGroupRepository().getGroups(owner, group.getName()));
-  }
-
-  public void removeRelationship(User user, T group, int role) {
-    getRelationshipRepository().delete(group, user, role);
   }
 
   private List<User> getMembersOf(T group) {

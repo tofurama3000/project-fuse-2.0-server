@@ -30,21 +30,33 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
-import server.controllers.rest.group.OrganizationController;
-import server.controllers.rest.group.ProjectController;
-import server.controllers.rest.group.TeamController;
 import server.controllers.rest.response.GeneralResponse;
+import server.controllers.rest.response.GeneralResponse.Status;
 import server.email.StandardEmailSender;
+import server.entities.PossibleError;
 import server.entities.dto.FuseSession;
 import server.entities.dto.UnregisteredUser;
 import server.entities.dto.User;
+import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.interview.Interview;
+import server.entities.dto.group.organization.Organization;
+import server.entities.dto.group.organization.OrganizationInvitation;
+import server.entities.dto.group.project.Project;
+import server.entities.dto.group.project.ProjectInvitation;
 import server.entities.dto.group.team.Team;
 import server.entities.dto.group.team.TeamInvitation;
-import server.permissions.PermissionFactory;
-import server.permissions.UserPermission;
-import server.permissions.UserToTeamPermission;
-import server.permissions.results.JoinResult;
+import server.entities.user_to_group.permissions.PermissionFactory;
+import server.entities.user_to_group.permissions.UserPermission;
+import server.entities.user_to_group.permissions.UserToGroupPermission;
+import server.entities.user_to_group.permissions.UserToOrganizationPermission;
+import server.entities.user_to_group.permissions.UserToProjectPermission;
+import server.entities.user_to_group.permissions.UserToTeamPermission;
+import server.entities.user_to_group.permissions.results.JoinResult;
+import server.entities.user_to_group.relationships.RelationshipFactory;
+import server.entities.user_to_group.relationships.UserToGroupRelationship;
+import server.entities.user_to_group.relationships.UserToOrganizationRelationship;
+import server.entities.user_to_group.relationships.UserToProjectRelationship;
+import server.entities.user_to_group.relationships.UserToTeamRelationship;
 import server.repositories.UnregisteredUserRepository;
 import server.repositories.UserRepository;
 import server.repositories.group.InterviewRepository;
@@ -86,16 +98,10 @@ public class UserController {
   private UnregisteredUserRepository unregisteredUserRepository;
 
   @Autowired
-  private TeamController teamController;
-
-  @Autowired
-  private ProjectController projectController;
-
-  @Autowired
-  private OrganizationController organizationController;
-
-  @Autowired
   private InterviewRepository interviewRepository;
+
+  @Autowired
+  private RelationshipFactory relationshipFactory;
 
   @Value("${fuse.requireRegistration}")
   private boolean requireRegistration;
@@ -179,7 +185,7 @@ public class UserController {
       }
     }
 
-    return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+    return new GeneralResponse(response, Status.DENIED, errors);
   }
 
   @PostMapping(path = "/logout")
@@ -192,7 +198,7 @@ public class UserController {
     } else {
       List<String> errors = new ArrayList<>();
       errors.add("No active session");
-      return new GeneralResponse(response, GeneralResponse.Status.ERROR, errors);
+      return new GeneralResponse(response, Status.ERROR, errors);
     }
   }
 
@@ -244,7 +250,7 @@ public class UserController {
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new GeneralResponse(response, Status.DENIED, errors);
     }
 
     User userToSave = session.get().getUser();
@@ -258,7 +264,7 @@ public class UserController {
       userToSave.setEncoded_password(userData.getEncoded_password());
 
     userRepository.save(userToSave);
-    return new GeneralResponse(response, GeneralResponse.Status.OK);
+    return new GeneralResponse(response, Status.OK);
   }
 
   @GetMapping(path = "/all")
@@ -371,30 +377,125 @@ public class UserController {
     }
 
     User user = session.get().getUser();
+    if (!user.getId().equals(savedInvitation.getReceiver().getId())) {
+      errors.add(INSUFFICIENT_PRIVELAGES);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+
     Team group = savedInvitation.getGroup();
     UserToTeamPermission permission = permissionFactory.createUserToTeamPermission(user, group);
 
-    Optional<Integer> roleFromInvitationType = RolesUtility.getRoleFromInvitationType(savedInvitation.getType());
+    UserToTeamRelationship userToTeamRelationship = relationshipFactory.createUserToTeamRelationship(user, group);
+    PossibleError possibleError = addRelationshipsIfNotError(savedInvitation, permission, userToTeamRelationship);
+
+    if (!possibleError.hasError()) {
+      savedInvitation.setStatus(ACCEPTED);
+      teamInvitationRepository.save(savedInvitation);
+    }
+    return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
+  }
+
+  @PostMapping(path = "/accept/invite/project")
+  @ResponseBody
+  public GeneralResponse acceptProjectInvite(@RequestBody ProjectInvitation projectInvitation, HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+
+    ProjectInvitation savedInvitation = projectInvitationRepository.findOne(projectInvitation.getId());
+    if (savedInvitation == null) {
+      errors.add(NO_INVITATION_FOUND);
+      return new GeneralResponse(response, BAD_DATA, errors);
+    }
+
+    User user = session.get().getUser();
+    if (!user.getId().equals(savedInvitation.getReceiver().getId())) {
+      errors.add(INSUFFICIENT_PRIVELAGES);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+
+    Project group = savedInvitation.getGroup();
+    UserToProjectPermission permission = permissionFactory.createUserToProjectPermission(user, group);
+
+    UserToProjectRelationship userToTeamRelationship = relationshipFactory.createUserToProjectRelationship(user, group);
+    PossibleError possibleError = addRelationshipsIfNotError(savedInvitation, permission, userToTeamRelationship);
+
+    if (!possibleError.hasError()) {
+      savedInvitation.setStatus(ACCEPTED);
+      projectInvitationRepository.save(savedInvitation);
+    }
+    return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
+  }
+
+
+  @PostMapping(path = "/accept/invite/organization")
+  @ResponseBody
+  public GeneralResponse acceptOrganizationInvite(@RequestBody OrganizationInvitation organizationInvitation, HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+
+    OrganizationInvitation savedInvitation = organizationInvitationRepository.findOne(organizationInvitation.getId());
+    if (savedInvitation == null) {
+      errors.add(NO_INVITATION_FOUND);
+      return new GeneralResponse(response, BAD_DATA, errors);
+    }
+
+    User user = session.get().getUser();
+    if (!user.getId().equals(savedInvitation.getReceiver().getId())) {
+      errors.add(INSUFFICIENT_PRIVELAGES);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+
+    Organization group = savedInvitation.getGroup();
+    UserToOrganizationPermission permission = permissionFactory.createUserToOrganizationPermission(user, group);
+
+    UserToOrganizationRelationship userToTeamRelationship = relationshipFactory.createUserToOrganizationRelationship(user, group);
+    PossibleError possibleError = addRelationshipsIfNotError(savedInvitation, permission, userToTeamRelationship);
+
+    if (!possibleError.hasError()) {
+      savedInvitation.setStatus(ACCEPTED);
+      organizationInvitationRepository.save(savedInvitation);
+    }
+    return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
+  }
+
+
+  private PossibleError addRelationshipsIfNotError(GroupInvitation invitation, UserToGroupPermission permission,
+                                                   UserToGroupRelationship relationship) {
+
+    List<String> errors = new ArrayList<>();
+
+    User user = invitation.getReceiver();
+    Optional<Integer> roleFromInvitationType = RolesUtility.getRoleFromInvitationType(invitation.getType());
     if (!roleFromInvitationType.isPresent()) {
       errors.add(INVALID_FIELDS);
-      return new GeneralResponse(response, errors);
+      return new PossibleError(errors);
     }
 
     switch (roleFromInvitationType.get()) {
       case INVITED_TO_INTERVIEW:
-        Interview interview = savedInvitation.getInterview();
+        Interview interview = invitation.getInterview();
         if (interview == null) {
           errors.add(INVALID_FIELDS);
-          return new GeneralResponse(response, errors);
+          return new PossibleError(errors);
         }
 
         if (!permission.hasRole(INVITED_TO_INTERVIEW)) {
           errors.add(INSUFFICIENT_PRIVELAGES);
-          return new GeneralResponse(response, errors);
+          return new PossibleError(errors);
         }
 
-        teamController.addRelationship(user, group, TO_INTERVIEW);
-        teamController.removeRelationship(user, group, INVITED_TO_INTERVIEW);
+        relationship.addRelationship(TO_INTERVIEW);
+        relationship.addRelationship(INVITED_TO_INTERVIEW);
 
         interview.setUser(user);
         interview.setAvailability(NOT_AVAILABLE);
@@ -403,16 +504,14 @@ public class UserController {
       case INVITED_TO_JOIN:
         if (permission.canJoin() != JoinResult.HAS_INVITE) {
           errors.add(INSUFFICIENT_PRIVELAGES);
-          return new GeneralResponse(response, errors);
+          return new PossibleError(errors);
         }
-        teamController.addRelationship(user, group, DEFAULT_USER);
-        teamController.removeRelationship(user, group, INVITED_TO_JOIN);
+        relationship.addRelationship(DEFAULT_USER);
+        relationship.removeRelationship(INVITED_TO_JOIN);
         break;
     }
 
-    savedInvitation.setStatus(ACCEPTED);
-    teamInvitationRepository.save(savedInvitation);
-    return new GeneralResponse(response);
+    return new PossibleError(Status.OK);
   }
 
 
