@@ -9,6 +9,7 @@ import lombok.Getter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import javax.persistence.*;
+import javax.persistence.Transient;
 import java.util.Objects;
 
 @Entity

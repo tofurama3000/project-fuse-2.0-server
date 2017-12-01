@@ -9,13 +9,15 @@ import server.entities.dto.group.team.Team;
 import server.entities.dto.group.team.TeamMember;
 import server.repositories.group.GroupMemberRepository;
 
+import java.util.List;
+
 @Transactional
 public interface TeamMemberRepository extends GroupMemberRepository<Team, TeamMember> {
   @Query("SELECT user FROM TeamMember a where a.team = :group")
-  Iterable<User> getUsersByGroup(@Param("group") Team group);
+  List<User> getUsersByGroup(@Param("group") Team group);
 
   @Query("SELECT roleId FROM TeamMember a where a.team = :group AND a.user = :user")
-  Iterable<Integer> getRoles(@Param("group") Team group, @Param("user") User user);
+  List<Integer> getRoles(@Param("group") Team group, @Param("user") User user);
 
   @Modifying(clearAutomatically = true)
   @Query("DELETE from TeamMember a where a.team =:group AND a.user =:user and a.roleId = :roleId")

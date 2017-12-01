@@ -16,9 +16,10 @@ import server.entities.dto.group.organization.OrganizationProfile;
 import server.entities.dto.group.team.Team;
 import server.entities.dto.group.team.TeamInvitation;
 import server.entities.dto.group.team.TeamMember;
+import server.entities.user_to_group.permissions.PermissionFactory;
+import server.entities.user_to_group.permissions.UserToGroupPermission;
+import server.entities.user_to_group.relationships.RelationshipFactory;
 import server.entities.dto.group.team.TeamProfile;
-import server.permissions.PermissionFactory;
-import server.permissions.UserToGroupPermission;
 import server.repositories.group.GroupMemberRepository;
 import server.repositories.group.GroupProfileRepository;
 import server.repositories.group.GroupRepository;
@@ -53,7 +54,20 @@ public class TeamController extends GroupController<Team, TeamMember> {
   private PermissionFactory permissionFactory;
 
   @Autowired
+  private RelationshipFactory relationshipFactory;
+
+  @Autowired
   private SessionFactory sessionFactory;
+
+  @Override
+  public void addRelationship(User user, Team team, int role) {
+    relationshipFactory.createUserToTeamRelationship(user, team).addRelationship(role);
+  }
+
+  @Override
+  protected void removeRelationship(User user, Team group, int role) {
+    relationshipFactory.createUserToTeamRelationship(user, group).removeRelationship(role);
+  }
 
   @Override
   protected Team createGroup() {
@@ -83,16 +97,6 @@ public class TeamController extends GroupController<Team, TeamMember> {
   @Override
   protected UserToGroupPermission getUserToGroupPermission(User user, Team team) {
     return permissionFactory.createUserToTeamPermission(user, team);
-  }
-
-  @Override
-  protected void addRelationship(User user, Team team, int role) {
-    TeamMember member = new TeamMember();
-    member.setUser(user);
-    member.setTeam(team);
-    member.setRoleId(role);
-
-    teamMemberRepository.save(member);
   }
 
   @PostMapping(path = "/invite")

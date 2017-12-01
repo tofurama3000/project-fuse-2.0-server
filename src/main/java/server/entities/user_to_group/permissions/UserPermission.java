@@ -1,4 +1,4 @@
-package server.permissions;
+package server.entities.user_to_group.permissions;
 
 import lombok.Setter;
 import server.controllers.FuseSessionController;

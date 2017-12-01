@@ -1,7 +1,6 @@
 package server.entities.dto;
 
 import lombok.Data;
-import lombok.Getter;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -33,7 +32,6 @@ public class Message {
   @Column(name = "message")
   private String message;
 
-  @Getter
   private Timestamp sent;
 
 }

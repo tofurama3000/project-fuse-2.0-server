@@ -5,6 +5,7 @@ import static server.entities.Restriction.NONE;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import server.entities.Interviewable;
 import server.entities.Restriction;
 import server.entities.dto.User;
 import server.entities.dto.group.project.Project;
@@ -25,10 +26,10 @@ public abstract class Group<Profile extends GroupProfile> {
   @GeneratedValue(strategy = GenerationType.AUTO)
   private Long id;
 
-
   @ManyToOne
   @JoinColumn(name = "owner_id", referencedColumnName = "id")
   private User owner;
+
   private String name;
 
   @Column(name = "restriction")

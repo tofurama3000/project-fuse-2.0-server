@@ -15,14 +15,13 @@ public class Organization extends Group<OrganizationProfile> {
   @JoinColumn(name = "id", referencedColumnName = "organization_profile_id")
   private OrganizationProfile profile;
 
-  @Override
-  public String getTableName() {
-    return Organization.class.getSimpleName();
-  }
+  @JoinColumn(name = "id", referencedColumnName = "group_id")
+  @OneToOne
+  private OrganizationSettings organizationSettings;
 
   @Override
-  public String getRelationshipTableName() {
-    return OrganizationMember.class.getSimpleName();
+  public String getGroupType() {
+    return "Organization";
   }
 
   @Override
