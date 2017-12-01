@@ -1,5 +1,6 @@
 package server.entities.dto.group.project;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.Data;
 import server.entities.dto.group.GroupProfile;
 
@@ -14,6 +15,7 @@ import javax.persistence.Table;
 public class ProjectProfile extends GroupProfile<Project> {
 
   @OneToOne
+  @JsonBackReference
   @JoinColumn(name = "project_id", referencedColumnName = "id")
   private Project project;
 

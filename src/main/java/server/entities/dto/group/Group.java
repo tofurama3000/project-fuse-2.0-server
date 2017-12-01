@@ -20,7 +20,7 @@ import javax.persistence.MappedSuperclass;
 
 @Data
 @MappedSuperclass
-public abstract class Group<Profile extends GroupProfile> {
+public abstract class Group<Profile extends GroupProfile> implements  Interviewable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
@@ -47,15 +47,12 @@ public abstract class Group<Profile extends GroupProfile> {
     restrictionString = restriction;
   }
 
-  @JsonIgnore
-  public abstract String getTableName();
-
-  @JsonIgnore
-  public abstract String getRelationshipTableName();
-
-
   public abstract Profile getProfile();
 
-
   public abstract void setProfile(Profile p);
+
+  @Override
+  public String toString() {
+    return getGroupType() + " " + getName() + " " + getOwner();
+  }
 }

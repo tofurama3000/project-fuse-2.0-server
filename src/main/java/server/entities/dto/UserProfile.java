@@ -1,10 +1,13 @@
 package server.entities.dto;
 
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.Data;
+import lombok.ToString;
 
 import javax.persistence.*;
 
+@ToString(exclude = "user")
 @Entity
 @Table(name = "user_profile")
 @Data
@@ -14,7 +17,8 @@ public class UserProfile {
   @GeneratedValue(strategy = GenerationType.AUTO)
   private long id;
 
-  @ManyToOne
+  @OneToOne
+  @JsonBackReference
   @JoinColumn(name = "user_id", referencedColumnName = "id")
   private User user;
 

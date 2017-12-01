@@ -1,13 +1,17 @@
 package server.entities.dto.group.team;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import lombok.ToString;
 import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupProfile;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
+@ToString(exclude = "profile")
 @Entity
 @Table(name = "team")
 public class Team extends Group<TeamProfile> {
@@ -16,18 +20,14 @@ public class Team extends Group<TeamProfile> {
   @OneToOne
   private TeamSettings teamSettings;
 
-  @OneToOne
+  @JsonManagedReference
+  @OneToOne(cascade = CascadeType.ALL)
   @JoinColumn(name = "team_profile_id", referencedColumnName = "id")
   private TeamProfile profile;
 
   @Override
   public String getGroupType() {
     return "Team";
-  }
-
-  @Override
-  public String getRelationshipTableName() {
-    return "TeamMember";
   }
 
   @Override

@@ -1,5 +1,6 @@
 package server.entities.dto.group.team;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.Data;
 import server.entities.dto.group.GroupProfile;
 
@@ -15,6 +16,7 @@ import javax.persistence.Transient;
 public class TeamProfile extends GroupProfile<Team> {
 
   @OneToOne
+  @JsonBackReference
   @JoinColumn(name = "team_id", referencedColumnName = "id")
   private Team team;
 

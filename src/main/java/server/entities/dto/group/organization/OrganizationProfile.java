@@ -1,6 +1,7 @@
 package server.entities.dto.group.organization;
 
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.Data;
 import server.entities.dto.group.GroupProfile;
 
@@ -15,6 +16,7 @@ import javax.persistence.Table;
 public class OrganizationProfile extends GroupProfile<Organization> {
 
   @OneToOne
+  @JsonBackReference
   @JoinColumn(name = "organization_id", referencedColumnName = "id")
   private Organization organization;
 

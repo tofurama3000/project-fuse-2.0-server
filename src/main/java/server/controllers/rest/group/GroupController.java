@@ -122,7 +122,6 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       Group savedEntity = getGroupRepository().save(entity);
       addRelationship(user, entity, OWNER);
       addRelationship(user, entity, ADMIN);
-
       return new GeneralResponse(response, OK, null, savedEntity);
     } else {
       errors.add("entity name already exists for user");
