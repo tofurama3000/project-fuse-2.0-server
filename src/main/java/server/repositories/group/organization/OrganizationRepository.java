@@ -7,8 +7,10 @@ import server.entities.dto.User;
 import server.entities.dto.group.organization.Organization;
 import server.repositories.group.GroupRepository;
 
+import java.util.List;
+
 @Transactional
 public interface OrganizationRepository extends GroupRepository<Organization> {
   @Query("From Organization t WHERE t.owner =:owner AND t.name=:name")
-  Iterable<Organization> getGroups(@Param("owner") User user, @Param("name") String name);
+  List<Organization> getGroups(@Param("owner") User user, @Param("name") String name);
 }

@@ -410,7 +410,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
   @SuppressWarnings("unchecked")
   private List<T> getGroupsWith(User owner, T group) {
-    return toList(getGroupRepository().getGroups(owner, group.getName()));
+    return getGroupRepository().getGroups(owner, group.getName());
   }
 
   private List<User> getMembersOf(T group) {
@@ -418,12 +418,6 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     Iterable<User> usersByGroup = getRelationshipRepository().getUsersByGroup(group);
     usersByGroup.forEach(users::add);
     return users;
-  }
-
-  private List<T> toList(Iterable<T> iterable) {
-    List<T> list = new ArrayList<>();
-    iterable.forEach(list::add);
-    return list;
   }
 
   private boolean isValidInterviewSlots(List<Interview> interviews, User user) {

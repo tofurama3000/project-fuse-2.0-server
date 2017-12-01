@@ -6,7 +6,9 @@ import org.springframework.data.repository.query.Param;
 import server.entities.dto.User;
 import server.entities.dto.group.Group;
 
+import java.util.List;
+
 @NoRepositoryBean
 public interface GroupRepository<T extends Group> extends CrudRepository<T, Long> {
-  Iterable<T> getGroups(@Param("owner") User user, @Param("name") String name);
+  List<T> getGroups(@Param("owner") User user, @Param("name") String name);
 }
