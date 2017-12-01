@@ -1,6 +1,7 @@
 package server.entities.dto.group.project;
 
-import server.entities.dto.group.Group;
+import lombok.Data;
+import server.entities.dto.group.GroupSettings;
 
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
@@ -8,12 +9,13 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "project")
-public class Project extends Group {
+@Table(name = "project_settings")
+@Data
+public class ProjectSettings extends GroupSettings {
 
-  @JoinColumn(name = "id", referencedColumnName = "group_id")
   @OneToOne
-  private ProjectSettings projectSettings;
+  @JoinColumn(name = "group_id", referencedColumnName = "id")
+  private Project project;
 
   @Override
   public String getGroupType() {

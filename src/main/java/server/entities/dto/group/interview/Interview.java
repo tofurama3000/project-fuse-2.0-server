@@ -1,5 +1,6 @@
 package server.entities.dto.group.interview;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import javax.persistence.Column;
@@ -8,7 +9,9 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 @Data
 @Entity
@@ -20,9 +23,28 @@ public class Interview {
   private Long id;
 
   @Column(name = "start_time")
-  private Timestamp startDateTime;
+  private LocalDateTime startDateTime;
 
   @Column(name = "end_time")
-  private Timestamp endDateTime;
+  private LocalDateTime endDateTime;
 
+  @Column(name = "group_type")
+  @JsonIgnore
+  private String groupType;
+
+  @Column(name = "group_id")
+  private Long groupId;
+
+  @Column(name = "available")
+  private char availability;
+
+  public void setStartDateTime(String dateTime) {
+    ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateTime);
+    startDateTime = zonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+  }
+
+  public void setEndDateTime(String dateTime) {
+    ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateTime);
+    endDateTime = zonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+  }
 }

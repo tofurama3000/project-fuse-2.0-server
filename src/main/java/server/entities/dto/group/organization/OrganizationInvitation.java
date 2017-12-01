@@ -12,6 +12,7 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "organization_invitation")
 public class OrganizationInvitation extends GroupInvitation<Organization> {
+
   @ManyToOne
   @JoinColumn(name = "organization_id", referencedColumnName = "id")
   private Organization organization;
