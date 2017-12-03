@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import server.entities.dto.User;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.organization.OrganizationMember;
+import server.entities.dto.group.team.Team;
 import server.repositories.group.GroupMemberRepository;
 
 import java.util.List;
@@ -18,6 +19,9 @@ public interface OrganizationMemberRepository extends GroupMemberRepository<Orga
 
   @Query("SELECT roleId FROM OrganizationMember a where a.organization = :group AND a.user = :user")
   List<Integer> getRoles(@Param("group") Organization group, @Param("user") User user);
+
+  @Query("SELECT organization FROM OrganizationMember a where a.user = :user AND a.roleId = :roleId")
+  List<Organization> getGroups(@Param("user") User member, @Param("roleId") int roleId);
 
   @Modifying(clearAutomatically = true)
   @Query("DELETE from OrganizationMember a where a.organization =:group AND a.user =:user and a.roleId = :roleId")
