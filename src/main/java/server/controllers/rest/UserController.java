@@ -13,6 +13,7 @@ import static server.controllers.rest.response.GeneralResponse.Status.OK;
 import com.google.common.hash.Hashing;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.AlternativeJdkIdGenerator;
@@ -30,6 +31,7 @@ import server.permissions.PermissionFactory;
 import server.permissions.UserPermission;
 import server.repositories.UnregisteredUserRepository;
 import server.repositories.UserRepository;
+import server.repositories.group.FileDownloadRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
 import server.repositories.group.project.ProjectInvitationRepository;
 import server.repositories.group.team.TeamInvitationRepository;
@@ -85,6 +87,9 @@ public class UserController {
 
     @Autowired
     private FileRepository fileRepository;
+
+    @Autowired
+    private FileDownloadRepository fileDownloadRepository;
 
     @Value("${fuse.fileUploadPath}")
     private String fileUploadPath;
@@ -300,13 +305,13 @@ public class UserController {
 
     @PostMapping(path = "/fileUpload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public GeneralResponse fileUpload( @RequestParam("file") CommonsMultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public GeneralResponse fileUpload(@RequestParam("file") CommonsMultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
         List<String> errors = new ArrayList<>();
 
         Optional<FuseSession> session = fuseSessionController.getSession(request);
         if (!session.isPresent()) {
-          errors.add(INVALID_SESSION);
-          return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+            errors.add(INVALID_SESSION);
+            return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
         }
         User currentUser = session.get().getUser();
         UploadFile uploadFile;
@@ -314,16 +319,14 @@ public class UserController {
             if (fileToUpload.getSize() > 0 && fileToUpload.getName().equals("file")) {
                 uploadFile = new UploadFile();
 
-                String fileName = Hashing.sha256()
-                        .hashString(currentUser.getEmail() + fileToUpload.getOriginalFilename(), StandardCharsets.UTF_8)
+                String hash = Hashing.sha256()
+                        .hashString(fileToUpload.getOriginalFilename(), StandardCharsets.UTF_8)
                         .toString();
-
+                Timestamp ts = new Timestamp(System.currentTimeMillis());
+                String fileName = hash + "." + ts.toString() + "." + currentUser.getId().toString();
                 File fileToSave = new File(fileUploadPath, fileName);
                 fileToUpload.transferTo(fileToSave);
-
-                Timestamp ts = new Timestamp(System.currentTimeMillis());
-                fileName += ts.toString() + currentUser.getId().toString();
-                uploadFile.setHash(fileName);
+                uploadFile.setHash(hash);
                 uploadFile.setUpload_time(ts);
                 uploadFile.setFile_size(fileToUpload.getSize());
                 uploadFile.setFileName(fileToUpload.getOriginalFilename());
@@ -338,8 +341,25 @@ public class UserController {
 
     @GetMapping(path = "/fileDownload/{id}")
     @ResponseBody
-    public GeneralResponse fileDownload(@PathVariable(value = "id") Long id, HttpServletResponse response) throws Exception {
-        return null;
+    public FileSystemResource fileDownload(@PathVariable(value = "id") Long id, HttpServletResponse response, HttpServletRequest request) throws Exception {
+        List<String> errors = new ArrayList<>();
+
+        Optional<FuseSession> session = fuseSessionController.getSession(request);
+        if (!session.isPresent()) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return null;
+        }
+        User currentUser = session.get().getUser();
+        UploadFile fileToFind = fileDownloadRepository.findOne(id);
+        if (fileToFind == null) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return null;
+        }
+        String contentType = fileToFind.getMime_type();
+        String originalFileName = fileToFind.getFileName();
+        String fileName = fileToFind.getHash() + "." + fileToFind.getUpload_time() + "." + fileToFind.getUser().getId();
+        File file = new File(fileUploadPath, fileName);
+        return new FileSystemResource(file);
     }
 
     @GetMapping(path = "/{id}")
