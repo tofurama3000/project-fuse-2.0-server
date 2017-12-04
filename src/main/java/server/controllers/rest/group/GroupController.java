@@ -28,13 +28,7 @@ import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.CannedResponse;
 import server.controllers.rest.response.GeneralResponse;
@@ -145,6 +139,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     }
   }
 
+  @CrossOrigin
   @PutMapping(path = "/{id}/update")
   @ResponseBody
   public GeneralResponse updateGroup(@PathVariable(value = "id") long id, @RequestBody T groupData, HttpServletRequest request, HttpServletResponse response) {
@@ -161,7 +156,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     T groupToSave = getGroupRepository().findOne(id);
 
     UserToGroupPermission permission = getUserToGroupPermission(user, groupToSave);
-    boolean canUpdate = permission.canUpdate();
+    boolean canUpdate = permission.canUpdate() || user.getId().equals(groupToSave.getOwner().getId());
     if (!canUpdate) {
       errors.add(INSUFFICIENT_PRIVELAGES);
       return new GeneralResponse(response, DENIED, errors);
