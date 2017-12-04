@@ -32,5 +32,4 @@ public abstract class GroupMember<T extends Group> {
   @ManyToOne
   @JoinColumn(name = "user_id", referencedColumnName = "id")
   private User user;
-
 }

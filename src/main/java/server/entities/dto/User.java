@@ -1,21 +1,20 @@
 package server.entities.dto;
 
 import static server.constants.RegistrationStatus.UNREGISTERED;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Getter;
+import lombok.ToString;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import javax.persistence.Transient;
 import java.util.Objects;
 
+@ToString(exclude = "user")
 @Entity
 @Table(name = "user")
 @Data
@@ -29,6 +28,11 @@ public class User {
 
   @JsonIgnore
   private String encoded_password;
+
+  @JsonManagedReference
+  @OneToOne(cascade = CascadeType.ALL)
+  @JoinColumn(name = "user_profile_id", referencedColumnName = "id")
+  private UserProfile userProfile;
 
   @JsonIgnore
   @Getter(AccessLevel.NONE)
