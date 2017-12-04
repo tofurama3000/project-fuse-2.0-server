@@ -168,7 +168,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     boolean canUpdate = permission.canUpdate();
     if (!canUpdate) {
       errors.add(INSUFFICIENT_PRIVELAGES);
-      return new GeneralResponse(response, DENIED, errors);
+      return new GeneralResponse(response, DENIED, errors); 
     }
 
     // Merging instead of direct copying ensures we're very clear about what can be edited, and it provides easy checks
