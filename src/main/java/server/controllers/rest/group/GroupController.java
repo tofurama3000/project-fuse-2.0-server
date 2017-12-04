@@ -165,7 +165,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     T groupToSave = getGroupRepository().findOne(id);
 
     UserToGroupPermission permission = getUserToGroupPermission(user, groupToSave);
-    boolean canUpdate = permission.canUpdate() || user.getId().equals(groupToSave.getOwner().getId());
+    boolean canUpdate = permission.canUpdate();
     if (!canUpdate) {
       errors.add(INSUFFICIENT_PRIVELAGES);
       return new GeneralResponse(response, DENIED, errors);

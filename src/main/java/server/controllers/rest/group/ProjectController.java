@@ -82,12 +82,12 @@ public class ProjectController extends GroupController<Project, ProjectMember> {
 
   @Override
   protected void removeRelationship(User user, Project group, int role) {
-    relationshipFactory.createUserToProjectRelationship(user, group).addRelationship(role);
+    relationshipFactory.createUserToProjectRelationship(user, group).removeRelationship(role);
   }
 
   @Override
   protected void addRelationship(User user, Project group, int role) {
-    relationshipFactory.createUserToProjectRelationship(user, group).removeRelationship(role);
+    relationshipFactory.createUserToProjectRelationship(user, group).addRelationship(role);
   }
 
   @PostMapping(path = "/invite")
