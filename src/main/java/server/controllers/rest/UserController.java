@@ -112,7 +112,7 @@ public class UserController {
   private static IdGenerator generator = new AlternativeJdkIdGenerator();
 
 
-  @PostMapping(path = "/add")
+  @PostMapping(path = "/create")
   @ResponseBody
   public GeneralResponse addNewUser(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
 
