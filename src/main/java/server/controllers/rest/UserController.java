@@ -17,6 +17,7 @@ import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
 import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
 import static server.controllers.rest.response.GeneralResponse.Status.OK;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -32,6 +33,8 @@ import server.entities.PossibleError;
 import server.entities.dto.FuseSession;
 import server.entities.dto.UnregisteredUser;
 import server.entities.dto.User;
+import server.entities.dto.UserProfile;
+import server.entities.dto.group.GroupProfile;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.interview.Interview;
 import server.entities.dto.group.organization.Organization;
@@ -53,6 +56,7 @@ import server.entities.user_to_group.relationships.UserToOrganizationRelationshi
 import server.entities.user_to_group.relationships.UserToProjectRelationship;
 import server.entities.user_to_group.relationships.UserToTeamRelationship;
 import server.repositories.UnregisteredUserRepository;
+import server.repositories.UserProfileRepository;
 import server.repositories.UserRepository;
 import server.repositories.group.InterviewRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
@@ -87,6 +91,9 @@ public class UserController {
 
   @Autowired
   private ProjectInvitationRepository projectInvitationRepository;
+
+  @Autowired
+  private UserProfileRepository userProfileRepository;
 
   @Autowired
   private OrganizationInvitationRepository organizationInvitationRepository;
@@ -246,7 +253,7 @@ public class UserController {
   @PutMapping(path = "/update_current")
   @ResponseBody
   public GeneralResponse updateCurrentUser(@RequestBody User userData, HttpServletRequest request, HttpServletResponse response) {
-
+    //to Use userProfile for profile
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -264,6 +271,15 @@ public class UserController {
     if (userData.getEncoded_password() != null)
       userToSave.setEncoded_password(userData.getEncoded_password());
 
+    if (userData.getUserProfile() != null) {
+      if (userToSave.getUserProfile() == null) {
+        userData.getUserProfile().setUser(userToSave);
+        UserProfile profile = userProfileRepository.save(userData.getUserProfile());
+        userToSave.setUserProfile(profile);
+      } else {
+        userToSave.setUserProfile(userToSave.getUserProfile().merge(userToSave.getUserProfile(), userData.getUserProfile()));
+      }
+    }
     userRepository.save(userToSave);
     return new GeneralResponse(response, Status.OK);
   }

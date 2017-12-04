@@ -2,11 +2,13 @@ package server.entities.dto.group;
 
 import static server.entities.Restriction.INVITE;
 import static server.entities.Restriction.NONE;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import server.entities.Interviewable;
 import server.entities.Restriction;
 import server.entities.dto.User;
+import server.entities.dto.group.project.Project;
 
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
@@ -18,7 +20,7 @@ import javax.persistence.MappedSuperclass;
 
 @Data
 @MappedSuperclass
-public abstract class Group implements Interviewable {
+public abstract class Group<Profile extends GroupProfile> implements  Interviewable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
@@ -45,4 +47,12 @@ public abstract class Group implements Interviewable {
     restrictionString = restriction;
   }
 
+  public abstract Profile getProfile();
+
+  public abstract void setProfile(Profile p);
+
+  @Override
+  public String toString() {
+    return getGroupType() + " " + getName() + " " + getOwner();
+  }
 }
