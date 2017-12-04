@@ -36,7 +36,6 @@ public class Organization extends Group<OrganizationProfile> {
 
   @Override
   public void setProfile(OrganizationProfile p) {
-    profile.setHeadline(p.getHeadline());
-    profile.setSummary(p.getSummary());
+    profile = p;
   }
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.ToString;
 import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupProfile;
+import server.entities.dto.group.team.TeamProfile;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -37,7 +38,8 @@ public class Project extends Group<ProjectProfile> {
 
   @Override
   public void setProfile(ProjectProfile p) {
-    profile.setHeadline(p.getHeadline());
-    profile.setSummary(p.getSummary());
+    profile = p;
   }
+
+
 }
