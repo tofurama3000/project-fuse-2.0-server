@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
+import server.controllers.MembersOfGroupController;
 import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.GeneralResponse.Status;
 import server.email.StandardEmailSender;
@@ -61,8 +62,10 @@ import server.repositories.UnregisteredUserRepository;
 import server.repositories.UserRepository;
 import server.repositories.group.InterviewRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
+import server.repositories.group.organization.OrganizationMemberRepository;
 import server.repositories.group.project.ProjectInvitationRepository;
 import server.repositories.group.team.TeamInvitationRepository;
+import server.repositories.group.team.TeamMemberRepository;
 import server.utility.RolesUtility;
 
 import javax.servlet.http.HttpServletRequest;
@@ -102,6 +105,9 @@ public class UserController {
 
   @Autowired
   private RelationshipFactory relationshipFactory;
+
+  @Autowired
+  private MembersOfGroupController membersOfGroupController;
 
   @Value("${fuse.requireRegistration}")
   private boolean requireRegistration;
@@ -272,6 +278,53 @@ public class UserController {
   public GeneralResponse getAllUsers(HttpServletResponse response) {
     return new GeneralResponse(response, OK, null, userRepository.findAll());
   }
+
+  @GetMapping(path = "/joined/teams")
+  @ResponseBody
+  public GeneralResponse getAllTeamsOfUser(HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
+    User user = session.get().getUser();
+
+    return new GeneralResponse(response, OK, null, membersOfGroupController.getTeamsUserIsPartOf(user));
+  }
+
+  @GetMapping(path = "/joined/organizations")
+  @ResponseBody
+  public GeneralResponse getAllOrganizationsOfUser(HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
+    User user = session.get().getUser();
+
+    return new GeneralResponse(response, OK, null, membersOfGroupController.getOrganizationsUserIsPartOf(user));
+  }
+
+
+  @GetMapping(path = "/joined/projects")
+  @ResponseBody
+  public GeneralResponse getAllProjectsOfUser(HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
+    User user = session.get().getUser();
+
+    return new GeneralResponse(response, OK, null, membersOfGroupController.getProjectsUserIsPartOf(user));
+  }
+
 
   @GetMapping(path = "/register/{registrationKey}")
   @ResponseBody

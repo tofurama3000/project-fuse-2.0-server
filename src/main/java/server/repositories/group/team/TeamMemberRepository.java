@@ -19,6 +19,9 @@ public interface TeamMemberRepository extends GroupMemberRepository<Team, TeamMe
   @Query("SELECT roleId FROM TeamMember a where a.team = :group AND a.user = :user")
   List<Integer> getRoles(@Param("group") Team group, @Param("user") User user);
 
+  @Query("SELECT team FROM TeamMember a where a.user = :user AND a.roleId = :roleId")
+  List<Team> getGroups(@Param("user") User member, @Param("roleId") int roleId);
+
   @Modifying(clearAutomatically = true)
   @Query("DELETE from TeamMember a where a.team =:group AND a.user =:user and a.roleId = :roleId")
   void delete(@Param("group") Team group, @Param("user") User user, @Param("roleId") int roleId);
