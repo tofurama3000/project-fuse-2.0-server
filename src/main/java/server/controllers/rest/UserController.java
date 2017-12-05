@@ -17,18 +17,17 @@ import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
 import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
 import static server.controllers.rest.response.GeneralResponse.Status.OK;
+
+import com.google.common.hash.Hashing;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.AlternativeJdkIdGenerator;
 import org.springframework.util.IdGenerator;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import server.controllers.FuseSessionController;
 import server.controllers.MembersOfGroupController;
 import server.controllers.rest.response.GeneralResponse;
@@ -61,46 +60,58 @@ import server.entities.user_to_group.relationships.UserToTeamRelationship;
 import server.repositories.UnregisteredUserRepository;
 import server.repositories.UserRepository;
 import server.repositories.group.InterviewRepository;
+import server.repositories.group.FileDownloadRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
 import server.repositories.group.organization.OrganizationMemberRepository;
 import server.repositories.group.project.ProjectInvitationRepository;
 import server.repositories.group.team.TeamInvitationRepository;
 import server.repositories.group.team.TeamMemberRepository;
 import server.utility.RolesUtility;
+import server.repositories.FileRepository;
+import server.entities.dto.UploadFile;
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+
 
 @Controller
 @RequestMapping(value = "/user")
 @SuppressWarnings("unused")
 public class UserController {
 
-  @Autowired
-  private UserRepository userRepository;
+    @Autowired
+    private UserRepository userRepository;
 
-  @Autowired
-  private FuseSessionController fuseSessionController;
+    @Autowired
+    private FuseSessionController fuseSessionController;
 
-  @Autowired
-  private PermissionFactory permissionFactory;
+    @Autowired
+    private PermissionFactory permissionFactory;
 
-  @Autowired
-  private TeamInvitationRepository teamInvitationRepository;
+    @Autowired
+    private TeamInvitationRepository teamInvitationRepository;
 
-  @Autowired
-  private ProjectInvitationRepository projectInvitationRepository;
+    @Autowired
+    private ProjectInvitationRepository projectInvitationRepository;
 
-  @Autowired
-  private OrganizationInvitationRepository organizationInvitationRepository;
+    @Autowired
+    private OrganizationInvitationRepository organizationInvitationRepository;
 
-  @Autowired
-  private UnregisteredUserRepository unregisteredUserRepository;
+    @Autowired
+    private UnregisteredUserRepository unregisteredUserRepository;
 
-  @Autowired
+    @Autowired
   private InterviewRepository interviewRepository;
 
   @Autowired
@@ -110,176 +121,145 @@ public class UserController {
   private MembersOfGroupController membersOfGroupController;
 
   @Value("${fuse.requireRegistration}")
-  private boolean requireRegistration;
+    private boolean requireRegistration;
 
-  @Autowired
-  private StandardEmailSender emailSender;
+    @Autowired
+    private StandardEmailSender emailSender;
 
-  private static IdGenerator generator = new AlternativeJdkIdGenerator();
+    @Autowired
+    private FileRepository fileRepository;
+
+    @Autowired
+    private FileDownloadRepository fileDownloadRepository;
+
+    @Value("${fuse.fileUploadPath}")
+    private String fileUploadPath;
+
+    private static IdGenerator generator = new AlternativeJdkIdGenerator();
 
 
-  @PostMapping(path = "/add")
-  @ResponseBody
-  public GeneralResponse addNewUser(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
+    @PostMapping(path = "/add")
+    @ResponseBody
+    public GeneralResponse addNewUser(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
 
-    List<String> errors = new ArrayList<>();
+        List<String> errors = new ArrayList<>();
 
-    if (user != null) {
-      if (user.getName() == null)
-        errors.add("Missing Name");
-      if (user.getEncoded_password() == null)
-        errors.add("Missing Password");
-      if (user.getEmail() == null)
-        errors.add("Missing Email");
-      if (errors.size() == 0 && userRepository.findByEmail(user.getEmail()) != null)
-        errors.add("Username already exists!");
-    } else {
-      errors.add("No request body found");
-    }
-
-    if (errors.size() != 0) {
-      return new GeneralResponse(response, errors);
-    }
-
-    assert user != null;
-
-    if (requireRegistration) {
-      user.setRegistrationStatus(UNREGISTERED);
-    } else {
-      user.setRegistrationStatus(REGISTERED);
-    }
-
-    User savedUser = userRepository.save(user);
-    Long id = savedUser.getId();
-
-    if (requireRegistration) {
-      String registrationKey = generator.generateId().toString();
-
-      UnregisteredUser unregisteredUser = new UnregisteredUser();
-      unregisteredUser.setUserId(id);
-      unregisteredUser.setRegistrationKey(registrationKey);
-
-      unregisteredUserRepository.save(unregisteredUser);
-
-      emailSender.sendRegistrationEmail(user.getEmail(), registrationKey);
-    }
-
-    return new GeneralResponse(response, OK, errors, savedUser);
-  }
-
-  @PostMapping(path = "/login")
-  @ResponseBody
-  public GeneralResponse login(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
-
-    logoutIfLoggedIn(user, request);
-
-    List<String> errors = new ArrayList<>();
-    if (user == null) {
-      errors.add("Invalid Credentials");
-    } else {
-      User dbUser = userRepository.findByEmail(user.getEmail());
-
-      if (dbUser == null) {
-        errors.add("Invalid Credentials");
-      } else {
-        user.setEncoded_password(dbUser.getEncoded_password());
-
-        if (user.checkPassword()) {
-          return new GeneralResponse(response, OK, null, fuseSessionController.createSession(dbUser));
+        if (user != null) {
+            if (user.getName() == null)
+                errors.add("Missing Name");
+            if (user.getEncoded_password() == null)
+                errors.add("Missing Password");
+            if (user.getEmail() == null)
+                errors.add("Missing Email");
+            if (errors.size() == 0 && userRepository.findByEmail(user.getEmail()) != null)
+                errors.add("Username already exists!");
+        } else {
+            errors.add("No request body found");
         }
-        errors.add("Invalid Credentials");
-      }
+
+        if (errors.size() != 0) {
+            return new GeneralResponse(response, errors);
+        }
+
+        assert user != null;
+
+        if (requireRegistration) {
+            user.setRegistrationStatus(UNREGISTERED);
+        } else {
+            user.setRegistrationStatus(REGISTERED);
+        }
+
+        User savedUser = userRepository.save(user);
+        Long id = savedUser.getId();
+
+        if (requireRegistration) {
+            String registrationKey = generator.generateId().toString();
+
+            UnregisteredUser unregisteredUser = new UnregisteredUser();
+            unregisteredUser.setUserId(id);
+            unregisteredUser.setRegistrationKey(registrationKey);
+
+            unregisteredUserRepository.save(unregisteredUser);
+
+            emailSender.sendRegistrationEmail(user.getEmail(), registrationKey);
+        }
+
+        return new GeneralResponse(response, OK, errors, savedUser);
     }
 
-    return new GeneralResponse(response, Status.DENIED, errors);
-  }
+    @PostMapping(path = "/login")
+    @ResponseBody
+    public GeneralResponse login(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
 
-  @PostMapping(path = "/logout")
-  @ResponseBody
-  public GeneralResponse logout(HttpServletRequest request, HttpServletResponse response) {
-    Optional<FuseSession> session = fuseSessionController.getSession(request);
-    if (session.isPresent()) {
-      fuseSessionController.deleteSession(session.get());
-      return new GeneralResponse(response, OK);
-    } else {
-      List<String> errors = new ArrayList<>();
-      errors.add("No active session");
-      return new GeneralResponse(response, Status.ERROR, errors);
-    }
-  }
+        logoutIfLoggedIn(user, request);
 
-  @GetMapping(path = "/{id}")
-  @ResponseBody
-  public GeneralResponse getUserbyID(@PathVariable(value = "id") Long id, HttpServletResponse response) {
+        List<String> errors = new ArrayList<>();
+        if (user == null) {
+            errors.add("Invalid Credentials");
+        } else {
+            User dbUser = userRepository.findByEmail(user.getEmail());
 
-    List<String> errors = new ArrayList<>();
+            if (dbUser == null) {
+                errors.add("Invalid Credentials");
+            } else {
+                user.setEncoded_password(dbUser.getEncoded_password());
 
-    if (id == null) {
-      errors.add(INVALID_FIELDS);
-      return new GeneralResponse(response, BAD_DATA, errors);
-    }
+                if (user.checkPassword()) {
+                    return new GeneralResponse(response, OK, null, fuseSessionController.createSession(dbUser));
+                }
+                errors.add("Invalid Credentials");
+            }
+        }
 
-    User byId = userRepository.findOne(id);
-    if (byId == null) {
-      errors.add(NO_USER_FOUND);
-      return new GeneralResponse(response, BAD_DATA, errors);
+        return new GeneralResponse(response, Status.DENIED, errors);
     }
 
-    return new GeneralResponse(response, OK, null, byId);
-  }
-
-  @GetMapping(path = "/{email}")
-  @ResponseBody
-  public GeneralResponse getUserbyEmail(@PathVariable(value = "email") String email, HttpServletResponse response) {
-
-    List<String> errors = new ArrayList<>();
-
-    if (email == null) {
-      errors.add(INVALID_FIELDS);
-      return new GeneralResponse(response, BAD_DATA, errors);
+    @PostMapping(path = "/logout")
+    @ResponseBody
+    public GeneralResponse logout(HttpServletRequest request, HttpServletResponse response) {
+        Optional<FuseSession> session = fuseSessionController.getSession(request);
+        if (session.isPresent()) {
+            fuseSessionController.deleteSession(session.get());
+            return new GeneralResponse(response, OK);
+        } else {
+            List<String> errors = new ArrayList<>();
+            errors.add("No active session");
+            return new GeneralResponse(response, Status.ERROR, errors);
+        }
     }
 
-    User byEmail = userRepository.findByEmail(email);
-    if (byEmail == null) {
-      errors.add(NO_USER_FOUND);
-      return new GeneralResponse(response, BAD_DATA, errors);
+    @PutMapping(path = "/update_current")
+    @ResponseBody
+    public GeneralResponse updateCurrentUser(@RequestBody User userData, HttpServletRequest request, HttpServletResponse response) {
+
+        List<String> errors = new ArrayList<>();
+        Optional<FuseSession> session = fuseSessionController.getSession(request);
+        if (!session.isPresent()) {
+            errors.add(INVALID_SESSION);
+            return new GeneralResponse(response, Status.DENIED, errors);
+        }
+
+        User userToSave = session.get().getUser();
+
+        // Merging instead of direct copying ensures we're very clear about what can be edited, and it provides easy checks
+
+        if (userData.getName() != null)
+            userToSave.setName(userData.getName());
+
+        if (userData.getEncoded_password() != null)
+            userToSave.setEncoded_password(userData.getEncoded_password());
+
+        userRepository.save(userToSave);
+        return new GeneralResponse(response, Status.OK);
     }
 
-    return new GeneralResponse(response, OK, null, byEmail);
-  }
-
-  @PutMapping(path = "/update_current")
-  @ResponseBody
-  public GeneralResponse updateCurrentUser(@RequestBody User userData, HttpServletRequest request, HttpServletResponse response) {
-
-    List<String> errors = new ArrayList<>();
-    Optional<FuseSession> session = fuseSessionController.getSession(request);
-    if (!session.isPresent()) {
-      errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, Status.DENIED, errors);
+    @GetMapping(path = "/all")
+    @ResponseBody
+    public GeneralResponse getAllUsers(HttpServletResponse response) {
+        return new GeneralResponse(response, OK, null, userRepository.findAll());
     }
 
-    User userToSave = session.get().getUser();
-
-    // Merging instead of direct copying ensures we're very clear about what can be edited, and it provides easy checks
-
-    if (userData.getName() != null)
-      userToSave.setName(userData.getName());
-
-    if (userData.getEncoded_password() != null)
-      userToSave.setEncoded_password(userData.getEncoded_password());
-
-    userRepository.save(userToSave);
-    return new GeneralResponse(response, Status.OK);
-  }
-
-  @GetMapping(path = "/all")
-  @ResponseBody
-  public GeneralResponse getAllUsers(HttpServletResponse response) {
-    return new GeneralResponse(response, OK, null, userRepository.findAll());
-  }
-
-  @GetMapping(path = "/joined/teams")
+    @GetMapping(path = "/joined/teams")
   @ResponseBody
   public GeneralResponse getAllTeamsOfUser(HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
@@ -327,90 +307,89 @@ public class UserController {
 
 
   @GetMapping(path = "/register/{registrationKey}")
-  @ResponseBody
-  public GeneralResponse register(@PathVariable(value = "registrationKey") String registrationKey, HttpServletRequest request, HttpServletResponse response) {
-    List<String> errors = new ArrayList<>();
+    @ResponseBody
+    public GeneralResponse register(@PathVariable(value = "registrationKey") String registrationKey, HttpServletRequest request, HttpServletResponse response) {
+        List<String> errors = new ArrayList<>();
 
-    Optional<FuseSession> session = fuseSessionController.getSession(request);
-    if (!session.isPresent()) {
-      errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, DENIED, errors);
+        Optional<FuseSession> session = fuseSessionController.getSession(request);
+        if (!session.isPresent()) {
+            errors.add(INVALID_SESSION);
+            return new GeneralResponse(response, DENIED, errors);
+        }
+
+        User user = session.get().getUser();
+
+        UnregisteredUser unregisteredUser = unregisteredUserRepository.findOne(user.getId());
+
+        if (unregisteredUser == null) {
+            errors.add(NO_USER_FOUND);
+            return new GeneralResponse(response, errors);
+        }
+
+        if (!unregisteredUser.getRegistrationKey().equals(registrationKey)) {
+            errors.add(INVALID_REGISTRATION_KEY);
+            return new GeneralResponse(response, errors);
+        }
+
+        user.setRegistrationStatus(REGISTERED);
+        userRepository.save(user);
+
+        unregisteredUserRepository.delete(unregisteredUser);
+
+        return new GeneralResponse(response, OK, null,
+                projectInvitationRepository.findByReceiver(user));
     }
 
-    User user = session.get().getUser();
+    @GetMapping(path = "/incoming/invites/project")
+    @ResponseBody
+    public GeneralResponse getProjectInvites(HttpServletRequest request, HttpServletResponse response) {
+        List<String> errors = new ArrayList<>();
 
-    UnregisteredUser unregisteredUser = unregisteredUserRepository.findOne(user.getId());
+        Optional<FuseSession> session = fuseSessionController.getSession(request);
+        if (!session.isPresent()) {
+            errors.add(INVALID_SESSION);
+            return new GeneralResponse(response, DENIED, errors);
+        }
 
-    if (unregisteredUser == null) {
-      errors.add(NO_USER_FOUND);
-      return new GeneralResponse(response, errors);
+        User user = session.get().getUser();
+
+        return new GeneralResponse(response, OK, null,
+                projectInvitationRepository.findByReceiver(user));
     }
 
-    if (!unregisteredUser.getRegistrationKey().equals(registrationKey)) {
-      errors.add(INVALID_REGISTRATION_KEY);
-      return new GeneralResponse(response, errors);
+    @GetMapping(path = "/incoming/invites/organization")
+    @ResponseBody
+    public GeneralResponse getOrganizationInvites(HttpServletRequest request, HttpServletResponse response) {
+        List<String> errors = new ArrayList<>();
+
+        Optional<FuseSession> session = fuseSessionController.getSession(request);
+        if (!session.isPresent()) {
+            errors.add(INVALID_SESSION);
+            return new GeneralResponse(response, DENIED, errors);
+        }
+
+        User user = session.get().getUser();
+
+        return new GeneralResponse(response, OK, null,
+                organizationInvitationRepository.findByReceiver(user));
     }
-
-    user.setRegistrationStatus(REGISTERED);
-    userRepository.save(user);
-
-    unregisteredUserRepository.delete(unregisteredUser);
-
-    return new GeneralResponse(response, OK, null,
-        projectInvitationRepository.findByReceiver(user));
-  }
-
-  @GetMapping(path = "/incoming/invites/project")
-  @ResponseBody
-  public GeneralResponse getProjectInvites(HttpServletRequest request, HttpServletResponse response) {
-    List<String> errors = new ArrayList<>();
-
-    Optional<FuseSession> session = fuseSessionController.getSession(request);
-    if (!session.isPresent()) {
-      errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, DENIED, errors);
-    }
-
-    User user = session.get().getUser();
-
-    return new GeneralResponse(response, OK, null,
-        projectInvitationRepository.findByReceiver(user));
-  }
-
-  @GetMapping(path = "/incoming/invites/organization")
-  @ResponseBody
-  public GeneralResponse getOrganizationInvites(HttpServletRequest request, HttpServletResponse response) {
-    List<String> errors = new ArrayList<>();
-
-    Optional<FuseSession> session = fuseSessionController.getSession(request);
-    if (!session.isPresent()) {
-      errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, DENIED, errors);
-    }
-
-    User user = session.get().getUser();
-
-    return new GeneralResponse(response, OK, null,
-        organizationInvitationRepository.findByReceiver(user));
-  }
-
 
   @GetMapping(path = "/incoming/invites/team")
   @ResponseBody
   public GeneralResponse getTeamInvites(HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
-    Optional<FuseSession> session = fuseSessionController.getSession(request);
-    if (!session.isPresent()) {
-      errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, DENIED, errors);
+        Optional<FuseSession> session = fuseSessionController.getSession(request);
+        if (!session.isPresent()) {
+            errors.add(INVALID_SESSION);
+            return new GeneralResponse(response, DENIED, errors);
+        }
+
+        User user = session.get().getUser();
+
+        return new GeneralResponse(response, OK, null,
+                teamInvitationRepository.findByReceiver(user));
     }
-
-    User user = session.get().getUser();
-
-    return new GeneralResponse(response, OK, null,
-        teamInvitationRepository.findByReceiver(user));
-  }
 
   @PostMapping(path = "/accept/invite/team")
   @ResponseBody
@@ -567,15 +546,93 @@ public class UserController {
     return new PossibleError(Status.OK);
   }
 
+    @PostMapping(path = "/fileUpload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public GeneralResponse fileUpload(@RequestParam("file") CommonsMultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
+        List<String> errors = new ArrayList<>();
 
-  private boolean logoutIfLoggedIn(User user, HttpServletRequest request) {
-    UserPermission userPermission = permissionFactory.createUserPermission(user);
-    if (userPermission.isLoggedIn(request)) {
-      Optional<FuseSession> session = fuseSessionController.getSession(request);
-      session.ifPresent(s -> fuseSessionController.deleteSession(s));
-      return true;
-    } else {
-      return false;
+        Optional<FuseSession> session = fuseSessionController.getSession(request);
+        if (!session.isPresent()) {
+            errors.add(INVALID_SESSION);
+            return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+        }
+        User currentUser = session.get().getUser();
+        UploadFile uploadFile;
+        if (fileToUpload != null) {
+            if (fileToUpload.getSize() > 0 && fileToUpload.getName().equals("file")) {
+                uploadFile = new UploadFile();
+
+                String hash = Hashing.sha256()
+                        .hashString(fileToUpload.getOriginalFilename(), StandardCharsets.UTF_8)
+                        .toString();
+                Timestamp ts = new Timestamp(System.currentTimeMillis());
+                String fileName = hash + "." + ts.toString() + "." + currentUser.getId().toString();
+                File fileToSave = new File(fileUploadPath, fileName);
+                fileToUpload.transferTo(fileToSave);
+                uploadFile.setHash(hash);
+                uploadFile.setUpload_time(ts);
+                uploadFile.setFile_size(fileToUpload.getSize());
+                uploadFile.setFileName(fileToUpload.getOriginalFilename());
+                uploadFile.setMime_type(fileToUpload.getContentType());
+                uploadFile.setUser(currentUser);
+                return new GeneralResponse(response, OK, null, fileRepository.save(uploadFile));
+            }
+        }
+        errors.add("Invalid file, unable to save");
+        return new GeneralResponse(response, BAD_DATA, errors);
     }
-  }
+
+    @GetMapping(path = "/fileDownload/{id}")
+    @ResponseBody
+    public FileSystemResource fileDownload(@PathVariable(value = "id") Long id, HttpServletResponse response, HttpServletRequest request) throws Exception {
+        List<String> errors = new ArrayList<>();
+
+        Optional<FuseSession> session = fuseSessionController.getSession(request);
+        if (!session.isPresent()) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return null;
+        }
+        User currentUser = session.get().getUser();
+        UploadFile fileToFind = fileDownloadRepository.findOne(id);
+        if (fileToFind == null) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return null;
+        }
+        String contentType = fileToFind.getMime_type();
+        String originalFileName = fileToFind.getFileName();
+        String fileName = fileToFind.getHash() + "." + fileToFind.getUpload_time() + "." + fileToFind.getUser().getId();
+        File file = new File(fileUploadPath, fileName);
+        return new FileSystemResource(file);
+    }
+
+    @GetMapping(path = "/{id}")
+    @ResponseBody
+    public GeneralResponse getUserbyID(@PathVariable(value = "id") Long id, HttpServletResponse response) {
+
+        List<String> errors = new ArrayList<>();
+
+        if (id == null) {
+            errors.add(INVALID_FIELDS);
+            return new GeneralResponse(response, BAD_DATA, errors);
+        }
+
+        User byId = userRepository.findOne(id);
+        if (byId == null) {
+            errors.add(NO_USER_FOUND);
+            return new GeneralResponse(response, BAD_DATA, errors);
+        }
+
+        return new GeneralResponse(response, OK, null, byId);
+    }
+
+    private boolean logoutIfLoggedIn(User user, HttpServletRequest request) {
+        UserPermission userPermission = permissionFactory.createUserPermission(user);
+        if (userPermission.isLoggedIn(request)) {
+            Optional<FuseSession> session = fuseSessionController.getSession(request);
+            session.ifPresent(s -> fuseSessionController.deleteSession(s));
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
