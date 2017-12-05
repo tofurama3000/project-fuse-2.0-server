@@ -32,7 +32,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 @Controller
-@RequestMapping(value = "/team")
+@RequestMapping(value = "/teams")
 @Transactional
 @SuppressWarnings("unused")
 public class TeamController extends GroupController<Team, TeamMember> {

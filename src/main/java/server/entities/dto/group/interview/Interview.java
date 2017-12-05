@@ -45,12 +45,12 @@ public class Interview {
   @JoinColumn(name = "user_id", referencedColumnName = "id")
   private User user;
 
-  public void setStartDateTime(String dateTime) {
+  public void setStart(String dateTime) {
     ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateTime);
     startDateTime = zonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
   }
 
-  public void setEndDateTime(String dateTime) {
+  public void setEnd(String dateTime) {
     ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateTime);
     endDateTime = zonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
   }
@@ -66,10 +66,10 @@ public class Interview {
   }
 
   public String getStart(){
-    return startDateTime.toString() + ".000+00:00";
+    return startDateTime.toString() + "+00:00";
   }
 
   public String getEnd(){
-    return endDateTime.toString() + ".000+00:00";
+    return endDateTime.toString() + "+00:00";
   }
 }
