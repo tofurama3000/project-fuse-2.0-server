@@ -34,7 +34,6 @@ import server.entities.dto.FuseSession;
 import server.entities.dto.UnregisteredUser;
 import server.entities.dto.User;
 import server.entities.dto.UserProfile;
-import server.entities.dto.group.GroupProfile;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.interview.Interview;
 import server.entities.dto.group.organization.Organization;
@@ -60,10 +59,8 @@ import server.repositories.UserProfileRepository;
 import server.repositories.UserRepository;
 import server.repositories.group.InterviewRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
-import server.repositories.group.organization.OrganizationMemberRepository;
 import server.repositories.group.project.ProjectInvitationRepository;
 import server.repositories.group.team.TeamInvitationRepository;
-import server.repositories.group.team.TeamMemberRepository;
 import server.utility.RolesUtility;
 
 import javax.servlet.http.HttpServletRequest;
@@ -253,7 +250,7 @@ public class UserController {
   @PutMapping(path = "/update_current")
   @ResponseBody
   public GeneralResponse updateCurrentUser(@RequestBody User userData, HttpServletRequest request, HttpServletResponse response) {
-    //to Use userProfile for profile
+    //to Use profile for profile
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -271,13 +268,13 @@ public class UserController {
     if (userData.getEncoded_password() != null)
       userToSave.setEncoded_password(userData.getEncoded_password());
 
-    if (userData.getUserProfile() != null) {
-      if (userToSave.getUserProfile() == null) {
-        userData.getUserProfile().setUser(userToSave);
-        UserProfile profile = userProfileRepository.save(userData.getUserProfile());
-        userToSave.setUserProfile(profile);
+    if (userData.getProfile() != null) {
+      if (userToSave.getProfile() == null) {
+        userData.getProfile().setUser(userToSave);
+        UserProfile profile = userProfileRepository.save(userData.getProfile());
+        userToSave.setProfile(profile);
       } else {
-        userToSave.setUserProfile(userToSave.getUserProfile().merge(userToSave.getUserProfile(), userData.getUserProfile()));
+        userToSave.setProfile(userToSave.getProfile().merge(userToSave.getProfile(), userData.getProfile()));
       }
     }
     userRepository.save(userToSave);

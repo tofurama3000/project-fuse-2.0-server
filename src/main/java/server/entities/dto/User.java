@@ -32,7 +32,7 @@ public class User {
   @JsonManagedReference
   @OneToOne(cascade = CascadeType.ALL)
   @JoinColumn(name = "user_profile_id", referencedColumnName = "id")
-  private UserProfile userProfile;
+  private UserProfile profile;
 
   @JsonIgnore
   @Getter(AccessLevel.NONE)

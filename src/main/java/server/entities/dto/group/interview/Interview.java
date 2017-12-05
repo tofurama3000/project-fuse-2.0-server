@@ -66,10 +66,10 @@ public class Interview {
   }
 
   public String getStart(){
-    return startDateTime.toString();
+    return startDateTime.toString() + ".000+00:00";
   }
 
   public String getEnd(){
-    return endDateTime.toString();
+    return endDateTime.toString() + ".000+00:00";
   }
 }
