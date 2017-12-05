@@ -54,4 +54,22 @@ public class Interview {
     ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateTime);
     endDateTime = zonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
   }
+
+  @JsonIgnore
+  public LocalDateTime getStartDateTime(){
+    return startDateTime;
+  }
+
+  @JsonIgnore
+  public LocalDateTime getEndDateTime(){
+    return endDateTime;
+  }
+
+  public String getStart(){
+    return startDateTime.toString();
+  }
+
+  public String getEnd(){
+    return endDateTime.toString();
+  }
 }

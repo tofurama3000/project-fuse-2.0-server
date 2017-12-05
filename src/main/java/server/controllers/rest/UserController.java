@@ -229,7 +229,7 @@ public class UserController {
     return new GeneralResponse(response, OK, null, byId);
   }
 
-  @GetMapping(path = "/{email}")
+  @GetMapping(path = "/get_by_email/{email}")
   @ResponseBody
   public GeneralResponse getUserbyEmail(@PathVariable(value = "email") String email, HttpServletResponse response) {
 

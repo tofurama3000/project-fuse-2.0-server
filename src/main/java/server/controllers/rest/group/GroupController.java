@@ -310,9 +310,9 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     return new GeneralResponse(response);
   }
 
-  @PostMapping(path = "/interview_slots/add")
+  @PostMapping(path = "/{id}/interview_slots/add")
   @ResponseBody
-  public GeneralResponse addInterviewSlots(@RequestBody List<Interview> interviews, HttpServletRequest request,
+  public GeneralResponse addInterviewSlots(@PathVariable("id") long id, @RequestBody List<Interview> interviews, HttpServletRequest request,
                                            HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
@@ -322,28 +322,30 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       return new GeneralResponse(response, DENIED, errors);
     }
 
-    if (!isValidInterviewSlots(interviews, session.get().getUser())) {
+    if (!isValidInterviewSlots(interviews, session.get().getUser(), id)) {
       errors.add(INVALID_FIELDS);
       return new GeneralResponse(response, errors);
     }
 
-    T group = getGroupRepository().findOne(interviews.get(0).getGroupId());
+    T group = getGroupRepository().findOne(id);
     for (Interview interview : interviews) {
       interview.setGroupType(group.getGroupType());
       interview.setAvailability(AVAILABLE);
+      interview.setGroupId(id);
     }
 
     interviewRepository.save(interviews);
     return new GeneralResponse(response, OK);
   }
 
-  @PostMapping(path = "/interview_slots/available")
+  @GetMapping(path = "/{id}/interview_slots/available")
   @ResponseBody
-  public GeneralResponse getAvailableInterviews(@RequestBody T group, HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse getAvailableInterviews(@PathVariable("id") long id, HttpServletRequest request, HttpServletResponse response) {
+    Group group = getGroupRepository().findOne(id);
     LocalDateTime currentDateTime = ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime();
 
     List<Interview> availableInterviewsAfterDate =
-        interviewRepository.getAvailableInterviewsAfterDate(group.getId(), group.getGroupType(), currentDateTime);
+        interviewRepository.getAvailableInterviewsAfterDate(id, group.getGroupType(), currentDateTime);
 
     return new GeneralResponse(response, OK, new ArrayList<>(), availableInterviewsAfterDate);
   }
@@ -459,16 +461,10 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     return users;
   }
 
-  private boolean isValidInterviewSlots(List<Interview> interviews, User user) {
+  private boolean isValidInterviewSlots(List<Interview> interviews, User user, long groupId) {
     LocalDateTime currentDateTime = ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime();
 
     if (interviews.size() <= 0) {
-      return false;
-    }
-
-    Interview firstInterview = interviews.get(0);
-    Long groupId = firstInterview.getGroupId();
-    if (groupId == null) {
       return false;
     }
 
@@ -483,9 +479,6 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     }
 
     for (Interview interview : interviews) {
-      if (!interview.getGroupId().equals(groupId)) {
-        return false;
-      }
       if (interview.getStartDateTime() == null || interview.getEndDateTime() == null) {
         return false;
       }
