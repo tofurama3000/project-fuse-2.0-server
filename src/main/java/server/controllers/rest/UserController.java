@@ -70,7 +70,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Controller
-@RequestMapping(value = "/user")
+@RequestMapping(value = "/users")
 @SuppressWarnings("unused")
 public class UserController {
 
@@ -116,7 +116,7 @@ public class UserController {
   private static IdGenerator generator = new AlternativeJdkIdGenerator();
 
 
-  @PostMapping(path = "/create")
+  @PostMapping
   @ResponseBody
   public GeneralResponse addNewUser(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
 
@@ -247,9 +247,9 @@ public class UserController {
   }
 
   @CrossOrigin
-  @PutMapping(path = "/update_current")
+  @PutMapping(path = "/{id}")
   @ResponseBody
-  public GeneralResponse updateCurrentUser(@RequestBody User userData, HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse updateCurrentUser(@PathVariable long id, @RequestBody User userData, HttpServletRequest request, HttpServletResponse response) {
     //to Use profile for profile
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -259,6 +259,13 @@ public class UserController {
     }
 
     User userToSave = session.get().getUser();
+
+    if(id != userToSave.getId()){
+      // have this take care of misc updates by admins/moderators (e.g. flag user or revoke access)
+
+      errors.add("Unable to edit user, permission denied");
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
 
     // Merging instead of direct copying ensures we're very clear about what can be edited, and it provides easy checks
 
@@ -281,7 +288,7 @@ public class UserController {
     return new GeneralResponse(response, Status.OK);
   }
 
-  @GetMapping(path = "/all")
+  @GetMapping
   @ResponseBody
   public GeneralResponse getAllUsers(HttpServletResponse response) {
     return new GeneralResponse(response, OK, null, userRepository.findAll());

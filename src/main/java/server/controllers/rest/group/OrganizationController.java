@@ -32,7 +32,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 @Controller
-@RequestMapping(value = "/organization")
+@RequestMapping(value = "/organizations")
 @Transactional
 @SuppressWarnings("unused")
 public class OrganizationController extends GroupController<Organization, OrganizationMember> {

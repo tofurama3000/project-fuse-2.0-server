@@ -29,7 +29,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 @Controller
-@RequestMapping(value = "/project")
+@RequestMapping(value = "/projects")
 @Transactional
 @SuppressWarnings("unused")
 public class ProjectController extends GroupController<Project, ProjectMember> {

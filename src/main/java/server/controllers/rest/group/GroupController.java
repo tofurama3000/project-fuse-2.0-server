@@ -84,7 +84,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
   private static Logger logger = LoggerFactory.getLogger(TeamController.class);
 
-  @PostMapping(path = "/create")
+  @PostMapping
   @ResponseBody
   public synchronized GeneralResponse create(@RequestBody T entity, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
@@ -149,7 +149,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   }
 
   @CrossOrigin
-  @PutMapping(path = "/{id}/update")
+  @PutMapping(path = "/{id}")
   @ResponseBody
   public GeneralResponse updateGroup(@PathVariable(value = "id") long id, @RequestBody T groupData, HttpServletRequest request, HttpServletResponse response) {
 
@@ -384,7 +384,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     return new GeneralResponse(response, OK, null, getMembersOf(group));
   }
 
-  @GetMapping(path = "/all")
+  @GetMapping
   @ResponseBody
   protected GeneralResponse getAll(HttpServletResponse response) {
     return new GeneralResponse(response, OK, null, getGroupRepository().findAll());
