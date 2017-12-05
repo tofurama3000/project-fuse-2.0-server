@@ -17,7 +17,6 @@ import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
 import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
 import static server.controllers.rest.response.GeneralResponse.Status.OK;
-
 import com.google.common.hash.Hashing;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,7 +25,14 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.AlternativeJdkIdGenerator;
 import org.springframework.util.IdGenerator;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import server.controllers.FuseSessionController;
 import server.controllers.MembersOfGroupController;
@@ -36,6 +42,7 @@ import server.email.StandardEmailSender;
 import server.entities.PossibleError;
 import server.entities.dto.FuseSession;
 import server.entities.dto.UnregisteredUser;
+import server.entities.dto.UploadFile;
 import server.entities.dto.User;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.interview.Interview;
@@ -57,30 +64,22 @@ import server.entities.user_to_group.relationships.UserToGroupRelationship;
 import server.entities.user_to_group.relationships.UserToOrganizationRelationship;
 import server.entities.user_to_group.relationships.UserToProjectRelationship;
 import server.entities.user_to_group.relationships.UserToTeamRelationship;
+import server.repositories.FileRepository;
 import server.repositories.UnregisteredUserRepository;
 import server.repositories.UserRepository;
-import server.repositories.group.InterviewRepository;
 import server.repositories.group.FileDownloadRepository;
+import server.repositories.group.InterviewRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
-import server.repositories.group.organization.OrganizationMemberRepository;
 import server.repositories.group.project.ProjectInvitationRepository;
 import server.repositories.group.team.TeamInvitationRepository;
-import server.repositories.group.team.TeamMemberRepository;
 import server.utility.RolesUtility;
-import server.repositories.FileRepository;
-import server.entities.dto.UploadFile;
-import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.sql.Timestamp;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -546,9 +545,9 @@ public class UserController {
     return new PossibleError(Status.OK);
   }
 
-    @PostMapping(path = "/fileUpload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(path = "/fileUpload")
     @ResponseBody
-    public GeneralResponse fileUpload(@RequestParam("file") CommonsMultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public GeneralResponse fileUpload(@RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
         List<String> errors = new ArrayList<>();
 
         Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -568,6 +567,7 @@ public class UserController {
                 Timestamp ts = new Timestamp(System.currentTimeMillis());
                 String fileName = hash + "." + ts.toString() + "." + currentUser.getId().toString();
                 File fileToSave = new File(fileUploadPath, fileName);
+                fileToSave.createNewFile();
                 fileToUpload.transferTo(fileToSave);
                 uploadFile.setHash(hash);
                 uploadFile.setUpload_time(ts);
