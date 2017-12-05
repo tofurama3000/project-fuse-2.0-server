@@ -392,12 +392,26 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
   @GetMapping(path = "/{id}")
   @ResponseBody
-  protected GeneralResponse getById(@PathVariable(value = "id") Long id, HttpServletResponse response) {
-    Group res = getGroupRepository().findOne(id);
-    if (res != null)
-      return new GeneralResponse(response, OK, null, res);
+  protected GeneralResponse getById(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+
+    Group res = getGroupRepository().findOne(id);
+    if (res != null){
+      User user = session.get().getUser();
+      T groupToSave = getGroupRepository().findOne(id);
+      UserToGroupPermission permission = getUserToGroupPermission(user, groupToSave);
+      res.setCanEdit(permission.canUpdate());
+
+      return new GeneralResponse(response, OK, null, res);
+    }
     errors.add("Invalid ID! Object does not exist!");
+
     return new GeneralResponse(response, BAD_DATA, errors);
   }
 

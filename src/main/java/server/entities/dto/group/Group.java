@@ -10,13 +10,7 @@ import server.entities.Restriction;
 import server.entities.dto.User;
 import server.entities.dto.group.project.Project;
 
-import javax.persistence.Column;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.MappedSuperclass;
+import javax.persistence.*;
 
 @Data
 @MappedSuperclass
@@ -35,6 +29,9 @@ public abstract class Group<Profile extends GroupProfile> implements  Interviewa
   @Column(name = "restriction")
   @JsonIgnore
   private String restrictionString;
+
+  @Transient
+  private Boolean canEdit;
 
   public Restriction getRestriction() {
     if (restrictionString != null && restrictionString.equals("INVITE")) {
