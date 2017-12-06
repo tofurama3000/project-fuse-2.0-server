@@ -30,4 +30,4 @@ hs_err_pid*
 log/
 target/
 
-src/main/resources/application.properties
+*application.properties
