@@ -488,7 +488,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     }
 
     UserToGroupPermission permission = getUserToGroupPermission(user, group);
-    if (!permission.hasRole(ADMIN)) {
+    if (!permission.canUpdate()) {
       return false;
     }
 
