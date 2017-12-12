@@ -57,9 +57,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @SuppressWarnings("unused")
 public abstract class GroupController<T extends Group, R extends GroupMember<T>> {
@@ -468,8 +466,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     return getGroupRepository().getGroups(owner, group.getName());
   }
 
-  private List<User> getMembersOf(T group) {
-    List<User> users = new ArrayList<>();
+  private Set<User> getMembersOf(T group) {
+    Set<User> users = new HashSet<>();
     Iterable<User> usersByGroup = getRelationshipRepository().getUsersByGroup(group);
     usersByGroup.forEach(users::add);
     return users;
