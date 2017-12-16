@@ -148,6 +148,7 @@ public class UserController {
     }
 
     User savedUser = userRepository.save(user);
+    savedUser.indexAsync();
     Long id = savedUser.getId();
 
     if (requireRegistration) {
@@ -293,7 +294,7 @@ public class UserController {
         userToSave.setProfile(userToSave.getProfile().merge(userToSave.getProfile(), userData.getProfile()));
       }
     }
-    userRepository.save(userToSave);
+    userRepository.save(userToSave).indexAsync();
     return new GeneralResponse(response, Status.OK);
   }
 

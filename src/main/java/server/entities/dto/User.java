@@ -9,16 +9,19 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.ToString;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import server.entities.BaseIndexable;
 
 import javax.persistence.*;
 import javax.persistence.Transient;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 @ToString(exclude = "user")
 @Entity
 @Table(name = "user")
 @Data
-public class User {
+public class User extends BaseIndexable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
@@ -69,5 +72,36 @@ public class User {
 
   public int hashCode() {
     return id.hashCode();
+  }
+
+  @Override
+  public Map<String, Object> getEsJson() {
+    Map<String, Object> map = new HashMap<>();
+
+    map.put("id", this.id);
+    map.put("name", this.name);
+    map.put("email", this.email);
+    if(this.profile != null)
+      map.put("skills", this.profile.getSkills());
+    else
+      map.put("skills", "");
+
+    return map;
+  }
+
+  @Override
+  public String getEsIndex() {
+    return "user";
+  }
+
+  @Override
+  public String getEsType() {
+    return "info";
+  }
+
+  @Override
+  @JsonIgnore
+  public String getEsId() {
+    return this.id.toString();
   }
 }
