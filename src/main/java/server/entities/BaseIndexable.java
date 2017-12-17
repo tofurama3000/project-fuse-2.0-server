@@ -1,5 +1,6 @@
 package server.entities;
 
+import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.rest.RestStatus;
 import server.utility.ElasticsearchClient;
@@ -11,9 +12,11 @@ import java.io.IOException;
  */
 public abstract class BaseIndexable implements Indexable {
   public boolean tryToIndex(){
+    ElasticsearchClient es_client = ElasticsearchClient.instance();
+    if(es_client == null) return false;
     try {
-      IndexResponse res = ElasticsearchClient.instance().index(this);
-      if(res.status() == RestStatus.CREATED)
+      DocWriteResponse res = es_client.index(this);
+      if(res.status() == RestStatus.CREATED || res.status() == RestStatus.OK)
         return true;
     } catch (IOException e) {
       e.printStackTrace();
@@ -22,6 +25,8 @@ public abstract class BaseIndexable implements Indexable {
   }
 
   public void indexAsync(){
+    ElasticsearchClient es_client = ElasticsearchClient.instance();
+    if(es_client == null) return;
     ElasticsearchClient.instance().indexAsync(this);
   }
 }

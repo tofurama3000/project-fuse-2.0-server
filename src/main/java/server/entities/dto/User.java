@@ -91,7 +91,7 @@ public class User extends BaseIndexable {
 
   @Override
   public String getEsIndex() {
-    return "user";
+    return "users";
   }
 
   @Override

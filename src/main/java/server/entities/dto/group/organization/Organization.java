@@ -41,6 +41,6 @@ public class Organization extends Group<OrganizationProfile> {
 
   @Override
   public String getEsIndex() {
-    return "organization";
+    return "organizations";
   }
 }

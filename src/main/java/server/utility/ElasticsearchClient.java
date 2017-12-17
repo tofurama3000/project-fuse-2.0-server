@@ -1,22 +1,21 @@
 package server.utility;
 
-
-
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
+import org.elasticsearch.action.DocWriteResponse;
+import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import server.entities.Indexable;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InvalidObjectException;
-import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.List;
 import java.util.Properties;
 
 /**
@@ -67,17 +66,19 @@ public class ElasticsearchClient {
 
   // Create an index request for an indexable document
   private IndexRequest getIndexRequst(Indexable doc){
-    String index = doc.getEsIndex(), type = doc.getEsType(), id = doc.getEsId();
-    IndexRequest req;
-    if(doc.getEsId() != null) {
-      req = new IndexRequest(doc.getEsIndex(), doc.getEsType(), doc.getEsId())
-              .source(doc.getEsJson());
-    }
-    else {
-      req = new IndexRequest(doc.getEsIndex(), doc.getEsType())
-              .source(doc.getEsJson());
-    }
-    return req;
+    return new IndexRequest(doc.getEsIndex(), doc.getEsType(), doc.getEsId())
+                            .source(doc.getEsJson());
+  }
+
+  // Create an index request for an indexable document
+  private GetRequest getGetRequst(Indexable doc){
+    return new GetRequest(doc.getEsIndex(), doc.getEsType(), doc.getEsId());
+  }
+
+  // Create an index request for an indexable document
+  private UpdateRequest getUpdateRequest(Indexable doc){
+    return new UpdateRequest(doc.getEsIndex(), doc.getEsType(), doc.getEsId())
+                            .doc(doc.getEsJson());
   }
 
   // This is the default async handler, currently it just prints to the console the result
@@ -93,13 +94,14 @@ public class ElasticsearchClient {
       public void onFailure(Exception e) {
         // TODO: add logging
         System.err.println(e.getMessage());
-        System.err.print(e.getStackTrace());
+        e.printStackTrace();
       }
     };
   }
 
   // Perform a synchronous index of a document
-  public IndexResponse index(Indexable doc) throws IOException {
+  public DocWriteResponse index(Indexable doc) throws IOException {
+    IndexRequest req = getIndexRequst(doc);
     return elasticsearch_client.index(getIndexRequst(doc));
   }
 
@@ -111,5 +113,4 @@ public class ElasticsearchClient {
   private static ElasticsearchClient inst = null;
   private RestHighLevelClient elasticsearch_client;
 
-  private static String es_server;
 }

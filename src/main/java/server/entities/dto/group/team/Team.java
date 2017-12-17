@@ -44,7 +44,7 @@ public class Team extends Group<TeamProfile> {
 
   @Override
   public String getEsIndex() {
-    return "team";
+    return "teams";
   }
 
 }
