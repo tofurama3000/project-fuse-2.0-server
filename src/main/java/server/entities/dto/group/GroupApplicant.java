@@ -1,14 +1,15 @@
-package server.entities.dto;
+package server.entities.dto.group;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import server.entities.dto.User;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
 
-@Entity
-@Table(name = "team_applicant")
 @Data
-public class Applicant {
+@MappedSuperclass
+public abstract class GroupApplicant<T extends Group> {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
@@ -20,11 +21,12 @@ public class Applicant {
   @Column(name = "status")
     private String status;
 
-  @Column(name = "team_id")
-  private long team_id;
-
   @Column(name = "time")
   private Timestamp time;
-  
+
+  @JsonIgnore
+  public abstract T getGroup();
+
+  public abstract void setGroup(T group);
 
 }
