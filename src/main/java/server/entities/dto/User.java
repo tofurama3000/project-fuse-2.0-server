@@ -83,9 +83,9 @@ public class User extends BaseIndexable {
     map.put("email", this.email);
     map.put("index", this.getEsIndex());
     if(this.profile != null)
-      map.put("skills", this.profile.getSkills());
+      map.put("skills", this.profile.getSkills().split(","));
     else
-      map.put("skills", "");
+      map.put("skills", new String[0]);
 
     return map;
   }
