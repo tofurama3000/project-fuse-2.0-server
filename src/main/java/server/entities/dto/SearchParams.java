@@ -45,6 +45,15 @@ public class SearchParams {
       searchString = "*";
     }
 
+
+    Pattern p = Pattern.compile("(^\\w+|[\\s\\+]+[\\w\\s]+(\\s|$))");
+    Matcher m = p.matcher(searchString);
+    StringBuffer s = new StringBuffer();
+    while (m.find()) {
+      String group = m.group(1);
+      searchString =searchString.replaceAll(group, " " + m.group(1).trim() + "* ");
+    }
+
     entityMatches.forEach(this::mapEntityToIndexAndType);
   }
 

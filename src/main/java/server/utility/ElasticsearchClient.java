@@ -25,10 +25,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InvalidObjectException;
 import java.net.UnknownHostException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -130,11 +127,18 @@ public class ElasticsearchClient {
     SearchRequest req = new SearchRequest(indices);
     req.types(types);
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-    searchSourceBuilder.query(QueryBuilders.simpleQueryStringQuery(searchString));
+    searchSourceBuilder.query(QueryBuilders.simpleQueryStringQuery(searchString).analyzeWildcard(true));
     req.source(searchSourceBuilder);
     try {
       SearchResponse resp = elasticsearch_client.search(req);
-      return Arrays.stream(resp.getHits().getHits()).map(SearchHit::getSourceAsMap).collect(Collectors.toList());
+      return Arrays.stream(resp.getHits().getHits())
+              .sorted((res1, res2) -> Float.compare(res2.getScore(), res1.getScore()))
+              .map(res -> {
+                Map<String, Object> map = res.getSourceAsMap();
+                map.put("score", res.getScore());
+                return map;
+              })
+              .collect(Collectors.toList());
     } catch (IOException e) {
       e.printStackTrace();
       return null;
