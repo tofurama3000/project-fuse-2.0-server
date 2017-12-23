@@ -81,6 +81,7 @@ public class User extends BaseIndexable {
     map.put("id", this.id);
     map.put("name", this.name);
     map.put("email", this.email);
+    map.put("index", this.getEsIndex());
     if(this.profile != null)
       map.put("skills", this.profile.getSkills());
     else
@@ -89,15 +90,16 @@ public class User extends BaseIndexable {
     return map;
   }
 
+  public static String esIndex() { return "users"; }
+  public static String esType() { return "info"; }
+
   @Override
   public String getEsIndex() {
-    return "users";
+    return esIndex();
   }
 
   @Override
-  public String getEsType() {
-    return "info";
-  }
+  public String getEsType() { return esType(); }
 
   @Override
   @JsonIgnore

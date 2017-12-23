@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import server.entities.BaseIndexable;
+import server.entities.dto.User;
 import server.repositories.UserRepository;
 import server.repositories.group.organization.OrganizationRepository;
 import server.repositories.group.project.ProjectRepository;
@@ -48,10 +49,11 @@ public class ElasticsearchReindexService {
 
   @Scheduled(fixedDelay = 60L * 60L * 12L * 1000L) // runs once every 12 hours
   public void Reindex() throws InterruptedException {
-    System.out.println("REINDEXING");
     logger.info("Starting to re-index");
 
     logger.info("Indexing users");
+
+    //ElasticsearchClient.instance().ensureIndexTypeExists(User.esIndex(), User.indexDefinition());
 
     userRepository.findAll().forEach(getConsumer());
 
@@ -60,6 +62,7 @@ public class ElasticsearchReindexService {
     projectRepository.findAll().forEach(getConsumer());
 
     organizationRepository.findAll().forEach(getConsumer());
+
     logger.info("Reindex completed");
   }
 

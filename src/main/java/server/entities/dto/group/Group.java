@@ -68,13 +68,16 @@ public abstract class Group<Profile extends GroupProfile> extends BaseIndexable 
     map.put("join_restriction", this.getRestrictionString());
     map.put("summary", this.getProfile().getSummary());
     map.put("headline", this.getProfile().getHeadline());
+    map.put("index", this.getEsIndex());
 
     return map;
   }
 
+  public static String esType() { return "info"; }
+
   @Override
   public String getEsType() {
-    return "info";
+    return esType();
   }
 
   @Override

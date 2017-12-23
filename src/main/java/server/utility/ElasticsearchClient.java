@@ -3,12 +3,21 @@ package server.utility;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.DocWriteResponse;
+import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.SimpleQueryStringBuilder;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import server.entities.Indexable;
 
@@ -16,7 +25,11 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InvalidObjectException;
 import java.net.UnknownHostException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 /**
  * Created by tofurama on 12/16/17.
@@ -113,4 +126,24 @@ public class ElasticsearchClient {
   private static ElasticsearchClient inst = null;
   private RestHighLevelClient elasticsearch_client;
 
+  public List<Object> searchSimpleQuery(String[] indices, String[] types, String searchString) {
+    SearchRequest req = new SearchRequest(indices);
+    req.types(types);
+    SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+    searchSourceBuilder.query(QueryBuilders.simpleQueryStringQuery(searchString));
+    req.source(searchSourceBuilder);
+    try {
+      SearchResponse resp = elasticsearch_client.search(req);
+      return Arrays.stream(resp.getHits().getHits()).map(SearchHit::getSourceAsMap).collect(Collectors.toList());
+    } catch (IOException e) {
+      e.printStackTrace();
+      return null;
+    }
+  }
+
+  public void ensureIndexTypeExists(String indexName, String typeName, String mapping) {
+//    CreateIndexRequest request = new CreateIndexRequest(indexName);
+//    request.mapping(typeName, mapping, XContentType.JSON);
+//    elasticsearch_client.indices().createIndex(request);
+  }
 }

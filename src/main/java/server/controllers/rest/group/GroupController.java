@@ -98,6 +98,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       return new GeneralResponse(response, errors);
     }
 
+    if(entity.getProfile() == null){
+      errors.add("Missing profile information!");
+      return new GeneralResponse(response, errors);
+    }
+
     User user = session.get().getUser();
     List<T> entities = getGroupsWith(user, entity);
     entity.setOwner(user);

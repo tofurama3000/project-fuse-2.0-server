@@ -43,9 +43,11 @@ public class Project extends Group<ProjectProfile> {
     profile = p;
   }
 
+  public static String esIndex() { return "projects"; }
+
   @Override
   public String getEsIndex() {
-    return "projects";
+    return esIndex();
   }
 
 }
