@@ -207,7 +207,7 @@ public class UserController {
     }
     applicant.setSender(user);
     applicant.setStatus(PENDING);
-    applicant.convert(applicant.getTime().atZone());
+    //applicant.convert(applicant.getTime().atZone());
     Team team = teamRepository.findOne(id);
     if(team==null){
       errors.add(NO_GROUP_FOUND);
