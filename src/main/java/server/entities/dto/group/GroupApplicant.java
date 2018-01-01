@@ -6,6 +6,9 @@ import server.entities.dto.User;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 @Data
 @MappedSuperclass
@@ -22,7 +25,15 @@ public abstract class GroupApplicant<T extends Group> {
     private String status;
 
   @Column(name = "time")
-  private Timestamp time;
+  private LocalDateTime time;
+
+  public void convert(ZonedDateTime dateTime) { time = dateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime(); }
+
+
+  @JsonIgnore
+  public LocalDateTime getStartDateTime(){
+    return time;
+  }
 
   @JsonIgnore
   public abstract T getGroup();

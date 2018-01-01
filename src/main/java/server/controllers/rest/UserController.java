@@ -2,6 +2,7 @@ package server.controllers.rest;
 
 import static server.constants.Availability.NOT_AVAILABLE;
 import static server.constants.InvitationStatus.ACCEPTED;
+import static server.constants.InvitationStatus.PENDING;
 import static server.constants.RegistrationStatus.REGISTERED;
 import static server.constants.RegistrationStatus.UNREGISTERED;
 import static server.constants.RoleValue.DEFAULT_USER;
@@ -12,6 +13,7 @@ import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVE
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_REGISTRATION_KEY;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
+import static server.controllers.rest.response.CannedResponse.NO_GROUP_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_INVITATION_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
 import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
@@ -34,13 +36,17 @@ import server.entities.dto.FuseSession;
 import server.entities.dto.UnregisteredUser;
 import server.entities.dto.User;
 import server.entities.dto.UserProfile;
+import server.entities.dto.group.GroupApplicant;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.interview.Interview;
 import server.entities.dto.group.organization.Organization;
+import server.entities.dto.group.organization.OrganizationApplicant;
 import server.entities.dto.group.organization.OrganizationInvitation;
 import server.entities.dto.group.project.Project;
+import server.entities.dto.group.project.ProjectApplicant;
 import server.entities.dto.group.project.ProjectInvitation;
 import server.entities.dto.group.team.Team;
+import server.entities.dto.group.team.TeamApplicant;
 import server.entities.dto.group.team.TeamInvitation;
 import server.entities.user_to_group.permissions.PermissionFactory;
 import server.entities.user_to_group.permissions.UserPermission;
@@ -58,9 +64,15 @@ import server.repositories.UnregisteredUserRepository;
 import server.repositories.UserProfileRepository;
 import server.repositories.UserRepository;
 import server.repositories.group.InterviewRepository;
+import server.repositories.group.organization.OrganizationApplicantRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
+import server.repositories.group.organization.OrganizationRepository;
+import server.repositories.group.project.ProjectApplicantRepository;
 import server.repositories.group.project.ProjectInvitationRepository;
+import server.repositories.group.project.ProjectRepository;
+import server.repositories.group.team.TeamApplicantRepository;
 import server.repositories.group.team.TeamInvitationRepository;
+import server.repositories.group.team.TeamRepository;
 import server.utility.RolesUtility;
 
 import javax.servlet.http.HttpServletRequest;
@@ -87,13 +99,31 @@ public class UserController {
   private TeamInvitationRepository teamInvitationRepository;
 
   @Autowired
+  private TeamApplicantRepository teamApplicantRepository;
+
+  @Autowired
+  private TeamRepository teamRepository;
+
+  @Autowired
+  private ProjectApplicantRepository projectApplicantRepository;
+
+  @Autowired
   private ProjectInvitationRepository projectInvitationRepository;
+
+  @Autowired
+  private ProjectRepository projectRepository;
 
   @Autowired
   private UserProfileRepository userProfileRepository;
 
   @Autowired
   private OrganizationInvitationRepository organizationInvitationRepository;
+
+  @Autowired
+  private OrganizationRepository organizationRepository;
+
+  @Autowired
+  private OrganizationApplicantRepository organizationApplicantRepository;
 
   @Autowired
   private UnregisteredUserRepository unregisteredUserRepository;
@@ -163,6 +193,76 @@ public class UserController {
     }
 
     return new GeneralResponse(response, OK, errors, savedUser);
+  }
+
+  @PostMapping (path = "/apply/team/{id}")
+  @ResponseBody
+  public GeneralResponse applyTeam(@PathVariable(value = "id") Long id,@RequestBody User user, @RequestBody TeamApplicant applicant, HttpServletRequest request, HttpServletResponse response) {
+
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
+    applicant.setSender(user);
+    applicant.setStatus(PENDING);
+    applicant.convert(applicant.getTime().atZone());
+    Team team = teamRepository.findOne(id);
+    if(team==null){
+      errors.add(NO_GROUP_FOUND);
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
+
+    applicant.setTeam(team);
+    teamApplicantRepository.save(applicant);
+  return  new GeneralResponse(response, Status.OK, errors);
+  }
+
+  @PostMapping (path = "/apply/project/{id}")
+  @ResponseBody
+  public GeneralResponse applyProject(@PathVariable(value = "id") Long id, @RequestBody User user, @RequestBody ProjectApplicant applicant, HttpServletRequest request, HttpServletResponse response) {
+
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
+    applicant.setSender(user);
+    applicant.setStatus(PENDING);
+    Project project = projectRepository.findOne(id);
+    if(project==null){
+      errors.add(NO_GROUP_FOUND);
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
+
+    applicant.setProject(project);
+    projectApplicantRepository.save(applicant);
+    return  new GeneralResponse(response, Status.OK, errors);
+  }
+
+  @PostMapping (path = "/apply/organization/{id}")
+  @ResponseBody
+  public GeneralResponse applyOrganization(@PathVariable(value = "id") Long id, @RequestBody User user, @RequestBody OrganizationApplicant applicant, HttpServletRequest request, HttpServletResponse response) {
+
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
+    applicant.setSender(user);
+    applicant.setStatus(PENDING);
+    Organization organization = organizationRepository.findOne(id);
+    if(organization==null){
+      errors.add(NO_GROUP_FOUND);
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
+
+    applicant.setOrganization(organization);
+    organizationApplicantRepository.save(applicant);
+    return  new GeneralResponse(response, Status.OK, errors);
   }
 
   @PostMapping(path = "/login")
