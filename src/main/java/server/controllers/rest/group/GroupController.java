@@ -57,9 +57,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @SuppressWarnings("unused")
 public abstract class GroupController<T extends Group, R extends GroupMember<T>> {
@@ -100,6 +98,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       return new GeneralResponse(response, errors);
     }
 
+    if(entity.getProfile() == null){
+      errors.add("Missing profile information!");
+      return new GeneralResponse(response, errors);
+    }
+
     User user = session.get().getUser();
     List<T> entities = getGroupsWith(user, entity);
     entity.setOwner(user);
@@ -108,6 +111,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       Group savedEntity = getGroupRepository().save(entity);
       addRelationship(user, entity, OWNER);
       addRelationship(user, entity, ADMIN);
+      savedEntity.indexAsync();
       return new GeneralResponse(response, OK, null, savedEntity);
     } else {
       errors.add("entity name already exists for user");
@@ -187,7 +191,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       }
 
     }
-    getGroupRepository().save(groupToSave);
+    getGroupRepository().save(groupToSave).indexAsync();
     return new GeneralResponse(response, OK);
   }
 
@@ -404,8 +408,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     Group res = getGroupRepository().findOne(id);
     if (res != null){
       User user = session.get().getUser();
-      T groupToSave = getGroupRepository().findOne(id);
-      UserToGroupPermission permission = getUserToGroupPermission(user, groupToSave);
+      T groupToFindRestriction = getGroupRepository().findOne(id);
+      UserToGroupPermission permission = getUserToGroupPermission(user, groupToFindRestriction);
       res.setCanEdit(permission.canUpdate());
 
       return new GeneralResponse(response, OK, null, res);
@@ -468,8 +472,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     return getGroupRepository().getGroups(owner, group.getName());
   }
 
-  private List<User> getMembersOf(T group) {
-    List<User> users = new ArrayList<>();
+  private Set<User> getMembersOf(T group) {
+    Set<User> users = new HashSet<>();
     Iterable<User> usersByGroup = getRelationshipRepository().getUsersByGroup(group);
     usersByGroup.forEach(users::add);
     return users;
@@ -488,7 +492,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     }
 
     UserToGroupPermission permission = getUserToGroupPermission(user, group);
-    if (!permission.hasRole(ADMIN)) {
+    if (!permission.canUpdate()) {
       return false;
     }
 

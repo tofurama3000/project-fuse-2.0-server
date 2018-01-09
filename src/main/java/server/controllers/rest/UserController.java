@@ -148,6 +148,7 @@ public class UserController {
     }
 
     User savedUser = userRepository.save(user);
+    savedUser.indexAsync();
     Long id = savedUser.getId();
 
     if (requireRegistration) {
@@ -208,9 +209,13 @@ public class UserController {
 
   @GetMapping(path = "/{id}")
   @ResponseBody
-  public GeneralResponse getUserbyID(@PathVariable(value = "id") Long id, HttpServletResponse response) {
-
+  public GeneralResponse getUserbyID(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
 
     if (id == null) {
       errors.add(INVALID_FIELDS);
@@ -228,9 +233,14 @@ public class UserController {
 
   @GetMapping(path = "/get_by_email/{email}")
   @ResponseBody
-  public GeneralResponse getUserbyEmail(@PathVariable(value = "email") String email, HttpServletResponse response) {
+  public GeneralResponse getUserbyEmail(@PathVariable(value = "email") String email, HttpServletRequest request, HttpServletResponse response) {
 
     List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
 
     if (email == null) {
       errors.add(INVALID_FIELDS);
@@ -284,13 +294,19 @@ public class UserController {
         userToSave.setProfile(userToSave.getProfile().merge(userToSave.getProfile(), userData.getProfile()));
       }
     }
-    userRepository.save(userToSave);
+    userRepository.save(userToSave).indexAsync();
     return new GeneralResponse(response, Status.OK);
   }
 
   @GetMapping
   @ResponseBody
-  public GeneralResponse getAllUsers(HttpServletResponse response) {
+  public GeneralResponse getAllUsers(HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
     return new GeneralResponse(response, OK, null, userRepository.findAll());
   }
 
