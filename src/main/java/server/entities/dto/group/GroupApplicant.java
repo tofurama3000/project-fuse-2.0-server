@@ -27,12 +27,19 @@ public abstract class GroupApplicant<T extends Group> {
   @Column(name = "time")
   private LocalDateTime time;
 
-  public void convert(ZonedDateTime dateTime) { time = dateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime(); }
+  public void setTime(String dateTime)
+  {  ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateTime);
+    time = zonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+  }
 
 
   @JsonIgnore
-  public LocalDateTime getStartDateTime(){
+  public LocalDateTime getDateTime(){
     return time;
+  }
+
+  public String getTime(){
+    return time.toString() + "+00:00";
   }
 
   @JsonIgnore
