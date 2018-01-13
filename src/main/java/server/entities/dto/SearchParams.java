@@ -58,6 +58,9 @@ public class SearchParams {
   }
 
   private void mapEntityToIndexAndType(String entity){
+    if (entity.length() > 3 && entity.substring(0, 3).equals("in:")) {
+      entity = entity.substring(3);
+    }
     if(entity.contains(",")) {
       String[] entities = entity.trim().substring(3).split(",");
       indices.addAll(Arrays.stream(entities)
