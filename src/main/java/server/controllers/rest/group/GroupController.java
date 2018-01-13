@@ -249,7 +249,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     }
 
     User sessionUser = session.get().getUser();
-    UserToGroupPermission senderPermission = getUserToGroupPermission(sessionUser, groupInvitation.getGroup());
+    T group = groupInvitation.getGroup();
+    UserToGroupPermission senderPermission = getUserToGroupPermission(sessionUser, group);
     if (!senderPermission.canInvite()) {
       errors.add(INSUFFICIENT_PRIVELAGES);
       return new GeneralResponse(response, DENIED, errors);
@@ -262,7 +263,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       return new GeneralResponse(response, BAD_DATA, errors);
     }
 
-    UserToGroupPermission receiverPermission = getUserToGroupPermission(receiver.get(), groupInvitation.getGroup());
+    UserToGroupPermission receiverPermission = getUserToGroupPermission(receiver.get(), group);
 
     Optional<Integer> role = getRoleFromInvitationType(groupInvitation.getType());
 
@@ -278,30 +279,21 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
     groupInvitation.setStatus(PENDING);
     groupInvitation.setSender(sessionUser);
-
     switch (role.get()) {
       case INVITED_TO_JOIN:
-        addRelationship(receiver.get(), groupInvitation.getGroup(), INVITED_TO_JOIN);
+        addRelationship(receiver.get(), group, INVITED_TO_JOIN);
         saveInvitation(groupInvitation);
         break;
       case INVITED_TO_INTERVIEW:
-        Interview interview = interviewRepository.findOne(groupInvitation.getInterview().getId());
-
-        if (interview == null) {
-          errors.add(INVALID_FIELDS);
-          return new GeneralResponse(response, BAD_DATA, errors);
-        }
-
         LocalDateTime currentDateTime = ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime();
-
-        if (interview.getAvailability() != AVAILABLE || interview.getStartDateTime().isBefore(currentDateTime)) {
+        List<Interview> availableInterviewsAfterDate = interviewRepository.getAvailableInterviewsAfterDate(group.getId(), group.getGroupType(), currentDateTime);
+        if (availableInterviewsAfterDate.size() == 0) {
           errors.add(INTERVIEW_NOT_AVAILABLE);
           return new GeneralResponse(response, BAD_DATA, errors);
         }
 
-        groupInvitation.setInterview(interview);
+        addRelationship(receiver.get(), group, INVITED_TO_INTERVIEW);
         saveInvitation(groupInvitation);
-        addRelationship(receiver.get(), groupInvitation.getGroup(), INVITED_TO_INTERVIEW);
         break;
     }
 
