@@ -28,7 +28,8 @@ public abstract class GroupApplicant<T extends Group> {
   private LocalDateTime time;
 
   public void setTime(String dateTime)
-  {  ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateTime);
+  {
+    ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateTime);
     time = zonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
   }
 
