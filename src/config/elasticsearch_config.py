@@ -30,16 +30,20 @@ def send_request_to_elasticsearch(uri, data):
     url = '/' + uri
 
     con = get_connection()
-    con.request('GET', url)
-    response = con.getresponse()
-    con.close()
+    try:
+        con.request('GET', url)
+        response = con.getresponse()
+    finally:
+        con.close()
 
     if response.status == 200:
         print("Index, found, dropping index")
         con = get_connection()
-        con.request('DELETE', url)
-        response = con.getresponse()
-        con.close()
+        try:
+            con.request('DELETE', url)
+            response = con.getresponse()
+        finally:
+            con.close()
 
         if response.status != 200:
             raise Exception("Unable to delete existing index for " + uri)
@@ -47,11 +51,13 @@ def send_request_to_elasticsearch(uri, data):
 
     print("Creating index")
     con = get_connection()
-    con.request('PUT', url, data, {
-        'Content-Type': 'application/json'
-    })
-    response = con.getresponse()
-    con.close()
+    try:
+        con.request('PUT', url, data, {
+            'Content-Type': 'application/json'
+        })
+        response = con.getresponse()
+    finally:
+        con.close()
 
     if response.status != 200:
         raise Exception("Unable to createindex for " + uri)
@@ -70,10 +76,15 @@ for file in files:
 for file in json_files:
     uri = file[0:-5]
     f = open(os.path.join(DIRECTORY, file),'r')
-    request_string = f.read()
-    f.close()
+    try:
+        request_string = f.read()
+    finally:
+        f.close()
     print("Doing index for " + uri)
-    send_request_to_elasticsearch(uri, request_string)
+    try:
+        send_request_to_elasticsearch(uri, request_string)
+    except Exception as e:
+        print("ERROR " + e)
 
 print('')
 print("Done with indexes, please reindex all your data")
