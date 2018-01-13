@@ -27,6 +27,7 @@ import server.repositories.group.team.TeamInvitationRepository;
 import server.repositories.group.team.TeamMemberRepository;
 import server.repositories.group.team.TeamProfileRepository;
 import server.repositories.group.team.TeamRepository;
+import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -34,6 +35,7 @@ import javax.servlet.http.HttpServletResponse;
 @Controller
 @RequestMapping(value = "/teams")
 @Transactional
+@ApiIgnore
 @SuppressWarnings("unused")
 public class TeamController extends GroupController<Team, TeamMember> {
 
