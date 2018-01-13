@@ -28,21 +28,31 @@ def get_connection():
 
 def send_request_to_elasticsearch(uri, data):
     url = '/' + uri
+
     con = get_connection()
     con.request('GET', url)
-    if con.getresponse().status == 200:
+    response = con.getresponse()
+    con.close()
+
+    if response.status == 200:
         print("Index, found, dropping index")
         con = get_connection()
         con.request('DELETE', url)
-        if con.getresponse().status != 200:
+        response = con.getresponse()
+        con.close()
+
+        if response.status != 200:
             raise Exception("Unable to delete existing index for " + uri)
         print("Index dropped")
+
     print("Creating index")
     con = get_connection()
     con.request('PUT', url, data, {
         'Content-Type': 'application/json'
     })
     response = con.getresponse()
+    con.close()
+
     if response.status != 200:
         raise Exception("Unable to createindex for " + uri)
     print("Index made")
