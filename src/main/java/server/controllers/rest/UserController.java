@@ -12,7 +12,6 @@ import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVE
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_REGISTRATION_KEY;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
-import static server.controllers.rest.response.CannedResponse.NO_INTERVIEW_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_INVITATION_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
 import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
@@ -35,7 +34,6 @@ import server.entities.dto.FuseSession;
 import server.entities.dto.UnregisteredUser;
 import server.entities.dto.User;
 import server.entities.dto.UserProfile;
-import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.interview.Interview;
 import server.entities.dto.group.organization.Organization;
@@ -67,12 +65,8 @@ import server.utility.RolesUtility;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @Controller
@@ -476,8 +470,6 @@ public class UserController {
     UserToTeamPermission permission = permissionFactory.createUserToTeamPermission(user, group);
 
     UserToTeamRelationship userToTeamRelationship = relationshipFactory.createUserToTeamRelationship(user, group);
-
-    savedInvitation.setInterview(teamInvitation.getInterview());
     PossibleError possibleError = addRelationshipsIfNotError(savedInvitation, permission, userToTeamRelationship);
 
     if (!possibleError.hasError()) {
@@ -514,8 +506,6 @@ public class UserController {
     UserToProjectPermission permission = permissionFactory.createUserToProjectPermission(user, group);
 
     UserToProjectRelationship userToTeamRelationship = relationshipFactory.createUserToProjectRelationship(user, group);
-
-    savedInvitation.setInterview(projectInvitation.getInterview());
     PossibleError possibleError = addRelationshipsIfNotError(savedInvitation, permission, userToTeamRelationship);
 
     if (!possibleError.hasError()) {
@@ -553,8 +543,6 @@ public class UserController {
     UserToOrganizationPermission permission = permissionFactory.createUserToOrganizationPermission(user, group);
 
     UserToOrganizationRelationship userToTeamRelationship = relationshipFactory.createUserToOrganizationRelationship(user, group);
-
-    savedInvitation.setInterview(organizationInvitation.getInterview());
     PossibleError possibleError = addRelationshipsIfNotError(savedInvitation, permission, userToTeamRelationship);
 
     if (!possibleError.hasError()) {
@@ -584,19 +572,6 @@ public class UserController {
           errors.add(INVALID_FIELDS);
           return new PossibleError(errors);
         }
-        Group group = invitation.getGroup();
-        LocalDateTime currentDateTime = ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime();
-
-        List<Interview> availableInterviewsAfterDate = interviewRepository
-            .getAvailableInterviewsAfterDate(group.getId(), group.getGroupType(), currentDateTime);
-
-        long count = availableInterviewsAfterDate.stream().map(Interview::getId)
-            .filter(id -> Objects.equals(id, interview.getId())).count();
-
-        if (count < 1) {
-          errors.add(NO_INTERVIEW_FOUND);
-          return new PossibleError(errors);
-        }
 
         if (!permission.hasRole(INVITED_TO_INTERVIEW)) {
           errors.add(INSUFFICIENT_PRIVELAGES);
@@ -604,7 +579,7 @@ public class UserController {
         }
 
         relationship.addRelationship(TO_INTERVIEW);
-        relationship.removeRelationship(INVITED_TO_INTERVIEW);
+        relationship.addRelationship(INVITED_TO_INTERVIEW);
 
         interview.setUser(user);
         interview.setAvailability(NOT_AVAILABLE);
