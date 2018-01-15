@@ -9,16 +9,9 @@ import static server.constants.RoleValue.DEFAULT_USER;
 import static server.constants.RoleValue.INVITED_TO_INTERVIEW;
 import static server.constants.RoleValue.INVITED_TO_JOIN;
 import static server.constants.RoleValue.TO_INTERVIEW;
-import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
-import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
-import static server.controllers.rest.response.CannedResponse.INVALID_REGISTRATION_KEY;
-import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
-import static server.controllers.rest.response.CannedResponse.NO_GROUP_FOUND;
-import static server.controllers.rest.response.CannedResponse.NO_INVITATION_FOUND;
-import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
-import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
-import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
-import static server.controllers.rest.response.GeneralResponse.Status.OK;
+import static server.controllers.rest.response.CannedResponse.*;
+import static server.controllers.rest.response.GeneralResponse.Status.*;
+import static server.entities.user_to_group.permissions.results.JoinResult.ALREADY_JOINED;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -197,7 +190,7 @@ public class UserController {
 
   @PostMapping (path = "/apply/team/{id}")
   @ResponseBody
-  public GeneralResponse applyTeam(@PathVariable(value = "id") Long id,@RequestBody User user, @RequestBody TeamApplicant applicant, HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse applyTeam(@PathVariable(value = "id") Long id, @RequestBody TeamApplicant applicant, HttpServletRequest request, HttpServletResponse response) {
 
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -205,7 +198,8 @@ public class UserController {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, Status.DENIED, errors);
     }
-    applicant.setSender(user);
+
+   applicant.setSender(session.get().getUser());
     applicant.setStatus(PENDING);
     Team team = teamRepository.findOne(id);
     if(team==null){
@@ -220,7 +214,7 @@ public class UserController {
 
   @PostMapping (path = "/apply/project/{id}")
   @ResponseBody
-  public GeneralResponse applyProject(@PathVariable(value = "id") Long id, @RequestBody User user, @RequestBody ProjectApplicant applicant, HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse applyProject(@PathVariable(value = "id") Long id,  @RequestBody ProjectApplicant applicant, HttpServletRequest request, HttpServletResponse response) {
 
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -228,14 +222,20 @@ public class UserController {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, Status.DENIED, errors);
     }
-    applicant.setSender(user);
+
+//   switch ( permissionFactory.createUserToProjectPermission(session.get().getUser(), applicant.getProject()).canJoin()){
+//      case ALREADY_JOINED:
+//        errors.add(ALREADY_JOINED_MSG);
+//        return new GeneralResponse(response, ERROR, errors);
+//   }
+
+    applicant.setSender(session.get().getUser());
     applicant.setStatus(PENDING);
     Project project = projectRepository.findOne(id);
     if(project==null){
       errors.add(NO_GROUP_FOUND);
       return new GeneralResponse(response, Status.DENIED, errors);
     }
-
     applicant.setProject(project);
     projectApplicantRepository.save(applicant);
     return  new GeneralResponse(response, Status.OK, errors);
@@ -243,7 +243,7 @@ public class UserController {
 
   @PostMapping (path = "/apply/organization/{id}")
   @ResponseBody
-  public GeneralResponse applyOrganization(@PathVariable(value = "id") Long id, @RequestBody User user, @RequestBody OrganizationApplicant applicant, HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse applyOrganization(@PathVariable(value = "id") Long id,  @RequestBody OrganizationApplicant applicant, HttpServletRequest request, HttpServletResponse response) {
 
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -251,7 +251,7 @@ public class UserController {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, Status.DENIED, errors);
     }
-    applicant.setSender(user);
+    applicant.setSender(session.get().getUser());
     applicant.setStatus(PENDING);
     Organization organization = organizationRepository.findOne(id);
     if(organization==null){

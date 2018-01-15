@@ -3,6 +3,7 @@ package server.repositories.group.team;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import server.entities.dto.group.interview.Interview;
+import server.entities.dto.group.team.Team;
 import server.entities.dto.group.team.TeamApplicant;
 import server.repositories.group.GroupApplicantRepository;
 
@@ -13,6 +14,6 @@ import static server.constants.Availability.AVAILABLE;
 
 public interface TeamApplicantRepository extends GroupApplicantRepository<TeamApplicant> {
   @Query("FROM TeamApplicant a where a.team = :team and a.status = :status ")
-  List<TeamApplicant> getTeamApplicants(@Param("team") Long groupId, @Param("status") String status);
+  List<TeamApplicant> getTeamApplicants(@Param("team") Team team, @Param("status") String status);
 }
 
