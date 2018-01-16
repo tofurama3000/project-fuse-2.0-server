@@ -41,15 +41,14 @@ import server.entities.dto.FuseSession;
 import server.entities.dto.GroupMember;
 import server.entities.dto.User;
 import server.entities.dto.group.Group;
+import server.entities.dto.group.GroupApplicant;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.interview.Interview;
+import server.entities.dto.group.team.TeamApplicant;
 import server.entities.user_to_group.permissions.UserToGroupPermission;
 import server.entities.dto.group.GroupProfile;
 import server.repositories.UserRepository;
-import server.repositories.group.GroupMemberRepository;
-import server.repositories.group.GroupProfileRepository;
-import server.repositories.group.GroupRepository;
-import server.repositories.group.InterviewRepository;
+import server.repositories.group.*;
 import server.utility.UserFindHelper;
 
 import javax.servlet.http.HttpServletRequest;
@@ -413,6 +412,40 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     return new GeneralResponse(response, BAD_DATA, errors);
   }
 
+  @GetMapping(path = "/{id}/applicants/{status}")
+  @ResponseBody
+  public GeneralResponse getApplicants(@PathVariable(value = "id") Long id,@PathVariable(value = "status") String status,
+                                       HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+    }
+    GroupApplicantRepository groupApplicantRepository = getGroupApplicantRepository();
+
+    return new GeneralResponse(response, OK, null, groupApplicantRepository.getApplicants(getGroupRepository().findOne(id),status));
+  }
+
+  @PostMapping(path = "/{id}/applicants/{status}")
+  @ResponseBody
+  public GeneralResponse setApplicantsStatus(@PathVariable(value = "id") Long id,@RequestBody User applicant,@PathVariable(value = "status") String status,
+                                          HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+    }
+
+    GroupApplicantRepository groupApplicantRepository = getGroupApplicantRepository();
+    GroupApplicant applicantToSave = (GroupApplicant) groupApplicantRepository.findOne(applicant.getId());
+    applicantToSave.setStatus(status);
+    groupApplicantRepository.save(applicantToSave);
+    return new GeneralResponse(response, OK, null);
+  }
 
   @GetMapping(path = "/{id}/can_edit")
   @ResponseBody
@@ -444,6 +477,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   }
 
   protected abstract GroupRepository<T> getGroupRepository();
+
+  protected abstract GroupApplicantRepository getGroupApplicantRepository();
 
   protected abstract GroupProfile saveProfile(T group);
 

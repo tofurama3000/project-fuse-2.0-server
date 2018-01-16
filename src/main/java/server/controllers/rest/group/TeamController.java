@@ -9,6 +9,7 @@ import server.controllers.FuseSessionController;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.FuseSession;
 import server.entities.dto.User;
+import server.entities.dto.group.GroupApplicant;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.GroupProfile;
 import server.entities.dto.group.organization.OrganizationProfile;
@@ -16,6 +17,7 @@ import server.entities.dto.group.team.*;
 import server.entities.user_to_group.permissions.PermissionFactory;
 import server.entities.user_to_group.permissions.UserToGroupPermission;
 import server.entities.user_to_group.relationships.RelationshipFactory;
+import server.repositories.group.GroupApplicantRepository;
 import server.repositories.group.GroupMemberRepository;
 import server.repositories.group.GroupProfileRepository;
 import server.repositories.group.GroupRepository;
@@ -91,6 +93,11 @@ public class TeamController extends GroupController<Team, TeamMember> {
   }
 
   @Override
+  protected GroupApplicantRepository getGroupApplicantRepository() {
+    return teamApplicantRepository;
+  }
+
+  @Override
   protected GroupProfile<Team> saveProfile(Team team) {
     return teamProfileRepository.save(team.getProfile());
   }
@@ -117,19 +124,4 @@ public class TeamController extends GroupController<Team, TeamMember> {
     teamInvitationRepository.save(((TeamInvitation) invitation));
   }
 
-  @GetMapping(path = "/{id}/applicants/{status}")
-  @ResponseBody
-  public GeneralResponse getApplicants(@PathVariable(value = "id") Long id,@PathVariable(value = "status") String status,
-                                       HttpServletRequest request, HttpServletResponse response) {
-    List<String> errors = new ArrayList<>();
-
-    Optional<FuseSession> session = fuseSessionController.getSession(request);
-    if (!session.isPresent()) {
-      errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
-    }
-
-    
-    return new GeneralResponse(response, OK, null, teamApplicantRepository.getTeamApplicants(teamRepository.findOne(id),status));
-  }
 }

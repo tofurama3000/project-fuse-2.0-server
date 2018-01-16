@@ -13,17 +13,16 @@ import server.entities.dto.User;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.GroupProfile;
 import server.entities.dto.group.project.Project;
+import server.entities.dto.group.project.ProjectApplicant;
 import server.entities.dto.group.project.ProjectInvitation;
 import server.entities.dto.group.project.ProjectMember;
 import server.entities.user_to_group.permissions.PermissionFactory;
 import server.entities.user_to_group.permissions.UserToGroupPermission;
 import server.entities.user_to_group.relationships.RelationshipFactory;
+import server.repositories.group.GroupApplicantRepository;
 import server.repositories.group.GroupMemberRepository;
 import server.repositories.group.GroupRepository;
-import server.repositories.group.project.ProjectInvitationRepository;
-import server.repositories.group.project.ProjectMemberRepository;
-import server.repositories.group.project.ProjectProfileRepository;
-import server.repositories.group.project.ProjectRepository;
+import server.repositories.group.project.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -39,6 +38,9 @@ public class ProjectController extends GroupController<Project, ProjectMember> {
 
   @Autowired
   private ProjectProfileRepository projectProfileRepository;
+
+  @Autowired
+  private ProjectApplicantRepository projecApplicantRepository;
 
   @Autowired
   private ProjectRepository projectRepository;
@@ -63,6 +65,11 @@ public class ProjectController extends GroupController<Project, ProjectMember> {
   @Override
   protected GroupRepository<Project> getGroupRepository() {
     return projectRepository;
+  }
+
+  @Override
+  protected GroupApplicantRepository getGroupApplicantRepository() {
+    return projecApplicantRepository;
   }
 
   @Override
