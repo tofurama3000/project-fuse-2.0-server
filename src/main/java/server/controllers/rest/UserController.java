@@ -331,10 +331,12 @@ public class UserController {
     return new GeneralResponse(response, OK, null, userRepository.findAll());
   }
 
-  @GetMapping(path = "/joined/teams")
+  @GetMapping(path = "/{id}/joined/teams")
   @ResponseBody
   @ApiIgnore
-  public GeneralResponse getAllTeamsOfUser(HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse getAllTeamsOfUser(
+          @PathVariable Long id,
+          HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -342,15 +344,17 @@ public class UserController {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, Status.DENIED, errors);
     }
-    User user = session.get().getUser();
+    User user = userRepository.findOne(id);
 
     return new GeneralResponse(response, OK, null, membersOfGroupController.getTeamsUserIsPartOf(user));
   }
 
-  @GetMapping(path = "/joined/organizations")
+  @GetMapping(path = "/{id}/joined/organizations")
   @ResponseBody
-  @ApiOperation(value = "Get all organizations for the current user")
-  public GeneralResponse getAllOrganizationsOfUser(HttpServletRequest request, HttpServletResponse response) {
+  @ApiOperation(value = "Get all organizations for the specified user")
+  public GeneralResponse getAllOrganizationsOfUser(
+          @PathVariable Long id,
+          HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -358,16 +362,18 @@ public class UserController {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, Status.DENIED, errors);
     }
-    User user = session.get().getUser();
+    User user = userRepository.findOne(id);
 
     return new GeneralResponse(response, OK, null, membersOfGroupController.getOrganizationsUserIsPartOf(user));
   }
 
 
-  @GetMapping(path = "/joined/projects")
+  @GetMapping(path = "/{id}/joined/projects")
   @ResponseBody
-  @ApiOperation(value = "Get all projects for the current user")
-  public GeneralResponse getAllProjectsOfUser(HttpServletRequest request, HttpServletResponse response) {
+  @ApiOperation(value = "Get all projects for the specified user")
+  public GeneralResponse getAllProjectsOfUser(
+          @PathVariable Long id,
+          HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -375,7 +381,7 @@ public class UserController {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, Status.DENIED, errors);
     }
-    User user = session.get().getUser();
+    User user = userRepository.findOne(id);
 
     return new GeneralResponse(response, OK, null, membersOfGroupController.getProjectsUserIsPartOf(user));
   }
