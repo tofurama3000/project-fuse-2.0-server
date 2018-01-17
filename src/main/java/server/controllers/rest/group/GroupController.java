@@ -22,6 +22,7 @@ import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
 import static server.controllers.rest.response.GeneralResponse.Status.ERROR;
 import static server.controllers.rest.response.GeneralResponse.Status.OK;
+import static server.entities.user_to_group.permissions.results.JoinResult.ALREADY_JOINED;
 import static server.utility.RolesUtility.getRoleFromInvitationType;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -47,7 +48,10 @@ import server.entities.dto.group.GroupApplicant;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.GroupProfile;
 import server.entities.dto.group.interview.Interview;
+import server.entities.dto.group.team.Team;
+import server.entities.dto.group.team.TeamApplicant;
 import server.entities.user_to_group.permissions.UserToGroupPermission;
+import server.entities.user_to_group.permissions.UserToTeamPermission;
 import server.repositories.UserRepository;
 import server.repositories.group.GroupApplicantRepository;
 import server.repositories.group.GroupMemberRepository;
@@ -152,6 +156,34 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       getGroupRepository().delete(entities.get(0));
       return new GeneralResponse(response);
     }
+  }
+
+  protected GeneralResponse generalApply(@PathVariable(value = "id") Long id, @RequestBody GroupApplicant<T> applicant, HttpServletRequest request, HttpServletResponse response) {
+
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+    }
+
+   // UserToTeamPermission permission = permissionFactory.createUserToTeamPermission(session.get().getUser(), applicant.getTeam());
+    switch (getUserToGroupPermission(applicant.getSender(), applicant.getGroup()).canJoin()) {
+      case ALREADY_JOINED:
+        errors.add(ALREADY_JOINED_MSG);
+        return new GeneralResponse(response, ERROR, errors);
+    }
+    applicant.setSender(session.get().getUser());
+    applicant.setStatus(PENDING);
+    T group = getGroupRepository().findOne(id);
+    if (group == null) {
+      errors.add(NO_GROUP_FOUND);
+      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+    }
+
+    applicant.setGroup(group);
+    getGroupApplicantRepository().save(applicant);
+    return new GeneralResponse(response, GeneralResponse.Status.OK, errors);
   }
 
   @CrossOrigin
@@ -429,6 +461,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     return new GeneralResponse(response, OK, null, groupApplicantRepository.getApplicants(getGroupRepository().findOne(id), status));
   }
 
+  @CrossOrigin
   @PutMapping(path = "/{id}/applicants/{appId}/{status}")
   @ResponseBody
   public GeneralResponse setApplicantsStatus(@PathVariable(value = "id") Long id, @PathVariable(value = "status") String status,

@@ -107,6 +107,13 @@ public class OrganizationController extends GroupController<Organization, Organi
     return generalInvite(organizationInvitation, request, response);
   }
 
+  @PostMapping(path = "/apply/{id}")
+  @ResponseBody
+  public GeneralResponse apply(@RequestBody OrganizationInvitation organizationInvitation,
+                                HttpServletRequest request, HttpServletResponse response) {
+    return generalInvite(organizationInvitation, request, response);
+  }
+
   @Override
   protected void saveInvitation(GroupInvitation<Organization> invitation) {
     organizationInvitationRepository.save((OrganizationInvitation) invitation);
