@@ -4,15 +4,14 @@ import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.User;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.GroupProfile;
+import server.entities.dto.group.organization.OrganizationInvitation;
 import server.entities.dto.group.project.Project;
+import server.entities.dto.group.project.ProjectApplicant;
 import server.entities.dto.group.project.ProjectInvitation;
 import server.entities.dto.group.project.ProjectMember;
 import server.entities.user_to_group.permissions.PermissionFactory;
@@ -98,6 +97,13 @@ public class ProjectController extends GroupController<Project, ProjectMember> {
   @Override
   protected void addRelationship(User user, Project group, int role) {
     relationshipFactory.createUserToProjectRelationship(user, group).addRelationship(role);
+  }
+
+  @PostMapping(path = "/apply/{id}")
+  @ResponseBody
+  public GeneralResponse apply(@PathVariable(value = "id") Long id, @RequestBody ProjectApplicant projectApplicant,
+                               HttpServletRequest request, HttpServletResponse response) {
+    return generalApply(id, projectApplicant, request, response);
   }
 
   @PostMapping(path = "/invite")

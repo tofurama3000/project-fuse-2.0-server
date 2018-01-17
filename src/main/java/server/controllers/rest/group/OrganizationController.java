@@ -4,15 +4,13 @@ import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.User;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.GroupProfile;
 import server.entities.dto.group.organization.Organization;
+import server.entities.dto.group.organization.OrganizationApplicant;
 import server.entities.dto.group.organization.OrganizationInvitation;
 import server.entities.dto.group.organization.OrganizationMember;
 import server.entities.user_to_group.permissions.PermissionFactory;
@@ -109,9 +107,9 @@ public class OrganizationController extends GroupController<Organization, Organi
 
   @PostMapping(path = "/apply/{id}")
   @ResponseBody
-  public GeneralResponse apply(@RequestBody OrganizationInvitation organizationInvitation,
-                                HttpServletRequest request, HttpServletResponse response) {
-    return generalInvite(organizationInvitation, request, response);
+  public GeneralResponse apply(@PathVariable(value = "id") Long id, @RequestBody OrganizationApplicant organizationApplicant,
+                               HttpServletRequest request, HttpServletResponse response) {
+    return generalApply(id, organizationApplicant, request, response);
   }
 
   @Override

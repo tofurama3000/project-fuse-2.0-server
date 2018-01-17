@@ -22,6 +22,7 @@ import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
 import static server.controllers.rest.response.GeneralResponse.Status.ERROR;
 import static server.controllers.rest.response.GeneralResponse.Status.OK;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -206,95 +207,6 @@ public class UserController {
     }
 
     return new GeneralResponse(response, OK, errors, savedUser);
-  }
-
-  @PostMapping(path = "/apply/team/{id}")
-  @ResponseBody
-  public GeneralResponse applyTeam(@PathVariable(value = "id") Long id, @RequestBody TeamApplicant applicant, HttpServletRequest request, HttpServletResponse response) {
-
-    List<String> errors = new ArrayList<>();
-    Optional<FuseSession> session = fuseSessionController.getSession(request);
-    if (!session.isPresent()) {
-      errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, Status.DENIED, errors);
-    }
-
-    UserToTeamPermission permission = permissionFactory.createUserToTeamPermission(session.get().getUser(), applicant.getTeam());
-    switch (permission.canJoin()) {
-      case ALREADY_JOINED:
-        errors.add(ALREADY_JOINED_MSG);
-        return new GeneralResponse(response, ERROR, errors);
-    }
-    applicant.setSender(session.get().getUser());
-    applicant.setStatus(PENDING);
-    Team team = teamRepository.findOne(id);
-    if (team == null) {
-      errors.add(NO_GROUP_FOUND);
-      return new GeneralResponse(response, Status.DENIED, errors);
-    }
-
-    applicant.setTeam(team);
-    teamApplicantRepository.save(applicant);
-    return new GeneralResponse(response, Status.OK, errors);
-  }
-
-  @PostMapping(path = "/apply/project/{id}")
-  @ResponseBody
-  public GeneralResponse applyProject(@PathVariable(value = "id") Long id, @RequestBody ProjectApplicant applicant, HttpServletRequest request, HttpServletResponse response) {
-
-    List<String> errors = new ArrayList<>();
-    Optional<FuseSession> session = fuseSessionController.getSession(request);
-    if (!session.isPresent()) {
-      errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, Status.DENIED, errors);
-    }
-    UserToProjectPermission permission = permissionFactory.createUserToProjectPermission(session.get().getUser(), applicant.getProject());
-    switch (permission.canJoin()) {
-      case ALREADY_JOINED:
-        errors.add(ALREADY_JOINED_MSG);
-        return new GeneralResponse(response, ERROR, errors);
-    }
-
-    applicant.setSender(session.get().getUser());
-    applicant.setStatus(PENDING);
-    Project project = projectRepository.findOne(id);
-    if (project == null) {
-      errors.add(NO_GROUP_FOUND);
-      return new GeneralResponse(response, Status.DENIED, errors);
-    }
-    applicant.setProject(project);
-    projectApplicantRepository.save(applicant);
-    return new GeneralResponse(response, Status.OK, errors);
-  }
-
-  @PostMapping(path = "/apply/organization/{id}")
-  @ResponseBody
-  public GeneralResponse applyOrganization(@PathVariable(value = "id") Long id, @RequestBody OrganizationApplicant applicant, HttpServletRequest request, HttpServletResponse response) {
-
-    List<String> errors = new ArrayList<>();
-    Optional<FuseSession> session = fuseSessionController.getSession(request);
-    if (!session.isPresent()) {
-      errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, Status.DENIED, errors);
-    }
-    applicant.setSender(session.get().getUser());
-    applicant.setStatus(PENDING);
-    Organization organization = organizationRepository.findOne(id);
-    if (organization == null) {
-      errors.add(NO_GROUP_FOUND);
-      return new GeneralResponse(response, Status.DENIED, errors);
-    }
-
-    UserToOrganizationPermission permission = permissionFactory.createUserToOrganizationPermission(session.get().getUser(), applicant.getOrganization());
-    switch (permission.canJoin()) {
-      case ALREADY_JOINED:
-        errors.add(ALREADY_JOINED_MSG);
-        return new GeneralResponse(response, ERROR, errors);
-    }
-
-    applicant.setOrganization(organization);
-    organizationApplicantRepository.save(applicant);
-    return new GeneralResponse(response, Status.OK, errors);
   }
 
   @PostMapping(path = "/login")

@@ -2,6 +2,7 @@ package server.entities;
 
 import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.GeneralResponse.Status.OK;
+
 import lombok.Getter;
 import server.controllers.rest.response.GeneralResponse.Status;
 

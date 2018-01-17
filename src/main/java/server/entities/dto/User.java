@@ -1,6 +1,7 @@
 package server.entities.dto;
 
 import static server.constants.RegistrationStatus.UNREGISTERED;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.AccessLevel;

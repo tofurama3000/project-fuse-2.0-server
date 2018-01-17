@@ -24,6 +24,7 @@ import static server.controllers.rest.response.GeneralResponse.Status.ERROR;
 import static server.controllers.rest.response.GeneralResponse.Status.OK;
 import static server.entities.user_to_group.permissions.results.JoinResult.ALREADY_JOINED;
 import static server.utility.RolesUtility.getRoleFromInvitationType;
+
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
@@ -158,7 +159,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     }
   }
 
-  protected GeneralResponse generalApply(@PathVariable(value = "id") Long id, @RequestBody GroupApplicant<T> applicant, HttpServletRequest request, HttpServletResponse response) {
+  protected GeneralResponse generalApply(Long id, @RequestBody GroupApplicant<T> applicant, HttpServletRequest request, HttpServletResponse response) {
 
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -167,8 +168,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
     }
 
-   // UserToTeamPermission permission = permissionFactory.createUserToTeamPermission(session.get().getUser(), applicant.getTeam());
-    switch (getUserToGroupPermission(applicant.getSender(), applicant.getGroup()).canJoin()) {
+    // UserToTeamPermission permission = permissionFactory.createUserToTeamPermission(session.get().getUser(), applicant.getTeam());
+    switch (getUserToGroupPermission(session.get().getUser(), applicant.getGroup()).canJoin()) {
       case ALREADY_JOINED:
         errors.add(ALREADY_JOINED_MSG);
         return new GeneralResponse(response, ERROR, errors);
@@ -456,6 +457,14 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
     }
+
+    UserToGroupPermission permission = getUserToGroupPermission(session.get().getUser(), getGroupRepository().findOne(id));
+    boolean canUpdate = permission.canUpdate();
+    if (!canUpdate) {
+      errors.add(INSUFFICIENT_PRIVELAGES);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+
     GroupApplicantRepository groupApplicantRepository = getGroupApplicantRepository();
 
     return new GeneralResponse(response, OK, null, groupApplicantRepository.getApplicants(getGroupRepository().findOne(id), status));
@@ -472,6 +481,13 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+    }
+
+    UserToGroupPermission permission = getUserToGroupPermission(session.get().getUser(), getGroupRepository().findOne(id));
+    boolean canUpdate = permission.canUpdate();
+    if (!canUpdate) {
+      errors.add(INSUFFICIENT_PRIVELAGES);
+      return new GeneralResponse(response, DENIED, errors);
     }
 
     GroupApplicantRepository groupApplicantRepository = getGroupApplicantRepository();

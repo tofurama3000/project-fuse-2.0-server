@@ -4,16 +4,15 @@ import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.User;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.GroupProfile;
+import server.entities.dto.group.organization.OrganizationApplicant;
 import server.entities.dto.group.team.Team;
+import server.entities.dto.group.team.TeamApplicant;
 import server.entities.dto.group.team.TeamInvitation;
 import server.entities.dto.group.team.TeamMember;
 import server.entities.user_to_group.permissions.PermissionFactory;
@@ -80,10 +79,6 @@ public class TeamController extends GroupController<Team, TeamMember> {
     return new Team();
   }
 
-  //@Override
-  //protected GroupProfileRepository<TeamProfile> getGroupProfileRepository() {
-  //  return teamProfileRepository;
-  //}
 
   @Override
   protected GroupRepository<Team> getGroupRepository() {
@@ -108,6 +103,13 @@ public class TeamController extends GroupController<Team, TeamMember> {
   @Override
   protected UserToGroupPermission getUserToGroupPermission(User user, Team team) {
     return permissionFactory.createUserToTeamPermission(user, team);
+  }
+
+  @PostMapping(path = "/apply/{id}")
+  @ResponseBody
+  public GeneralResponse apply(@PathVariable(value = "id") Long id, @RequestBody TeamApplicant teamApplicant,
+                               HttpServletRequest request, HttpServletResponse response) {
+    return generalApply(id, teamApplicant, request, response);
   }
 
   @PostMapping(path = "/invite")
