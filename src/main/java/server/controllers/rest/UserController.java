@@ -150,7 +150,6 @@ public class UserController {
     public GeneralResponse addNewUser(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
 
         List<String> errors = new ArrayList<>();
-
         if (user != null) {
             if (user.getName() == null)
                 errors.add("Missing Name");
