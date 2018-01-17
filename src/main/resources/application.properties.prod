@@ -45,4 +45,4 @@ spring.jpa.properties.hibernate.dialect = org.hibernate.dialect.MySQL5Dialect
 spring.http.multipart.max-file-size=128KB
 spring.http.multipart.max-request-size=128KB
 
-fuse.fileUploadPath=C:/tmp2
+fuse.fileUploadPath=/tmp

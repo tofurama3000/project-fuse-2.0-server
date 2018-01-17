@@ -572,12 +572,13 @@ public class UserController {
                         .hashString(fileToUpload.getOriginalFilename(), StandardCharsets.UTF_8)
                         .toString();
                 Timestamp ts = new Timestamp(System.currentTimeMillis());
-                String fileName = hash + "." + ts.toString() + "." + currentUser.getId().toString();
+                long timestamp = ((ts.getTime())/1000) * 1000;
+                String fileName = hash + "." + timestamp + "." + currentUser.getId().toString();
                 File fileToSave = new File(fileUploadPath, fileName);
                 fileToSave.createNewFile();
                 fileToUpload.transferTo(fileToSave);
                 uploadFile.setHash(hash);
-                uploadFile.setUpload_time(ts);
+                uploadFile.setUpload_time(new Timestamp(timestamp));
                 uploadFile.setFile_size(fileToUpload.getSize());
                 uploadFile.setFileName(fileToUpload.getOriginalFilename());
                 uploadFile.setMime_type(fileToUpload.getContentType());
@@ -610,7 +611,7 @@ public class UserController {
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + originalFileName);
-        String fileName = fileToFind.getHash() + "." + fileToFind.getUpload_time() + "." + fileToFind.getUser().getId();
+        String fileName = fileToFind.getHash() + "." + fileToFind.getUpload_time().getTime() + "." + fileToFind.getUser().getId();
         Path path = Paths.get(fileUploadPath, fileName);
         ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(path));
         File file = new File(fileUploadPath, fileName);
