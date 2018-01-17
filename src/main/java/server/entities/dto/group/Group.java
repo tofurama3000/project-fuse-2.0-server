@@ -2,19 +2,24 @@ package server.entities.dto.group;
 
 import static server.entities.Restriction.INVITE;
 import static server.entities.Restriction.NONE;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import server.entities.Interviewable;
 import server.entities.Restriction;
 import server.entities.dto.User;
-import server.entities.dto.group.project.Project;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.MappedSuperclass;
+import javax.persistence.Transient;
 
 @Data
 @MappedSuperclass
-public abstract class Group<Profile extends GroupProfile> implements  Interviewable {
+public abstract class Group<Profile extends GroupProfile> implements Interviewable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)

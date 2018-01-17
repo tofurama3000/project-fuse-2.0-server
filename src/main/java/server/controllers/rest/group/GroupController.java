@@ -23,17 +23,19 @@ import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
 import static server.controllers.rest.response.GeneralResponse.Status.ERROR;
 import static server.controllers.rest.response.GeneralResponse.Status.OK;
 import static server.utility.RolesUtility.getRoleFromInvitationType;
-import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
-import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
-import static server.controllers.rest.response.GeneralResponse.Status.ERROR;
-import static server.controllers.rest.response.GeneralResponse.Status.OK;
-
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.CannedResponse;
 import server.controllers.rest.response.GeneralResponse;
@@ -43,12 +45,15 @@ import server.entities.dto.User;
 import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupApplicant;
 import server.entities.dto.group.GroupInvitation;
-import server.entities.dto.group.interview.Interview;
-import server.entities.dto.group.team.TeamApplicant;
-import server.entities.user_to_group.permissions.UserToGroupPermission;
 import server.entities.dto.group.GroupProfile;
+import server.entities.dto.group.interview.Interview;
+import server.entities.user_to_group.permissions.UserToGroupPermission;
 import server.repositories.UserRepository;
-import server.repositories.group.*;
+import server.repositories.group.GroupApplicantRepository;
+import server.repositories.group.GroupMemberRepository;
+import server.repositories.group.GroupProfileRepository;
+import server.repositories.group.GroupRepository;
+import server.repositories.group.InterviewRepository;
 import server.utility.UserFindHelper;
 
 import javax.servlet.http.HttpServletRequest;
@@ -56,7 +61,11 @@ import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @SuppressWarnings("unused")
 public abstract class GroupController<T extends Group, R extends GroupMember<T>> {
@@ -165,7 +174,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     boolean canUpdate = permission.canUpdate();
     if (!canUpdate) {
       errors.add(INSUFFICIENT_PRIVELAGES);
-      return new GeneralResponse(response, DENIED, errors); 
+      return new GeneralResponse(response, DENIED, errors);
     }
 
     // Merging instead of direct copying ensures we're very clear about what can be edited, and it provides easy checks
@@ -399,7 +408,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     }
 
     Group res = getGroupRepository().findOne(id);
-    if (res != null){
+    if (res != null) {
       User user = session.get().getUser();
       T groupToSave = getGroupRepository().findOne(id);
       UserToGroupPermission permission = getUserToGroupPermission(user, groupToSave);
@@ -414,7 +423,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
   @GetMapping(path = "/{id}/applicants/{status}")
   @ResponseBody
-  public GeneralResponse getApplicants(@PathVariable(value = "id") Long id,@PathVariable(value = "status") String status,
+  public GeneralResponse getApplicants(@PathVariable(value = "id") Long id, @PathVariable(value = "status") String status,
                                        HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
@@ -425,13 +434,13 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     }
     GroupApplicantRepository groupApplicantRepository = getGroupApplicantRepository();
 
-    return new GeneralResponse(response, OK, null, groupApplicantRepository.getApplicants(getGroupRepository().findOne(id),status));
+    return new GeneralResponse(response, OK, null, groupApplicantRepository.getApplicants(getGroupRepository().findOne(id), status));
   }
 
   @PutMapping(path = "/{id}/applicants/{appId}/{status}")
   @ResponseBody
   public GeneralResponse setApplicantsStatus(@PathVariable(value = "id") Long id, @PathVariable(value = "status") String status,
-                                             @PathVariable(value = "appId") Long appId,HttpServletRequest request, HttpServletResponse response) {
+                                             @PathVariable(value = "appId") Long appId, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);

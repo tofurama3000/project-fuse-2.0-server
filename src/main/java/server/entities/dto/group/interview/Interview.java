@@ -56,20 +56,20 @@ public class Interview {
   }
 
   @JsonIgnore
-  public LocalDateTime getStartDateTime(){
+  public LocalDateTime getStartDateTime() {
     return startDateTime;
   }
 
   @JsonIgnore
-  public LocalDateTime getEndDateTime(){
+  public LocalDateTime getEndDateTime() {
     return endDateTime;
   }
 
-  public String getStart(){
+  public String getStart() {
     return startDateTime.toString() + "+00:00";
   }
 
-  public String getEnd(){
+  public String getEnd() {
     return endDateTime.toString() + "+00:00";
   }
 }

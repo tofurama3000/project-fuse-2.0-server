@@ -9,16 +9,31 @@ import static server.constants.RoleValue.DEFAULT_USER;
 import static server.constants.RoleValue.INVITED_TO_INTERVIEW;
 import static server.constants.RoleValue.INVITED_TO_JOIN;
 import static server.constants.RoleValue.TO_INTERVIEW;
-import static server.controllers.rest.response.CannedResponse.*;
-import static server.controllers.rest.response.GeneralResponse.Status.*;
-import static server.entities.user_to_group.permissions.results.JoinResult.ALREADY_JOINED;
-
+import static server.controllers.rest.response.CannedResponse.ALREADY_JOINED_MSG;
+import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
+import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
+import static server.controllers.rest.response.CannedResponse.INVALID_REGISTRATION_KEY;
+import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
+import static server.controllers.rest.response.CannedResponse.NO_GROUP_FOUND;
+import static server.controllers.rest.response.CannedResponse.NO_INVITATION_FOUND;
+import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
+import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
+import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
+import static server.controllers.rest.response.GeneralResponse.Status.ERROR;
+import static server.controllers.rest.response.GeneralResponse.Status.OK;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.AlternativeJdkIdGenerator;
 import org.springframework.util.IdGenerator;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
 import server.controllers.MembersOfGroupController;
 import server.controllers.rest.response.GeneralResponse;
@@ -29,7 +44,6 @@ import server.entities.dto.FuseSession;
 import server.entities.dto.UnregisteredUser;
 import server.entities.dto.User;
 import server.entities.dto.UserProfile;
-import server.entities.dto.group.GroupApplicant;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.interview.Interview;
 import server.entities.dto.group.organization.Organization;
@@ -188,7 +202,7 @@ public class UserController {
     return new GeneralResponse(response, OK, errors, savedUser);
   }
 
-  @PostMapping (path = "/apply/team/{id}")
+  @PostMapping(path = "/apply/team/{id}")
   @ResponseBody
   public GeneralResponse applyTeam(@PathVariable(value = "id") Long id, @RequestBody TeamApplicant applicant, HttpServletRequest request, HttpServletResponse response) {
 
@@ -200,27 +214,27 @@ public class UserController {
     }
 
     UserToTeamPermission permission = permissionFactory.createUserToTeamPermission(session.get().getUser(), applicant.getTeam());
-    switch ( permission.canJoin()){
+    switch (permission.canJoin()) {
       case ALREADY_JOINED:
         errors.add(ALREADY_JOINED_MSG);
         return new GeneralResponse(response, ERROR, errors);
     }
-   applicant.setSender(session.get().getUser());
+    applicant.setSender(session.get().getUser());
     applicant.setStatus(PENDING);
     Team team = teamRepository.findOne(id);
-    if(team==null){
+    if (team == null) {
       errors.add(NO_GROUP_FOUND);
       return new GeneralResponse(response, Status.DENIED, errors);
     }
 
     applicant.setTeam(team);
     teamApplicantRepository.save(applicant);
-  return  new GeneralResponse(response, Status.OK, errors);
+    return new GeneralResponse(response, Status.OK, errors);
   }
 
-  @PostMapping (path = "/apply/project/{id}")
+  @PostMapping(path = "/apply/project/{id}")
   @ResponseBody
-  public GeneralResponse applyProject(@PathVariable(value = "id") Long id,  @RequestBody ProjectApplicant applicant, HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse applyProject(@PathVariable(value = "id") Long id, @RequestBody ProjectApplicant applicant, HttpServletRequest request, HttpServletResponse response) {
 
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -229,27 +243,27 @@ public class UserController {
       return new GeneralResponse(response, Status.DENIED, errors);
     }
     UserToProjectPermission permission = permissionFactory.createUserToProjectPermission(session.get().getUser(), applicant.getProject());
-    switch ( permission.canJoin()){
+    switch (permission.canJoin()) {
       case ALREADY_JOINED:
         errors.add(ALREADY_JOINED_MSG);
         return new GeneralResponse(response, ERROR, errors);
-   }
+    }
 
     applicant.setSender(session.get().getUser());
     applicant.setStatus(PENDING);
     Project project = projectRepository.findOne(id);
-    if(project==null){
+    if (project == null) {
       errors.add(NO_GROUP_FOUND);
       return new GeneralResponse(response, Status.DENIED, errors);
     }
     applicant.setProject(project);
     projectApplicantRepository.save(applicant);
-    return  new GeneralResponse(response, Status.OK, errors);
+    return new GeneralResponse(response, Status.OK, errors);
   }
 
-  @PostMapping (path = "/apply/organization/{id}")
+  @PostMapping(path = "/apply/organization/{id}")
   @ResponseBody
-  public GeneralResponse applyOrganization(@PathVariable(value = "id") Long id,  @RequestBody OrganizationApplicant applicant, HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse applyOrganization(@PathVariable(value = "id") Long id, @RequestBody OrganizationApplicant applicant, HttpServletRequest request, HttpServletResponse response) {
 
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -260,13 +274,13 @@ public class UserController {
     applicant.setSender(session.get().getUser());
     applicant.setStatus(PENDING);
     Organization organization = organizationRepository.findOne(id);
-    if(organization==null){
+    if (organization == null) {
       errors.add(NO_GROUP_FOUND);
       return new GeneralResponse(response, Status.DENIED, errors);
     }
 
     UserToOrganizationPermission permission = permissionFactory.createUserToOrganizationPermission(session.get().getUser(), applicant.getOrganization());
-    switch ( permission.canJoin()){
+    switch (permission.canJoin()) {
       case ALREADY_JOINED:
         errors.add(ALREADY_JOINED_MSG);
         return new GeneralResponse(response, ERROR, errors);
@@ -274,7 +288,7 @@ public class UserController {
 
     applicant.setOrganization(organization);
     organizationApplicantRepository.save(applicant);
-    return  new GeneralResponse(response, Status.OK, errors);
+    return new GeneralResponse(response, Status.OK, errors);
   }
 
   @PostMapping(path = "/login")
@@ -381,7 +395,7 @@ public class UserController {
 
     User userToSave = session.get().getUser();
 
-    if(id != userToSave.getId()){
+    if (id != userToSave.getId()) {
       // have this take care of misc updates by admins/moderators (e.g. flag user or revoke access)
 
       errors.add("Unable to edit user, permission denied");

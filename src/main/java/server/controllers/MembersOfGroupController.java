@@ -2,8 +2,6 @@ package server.controllers;
 
 import static server.constants.RoleValue.ADMIN;
 import static server.constants.RoleValue.DEFAULT_USER;
-import static server.constants.RoleValue.OWNER;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import server.entities.dto.User;
@@ -47,7 +45,8 @@ public class MembersOfGroupController {
     List<Team> all = new ArrayList<>();
     all.addAll(asDefault);
     all.addAll(asAdmin);
-    return all;  }
+    return all;
+  }
 
   public List<Organization> getOrganizationsUserIsPartOf(User user) {
     List<Organization> asDefault = organizationMemberRepository.getGroups(user, DEFAULT_USER);

@@ -12,7 +12,7 @@ import javax.persistence.Table;
 @Data
 @Entity
 @Table(name = "organization_applicant")
-public class OrganizationApplicant extends GroupApplicant<Organization>{
+public class OrganizationApplicant extends GroupApplicant<Organization> {
 
   @ManyToOne
   @JoinColumn(name = "organization_id", referencedColumnName = "id")
@@ -25,6 +25,6 @@ public class OrganizationApplicant extends GroupApplicant<Organization>{
 
   @Override
   public void setGroup(Organization group) {
-    organization=group;
+    organization = group;
   }
 }

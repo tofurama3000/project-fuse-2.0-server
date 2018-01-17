@@ -5,13 +5,12 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.organization.OrganizationApplicant;
-import server.entities.dto.group.team.TeamApplicant;
 import server.repositories.group.GroupApplicantRepository;
 
 import java.util.List;
 
 @Transactional
-public interface OrganizationApplicantRepository extends GroupApplicantRepository<OrganizationApplicant,Organization> {
+public interface OrganizationApplicantRepository extends GroupApplicantRepository<OrganizationApplicant, Organization> {
 
   @Query("FROM OrganizationApplicant a where a.organization = :organization and a.status = :status ")
   List<OrganizationApplicant> getApplicants(@Param("organization") Organization organization, @Param("status") String status);
