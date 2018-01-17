@@ -428,10 +428,10 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     return new GeneralResponse(response, OK, null, groupApplicantRepository.getApplicants(getGroupRepository().findOne(id),status));
   }
 
-  @PostMapping(path = "/{id}/applicants/{status}")
+  @PutMapping(path = "/{id}/applicants/{appId}/{status}")
   @ResponseBody
-  public GeneralResponse setApplicantsStatus(@PathVariable(value = "id") Long id,@RequestBody User applicant,@PathVariable(value = "status") String status,
-                                          HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse setApplicantsStatus(@PathVariable(value = "id") Long id, @PathVariable(value = "status") String status,
+                                             @PathVariable(value = "appId") Long appId,HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -441,7 +441,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     }
 
     GroupApplicantRepository groupApplicantRepository = getGroupApplicantRepository();
-    GroupApplicant applicantToSave = (GroupApplicant) groupApplicantRepository.findOne(applicant.getId());
+    GroupApplicant applicantToSave = (GroupApplicant) groupApplicantRepository.findOne(appId);
     applicantToSave.setStatus(status);
     groupApplicantRepository.save(applicantToSave);
     return new GeneralResponse(response, OK, null);

@@ -199,6 +199,12 @@ public class UserController {
       return new GeneralResponse(response, Status.DENIED, errors);
     }
 
+    UserToTeamPermission permission = permissionFactory.createUserToTeamPermission(session.get().getUser(), applicant.getTeam());
+    switch ( permission.canJoin()){
+      case ALREADY_JOINED:
+        errors.add(ALREADY_JOINED_MSG);
+        return new GeneralResponse(response, ERROR, errors);
+    }
    applicant.setSender(session.get().getUser());
     applicant.setStatus(PENDING);
     Team team = teamRepository.findOne(id);
@@ -222,12 +228,12 @@ public class UserController {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, Status.DENIED, errors);
     }
-
-//   switch ( permissionFactory.createUserToProjectPermission(session.get().getUser(), applicant.getProject()).canJoin()){
-//      case ALREADY_JOINED:
-//        errors.add(ALREADY_JOINED_MSG);
-//        return new GeneralResponse(response, ERROR, errors);
-//   }
+    UserToProjectPermission permission = permissionFactory.createUserToProjectPermission(session.get().getUser(), applicant.getProject());
+    switch ( permission.canJoin()){
+      case ALREADY_JOINED:
+        errors.add(ALREADY_JOINED_MSG);
+        return new GeneralResponse(response, ERROR, errors);
+   }
 
     applicant.setSender(session.get().getUser());
     applicant.setStatus(PENDING);
@@ -257,6 +263,13 @@ public class UserController {
     if(organization==null){
       errors.add(NO_GROUP_FOUND);
       return new GeneralResponse(response, Status.DENIED, errors);
+    }
+
+    UserToOrganizationPermission permission = permissionFactory.createUserToOrganizationPermission(session.get().getUser(), applicant.getOrganization());
+    switch ( permission.canJoin()){
+      case ALREADY_JOINED:
+        errors.add(ALREADY_JOINED_MSG);
+        return new GeneralResponse(response, ERROR, errors);
     }
 
     applicant.setOrganization(organization);
