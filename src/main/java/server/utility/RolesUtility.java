@@ -8,10 +8,13 @@ import java.util.Optional;
 public class RolesUtility {
 
   public static Optional<Integer> getRoleFromInvitationType(String type) {
-    switch (type) {
-      case "Join":
+    if (type == null) {
+      return Optional.empty();
+    }
+    switch (type.toLowerCase()) {
+      case "join":
         return Optional.of(INVITED_TO_JOIN);
-      case "Interview":
+      case "interview":
         return Optional.of(INVITED_TO_INTERVIEW);
       default:
         return Optional.empty();

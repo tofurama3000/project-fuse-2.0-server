@@ -1,4 +1,8 @@
 {
 	"name": "team 1",
-	"restriction": "INVITE"
+	"restriction": "INVITE",
+	"profile": {
+	    "summary": "This is a team summary",
+	    "headline": "This is the team headline"
+	}
 }

@@ -1,0 +1,71 @@
+{
+  "variables": {
+    "aws_access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
+    "aws_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
+    "email_address": "{{env `FUSE_EMAIL_ADDR`}}",
+    "email_password": "{{env `FUSE_EMAIL_PASSWRD`}}",
+    "base_url": "{{env `BASE_URL`}}",
+    "upload_path": "{{env `UPLOAD_PATH`}}",
+    "elasticsearch_host": "{{env `ELASTICSEARCH_HOST`}}",
+    "mysql_password": "{{env `MYSQL_PASSWRD`}}",
+    "mysql_user": "{{env `MYSQL_USER`}}",
+    "mysql_host": "{{env `MYSQL_HOST`}}",
+    "region": "us-east-1"
+  },
+  "builders": [{
+    "access_key": "{{user `aws_access_key`}}",
+    "ami_name": "project-fuse-{{timestamp}}",
+    "instance_type": "t2.micro",
+    "region": "us-east-1",
+    "secret_key": "{{user `aws_secret_key`}}",
+    "source_ami_filter": {
+      "filters": {
+        "virtualization-type": "hvm",
+        "name": "ubuntu/images/*ubuntu-xenial-16.04-amd64-server-*",
+        "root-device-type": "ebs"
+      },
+      "owners": ["099720109477"],
+      "most_recent": true
+    },
+    "ssh_username": "ubuntu",
+    "type": "amazon-ebs"
+  }],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "mkdir -p /home/ubuntu/project-fuse"
+      ],
+      "pause_before": "30s"
+    },
+    {
+      "type": "file",
+      "source": "../../",
+      "destination": "/home/ubuntu/project-fuse"
+    },
+    {
+      "type": "shell",
+      "script": "./setup.sh"
+    },
+    {
+      "type": "shell",
+      "inline": [
+          "echo \"mysql-server mysql-server/root_password password {{user `mysql_password`}}\" | sudo debconf-set-selections",
+          "echo \"mysql-server mysql-server/root_password_again password {{user `mysql_password`}}\" | sudo debconf-set-selections",
+          "sudo apt install -y mysql-server mysql-client"
+      ]
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "python3 /home/ubuntu/project-fuse/src/config/setup_app_properties.py {{user `email_address`}} {{user `email_password`}} {{user `base_url`}} {{user `upload_path`}} {{user `elasticsearch_host`}} {{user `mysql_user`}} {{user `mysql_password`}} {{user `mysql_host`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "cat /home/ubuntu/project-fuse/src/main/resources/application.properties"
+      ]
+    }
+  ]
+}
