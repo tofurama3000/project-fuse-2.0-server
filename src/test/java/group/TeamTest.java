@@ -108,12 +108,12 @@ public class TeamTest extends RestTester {
 
     String putContents = "{\"id\":" + team.get().getId()  +"," + requestHelper.getContentsFromResources("updateGroup/updateGroup1");
 
-    GeneralResponse generalResponse = requestHelper.makePutRequest(fuseSession1.get().getSessionId(), putContents, "/team/update");
+    GeneralResponse generalResponse = requestHelper.makePutRequest(fuseSession1.get().getSessionId(), putContents, "/team/" + team.get().getId());
     TestCase.assertTrue(generalResponse.getStatus() == OK);
     assertNull(generalResponse.getErrors());
     assertEquals( teamRepository.findOne(team.get().getId()).getName(),"fusion");
 
-    GeneralResponse generalResponse2 = requestHelper.makePutRequest(fuseSession2.get().getSessionId(), putContents, "/team/update");
+    GeneralResponse generalResponse2 = requestHelper.makePutRequest(fuseSession2.get().getSessionId(), putContents, "/team/" + team.get().getId());
     TestCase.assertTrue(generalResponse2.getStatus() == DENIED);
   }
   private Optional<Team> createTeam1(String sessionId) throws Exception {

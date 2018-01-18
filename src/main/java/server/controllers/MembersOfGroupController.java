@@ -2,6 +2,8 @@ package server.controllers;
 
 import static server.constants.RoleValue.ADMIN;
 import static server.constants.RoleValue.DEFAULT_USER;
+import static server.constants.RoleValue.OWNER;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import server.entities.dto.User;
@@ -9,8 +11,11 @@ import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
 import server.entities.dto.group.team.Team;
 import server.repositories.group.organization.OrganizationMemberRepository;
+import server.repositories.group.organization.OrganizationRepository;
 import server.repositories.group.project.ProjectMemberRepository;
+import server.repositories.group.project.ProjectRepository;
 import server.repositories.group.team.TeamMemberRepository;
+import server.repositories.group.team.TeamRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +31,15 @@ public class MembersOfGroupController {
 
   @Autowired
   private ProjectMemberRepository projectMemberRepository;
+
+  @Autowired
+  private TeamRepository teamRepository;
+
+  @Autowired
+  private OrganizationRepository organizationRepository;
+
+  @Autowired
+  private ProjectRepository projectRepository;
 
   public List<Team> getTeamsUserIsPartOf(User user) {
     List<Team> asDefault = teamMemberRepository.getGroups(user, DEFAULT_USER);

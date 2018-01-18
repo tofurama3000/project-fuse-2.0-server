@@ -31,3 +31,8 @@ log/
 target/
 
 *application.properties
+
+.classpath
+.settings
+.project
+.vscode

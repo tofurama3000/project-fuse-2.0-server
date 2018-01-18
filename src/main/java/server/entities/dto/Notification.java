@@ -13,10 +13,9 @@ import javax.persistence.Table;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "message")
+@Table(name = "notification")
 @Data
-public class Message {
-
+public class Notification {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   private long id;
@@ -32,6 +31,9 @@ public class Message {
   @Column(name = "message")
   private String message;
 
-  private Timestamp sent;
+  @Column(name = "time")
+  private Timestamp time;
 
+  @Column(name = "hasRead")
+  private short hasRead;
 }

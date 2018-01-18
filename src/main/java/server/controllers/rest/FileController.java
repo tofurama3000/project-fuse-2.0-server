@@ -51,7 +51,7 @@ public class FileController {
     @Value("${fuse.fileUploadPath}")
     private String fileUploadPath;
 
-    @PostMapping(path = "/fileUpload")
+    @PostMapping(path = "/upload")
     @ResponseBody
     public GeneralResponse fileUpload(@RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
         List<String> errors = new ArrayList<>();
@@ -93,7 +93,7 @@ public class FileController {
         return new GeneralResponse(response, BAD_DATA, errors);
     }
 
-    @GetMapping(path = "/fileDownload/{id}")
+    @GetMapping(path = "/download/{id}")
     @ResponseBody
     public ResponseEntity<Resource> fileDownload(@PathVariable(value = "id") Long id, HttpServletResponse response, HttpServletRequest request) throws Exception {
 

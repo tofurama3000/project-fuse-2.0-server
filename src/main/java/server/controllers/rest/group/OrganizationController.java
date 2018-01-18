@@ -1,5 +1,8 @@
 package server.controllers.rest.group;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -10,24 +13,30 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.User;
+import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupInvitation;
+import server.entities.dto.group.GroupProfile;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.organization.OrganizationInvitation;
 import server.entities.dto.group.organization.OrganizationMember;
+import server.entities.dto.group.organization.OrganizationProfile;
 import server.entities.user_to_group.permissions.PermissionFactory;
 import server.entities.user_to_group.permissions.UserToGroupPermission;
 import server.entities.user_to_group.relationships.RelationshipFactory;
 import server.repositories.group.GroupMemberRepository;
+import server.repositories.group.GroupProfileRepository;
 import server.repositories.group.GroupRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
 import server.repositories.group.organization.OrganizationMemberRepository;
+import server.repositories.group.organization.OrganizationProfileRepository;
 import server.repositories.group.organization.OrganizationRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 @Controller
-@RequestMapping(value = "/organization")
+@RequestMapping(value = "/organizations")
+@Api("Organizations")
 @Transactional
 @SuppressWarnings("unused")
 public class OrganizationController extends GroupController<Organization, OrganizationMember> {
@@ -37,6 +46,9 @@ public class OrganizationController extends GroupController<Organization, Organi
 
   @Autowired
   private OrganizationRepository organizationRepository;
+
+  @Autowired
+  OrganizationProfileRepository organizationProfileRepository;
 
   @Autowired
   private OrganizationMemberRepository organizationMemberRepository;
@@ -61,6 +73,11 @@ public class OrganizationController extends GroupController<Organization, Organi
   }
 
   @Override
+  protected GroupProfile<Organization> saveProfile(Organization org) {
+    return organizationProfileRepository.save(org.getProfile());
+  }
+
+  @Override
   protected GroupMemberRepository<Organization, OrganizationMember> getRelationshipRepository() {
     return organizationMemberRepository;
   }
@@ -80,10 +97,13 @@ public class OrganizationController extends GroupController<Organization, Organi
     relationshipFactory.createUserToOrganizationRelationship(user, group).addRelationship(role);
   }
 
+  @ApiOperation("Create an invitation")
   @PostMapping(path = "/invite")
   @ResponseBody
-  public GeneralResponse invite(@RequestBody OrganizationInvitation organizationInvitation,
-                                HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse invite(
+          @ApiParam("Invitation information")
+          @RequestBody OrganizationInvitation organizationInvitation,
+          HttpServletRequest request, HttpServletResponse response) {
     return generalInvite(organizationInvitation, request, response);
   }
 

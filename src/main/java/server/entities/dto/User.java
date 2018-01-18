@@ -1,25 +1,27 @@
 package server.entities.dto;
 
 import static server.constants.RegistrationStatus.UNREGISTERED;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Getter;
+import lombok.ToString;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import server.entities.BaseIndexable;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import javax.persistence.Transient;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
+@ToString(exclude = "user")
 @Entity
 @Table(name = "user")
 @Data
-public class User {
+public class User extends BaseIndexable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
@@ -29,6 +31,11 @@ public class User {
 
   @JsonIgnore
   private String encoded_password;
+
+  @JsonManagedReference
+  @OneToOne(cascade = CascadeType.ALL)
+  @JoinColumn(name = "user_profile_id", referencedColumnName = "id")
+  private UserProfile profile;
 
   @JsonIgnore
   @Getter(AccessLevel.NONE)
@@ -65,5 +72,44 @@ public class User {
 
   public int hashCode() {
     return id.hashCode();
+  }
+
+  @Override
+  public Map<String, Object> getEsJson() {
+    Map<String, Object> map = new HashMap<>();
+
+    map.put("id", this.id);
+    map.put("name", this.name);
+    map.put("email", this.email);
+    map.put("index", this.getEsIndex());
+    if(this.profile != null) {
+      map.put("skills", this.profile.getSkills().split(","));
+      map.put("headline", this.profile.getHeadline());
+      map.put("summary", this.profile.getSummary());
+    }
+    else {
+      map.put("skills", new String[0]);
+      map.put("headline", "");
+      map.put("summary", "");
+    }
+
+    return map;
+  }
+
+  public static String esIndex() { return "users"; }
+  public static String esType() { return "info"; }
+
+  @Override
+  public String getEsIndex() {
+    return esIndex();
+  }
+
+  @Override
+  public String getEsType() { return esType(); }
+
+  @Override
+  @JsonIgnore
+  public String getEsId() {
+    return this.id.toString();
   }
 }

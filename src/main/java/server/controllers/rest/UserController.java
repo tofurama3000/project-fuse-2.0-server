@@ -12,24 +12,22 @@ import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVE
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_REGISTRATION_KEY;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
+import static server.controllers.rest.response.CannedResponse.NO_INTERVIEW_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_INVITATION_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
 import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
 import static server.controllers.rest.response.GeneralResponse.Status.OK;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.AlternativeJdkIdGenerator;
 import org.springframework.util.IdGenerator;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import server.controllers.FuseSessionController;
 import server.controllers.MembersOfGroupController;
 import server.controllers.rest.response.GeneralResponse;
@@ -39,6 +37,8 @@ import server.entities.PossibleError;
 import server.entities.dto.FuseSession;
 import server.entities.dto.UnregisteredUser;
 import server.entities.dto.User;
+import server.entities.dto.UserProfile;
+import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.interview.Interview;
 import server.entities.dto.group.organization.Organization;
@@ -59,513 +59,622 @@ import server.entities.user_to_group.relationships.UserToGroupRelationship;
 import server.entities.user_to_group.relationships.UserToOrganizationRelationship;
 import server.entities.user_to_group.relationships.UserToProjectRelationship;
 import server.entities.user_to_group.relationships.UserToTeamRelationship;
-import server.repositories.FileRepository;
 import server.repositories.UnregisteredUserRepository;
+import server.repositories.UserProfileRepository;
 import server.repositories.UserRepository;
-import server.repositories.group.FileDownloadRepository;
 import server.repositories.group.InterviewRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
 import server.repositories.group.project.ProjectInvitationRepository;
 import server.repositories.group.team.TeamInvitationRepository;
 import server.utility.RolesUtility;
+import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
-
 @Controller
-@RequestMapping(value = "/user")
+@Api(value="User Endpoints")
+@RequestMapping(value = "/users")
 @SuppressWarnings("unused")
 public class UserController {
 
-    @Autowired
-    private UserRepository userRepository;
+  @Autowired
+  private UserRepository userRepository;
 
-    @Autowired
-    private FuseSessionController fuseSessionController;
+  @Autowired
+  private FuseSessionController fuseSessionController;
 
-    @Autowired
-    private PermissionFactory permissionFactory;
+  @Autowired
+  private PermissionFactory permissionFactory;
 
-    @Autowired
-    private TeamInvitationRepository teamInvitationRepository;
+  @Autowired
+  private TeamInvitationRepository teamInvitationRepository;
 
-    @Autowired
-    private ProjectInvitationRepository projectInvitationRepository;
+  @Autowired
+  private ProjectInvitationRepository projectInvitationRepository;
 
-    @Autowired
-    private OrganizationInvitationRepository organizationInvitationRepository;
+  @Autowired
+  private UserProfileRepository userProfileRepository;
 
-    @Autowired
-    private UnregisteredUserRepository unregisteredUserRepository;
+  @Autowired
+  private OrganizationInvitationRepository organizationInvitationRepository;
 
-    @Autowired
-    private InterviewRepository interviewRepository;
+  @Autowired
+  private UnregisteredUserRepository unregisteredUserRepository;
 
-    @Autowired
-    private RelationshipFactory relationshipFactory;
+  @Autowired
+  private InterviewRepository interviewRepository;
 
-    @Autowired
-    private MembersOfGroupController membersOfGroupController;
+  @Autowired
+  private RelationshipFactory relationshipFactory;
 
-    @Value("${fuse.requireRegistration}")
-    private boolean requireRegistration;
+  @Autowired
+  private MembersOfGroupController membersOfGroupController;
 
-    @Autowired
-    private StandardEmailSender emailSender;
+  @Value("${fuse.requireRegistration}")
+  private boolean requireRegistration;
 
-    @Autowired
-    private FileRepository fileRepository;
+  @Autowired
+  private StandardEmailSender emailSender;
 
-    @Autowired
-    private FileDownloadRepository fileDownloadRepository;
+  private static IdGenerator generator = new AlternativeJdkIdGenerator();
 
-    @Value("${fuse.fileUploadPath}")
-    private String fileUploadPath;
+  @ApiOperation(value = "Creates a new user",
+          notes = "Must provide a name, password, and email")
+  @PostMapping
+  @ResponseBody
+  public GeneralResponse addNewUser(
+          @ApiParam(value = "The user information to create with", required = true)
+          @RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
 
-    private static IdGenerator generator = new AlternativeJdkIdGenerator();
+    List<String> errors = new ArrayList<>();
 
-
-    @PostMapping(path = "/add")
-    @ResponseBody
-    public GeneralResponse addNewUser(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
-
-        List<String> errors = new ArrayList<>();
-        if (user != null) {
-            if (user.getName() == null)
-                errors.add("Missing Name");
-            if (user.getEncoded_password() == null)
-                errors.add("Missing Password");
-            if (user.getEmail() == null)
-                errors.add("Missing Email");
-            if (errors.size() == 0 && userRepository.findByEmail(user.getEmail()) != null)
-                errors.add("Username already exists!");
-        } else {
-            errors.add("No request body found");
-        }
-
-        if (errors.size() != 0) {
-            return new GeneralResponse(response, errors);
-        }
-
-        assert user != null;
-
-        if (requireRegistration) {
-            user.setRegistrationStatus(UNREGISTERED);
-        } else {
-            user.setRegistrationStatus(REGISTERED);
-        }
-
-        User savedUser = userRepository.save(user);
-        Long id = savedUser.getId();
-
-        if (requireRegistration) {
-            String registrationKey = generator.generateId().toString();
-
-            UnregisteredUser unregisteredUser = new UnregisteredUser();
-            unregisteredUser.setUserId(id);
-            unregisteredUser.setRegistrationKey(registrationKey);
-
-            unregisteredUserRepository.save(unregisteredUser);
-
-            emailSender.sendRegistrationEmail(user.getEmail(), registrationKey);
-        }
-
-        return new GeneralResponse(response, OK, errors, savedUser);
+    if (user != null) {
+      if (user.getName() == null)
+        errors.add("Missing Name");
+      if (user.getEncoded_password() == null)
+        errors.add("Missing Password");
+      if (user.getEmail() == null)
+        errors.add("Missing Email");
+      if (errors.size() == 0 && userRepository.findByEmail(user.getEmail()) != null)
+        errors.add("Username already exists!");
+    } else {
+      errors.add("No request body found");
     }
 
-    @PostMapping(path = "/login")
-    @ResponseBody
-    public GeneralResponse login(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
-
-        logoutIfLoggedIn(user, request);
-
-        List<String> errors = new ArrayList<>();
-        if (user == null) {
-            errors.add("Invalid Credentials");
-        } else {
-            User dbUser = userRepository.findByEmail(user.getEmail());
-
-            if (dbUser == null) {
-                errors.add("Invalid Credentials");
-            } else {
-                user.setEncoded_password(dbUser.getEncoded_password());
-
-                if (user.checkPassword()) {
-                    return new GeneralResponse(response, OK, null, fuseSessionController.createSession(dbUser));
-                }
-                errors.add("Invalid Credentials");
-            }
-        }
-
-        return new GeneralResponse(response, Status.DENIED, errors);
+    if (errors.size() != 0) {
+      return new GeneralResponse(response, errors);
     }
 
-    @PostMapping(path = "/logout")
-    @ResponseBody
-    public GeneralResponse logout(HttpServletRequest request, HttpServletResponse response) {
-        Optional<FuseSession> session = fuseSessionController.getSession(request);
-        if (session.isPresent()) {
-            fuseSessionController.deleteSession(session.get());
-            return new GeneralResponse(response, OK);
-        } else {
-            List<String> errors = new ArrayList<>();
-            errors.add("No active session");
-            return new GeneralResponse(response, Status.ERROR, errors);
-        }
+    assert user != null;
+
+    if (requireRegistration) {
+      user.setRegistrationStatus(UNREGISTERED);
+    } else {
+      user.setRegistrationStatus(REGISTERED);
     }
 
-    @PutMapping(path = "/update_current")
-    @ResponseBody
-    public GeneralResponse updateCurrentUser(@RequestBody User userData, HttpServletRequest request, HttpServletResponse response) {
+    User savedUser = userRepository.save(user);
+    savedUser.indexAsync();
+    Long id = savedUser.getId();
 
-        List<String> errors = new ArrayList<>();
-        Optional<FuseSession> session = fuseSessionController.getSession(request);
-        if (!session.isPresent()) {
-            errors.add(INVALID_SESSION);
-            return new GeneralResponse(response, Status.DENIED, errors);
-        }
+    if (requireRegistration) {
+      String registrationKey = generator.generateId().toString();
 
-        User userToSave = session.get().getUser();
+      UnregisteredUser unregisteredUser = new UnregisteredUser();
+      unregisteredUser.setUserId(id);
+      unregisteredUser.setRegistrationKey(registrationKey);
 
-        // Merging instead of direct copying ensures we're very clear about what can be edited, and it provides easy checks
+      unregisteredUserRepository.save(unregisteredUser);
 
-        if (userData.getName() != null)
-            userToSave.setName(userData.getName());
-
-        if (userData.getEncoded_password() != null)
-            userToSave.setEncoded_password(userData.getEncoded_password());
-
-        userRepository.save(userToSave);
-        return new GeneralResponse(response, Status.OK);
+      emailSender.sendRegistrationEmail(user.getEmail(), registrationKey);
     }
 
-    @GetMapping(path = "/all")
-    @ResponseBody
-    public GeneralResponse getAllUsers(HttpServletResponse response) {
-        return new GeneralResponse(response, OK, null, userRepository.findAll());
+    return new GeneralResponse(response, OK, errors, savedUser);
+  }
+
+  @ApiIgnore
+  @PostMapping(path = "/login")
+  @ResponseBody
+  public GeneralResponse login(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
+
+    logoutIfLoggedIn(user, request);
+
+    List<String> errors = new ArrayList<>();
+    if (user == null) {
+      errors.add("Invalid Credentials");
+    } else {
+      User dbUser = userRepository.findByEmail(user.getEmail());
+
+      if (dbUser == null) {
+        errors.add("Invalid Credentials");
+      } else {
+        user.setEncoded_password(dbUser.getEncoded_password());
+
+        if (user.checkPassword()) {
+          return new GeneralResponse(response, OK, null, fuseSessionController.createSession(dbUser));
+        }
+        errors.add("Invalid Credentials");
+      }
     }
 
-    @GetMapping(path = "/joined/teams")
-    @ResponseBody
-    public GeneralResponse getAllTeamsOfUser(HttpServletRequest request, HttpServletResponse response) {
-        List<String> errors = new ArrayList<>();
+    return new GeneralResponse(response, Status.DENIED, errors);
+  }
 
-        Optional<FuseSession> session = fuseSessionController.getSession(request);
-        if (!session.isPresent()) {
-            errors.add(INVALID_SESSION);
-            return new GeneralResponse(response, Status.DENIED, errors);
-        }
-        User user = session.get().getUser();
+  @ApiIgnore
+  @PostMapping(path = "/logout")
+  @ResponseBody
+  public GeneralResponse logout(HttpServletRequest request, HttpServletResponse response) {
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (session.isPresent()) {
+      fuseSessionController.deleteSession(session.get());
+      return new GeneralResponse(response, OK);
+    } else {
+      List<String> errors = new ArrayList<>();
+      errors.add("No active session");
+      return new GeneralResponse(response, Status.ERROR, errors);
+    }
+  }
 
-        return new GeneralResponse(response, OK, null, membersOfGroupController.getTeamsUserIsPartOf(user));
+  @ApiOperation(value = "Get a user by their id")
+  @GetMapping(path = "/{id}")
+  @ResponseBody
+  public GeneralResponse getUserbyID(
+          @ApiParam(value = "The ID of the user")
+          @PathVariable(value = "id") Long id,
+          HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, Status.DENIED, errors);
     }
 
-    @GetMapping(path = "/joined/organizations")
-    @ResponseBody
-    public GeneralResponse getAllOrganizationsOfUser(HttpServletRequest request, HttpServletResponse response) {
-        List<String> errors = new ArrayList<>();
-
-        Optional<FuseSession> session = fuseSessionController.getSession(request);
-        if (!session.isPresent()) {
-            errors.add(INVALID_SESSION);
-            return new GeneralResponse(response, Status.DENIED, errors);
-        }
-        User user = session.get().getUser();
-
-        return new GeneralResponse(response, OK, null, membersOfGroupController.getOrganizationsUserIsPartOf(user));
+    if (id == null) {
+      errors.add(INVALID_FIELDS);
+      return new GeneralResponse(response, BAD_DATA, errors);
     }
 
-
-    @GetMapping(path = "/joined/projects")
-    @ResponseBody
-    public GeneralResponse getAllProjectsOfUser(HttpServletRequest request, HttpServletResponse response) {
-        List<String> errors = new ArrayList<>();
-
-        Optional<FuseSession> session = fuseSessionController.getSession(request);
-        if (!session.isPresent()) {
-            errors.add(INVALID_SESSION);
-            return new GeneralResponse(response, Status.DENIED, errors);
-        }
-        User user = session.get().getUser();
-
-        return new GeneralResponse(response, OK, null, membersOfGroupController.getProjectsUserIsPartOf(user));
+    User byId = userRepository.findOne(id);
+    if (byId == null) {
+      errors.add(NO_USER_FOUND);
+      return new GeneralResponse(response, BAD_DATA, errors);
     }
 
+    return new GeneralResponse(response, OK, null, byId);
+  }
 
-    @GetMapping(path = "/register/{registrationKey}")
-    @ResponseBody
-    public GeneralResponse register(@PathVariable(value = "registrationKey") String registrationKey, HttpServletRequest request, HttpServletResponse response) {
-        List<String> errors = new ArrayList<>();
+  @ApiOperation(value = "Get a user by their email address")
+  @GetMapping(path = "/get_by_email/{email}")
+  @ResponseBody
+  public GeneralResponse getUserbyEmail(
+          @ApiParam("Email address of the user")
+          @PathVariable(value = "email") String email, HttpServletRequest request, HttpServletResponse response) {
 
-        Optional<FuseSession> session = fuseSessionController.getSession(request);
-        if (!session.isPresent()) {
-            errors.add(INVALID_SESSION);
-            return new GeneralResponse(response, DENIED, errors);
-        }
-
-        User user = session.get().getUser();
-
-        UnregisteredUser unregisteredUser = unregisteredUserRepository.findOne(user.getId());
-
-        if (unregisteredUser == null) {
-            errors.add(NO_USER_FOUND);
-            return new GeneralResponse(response, errors);
-        }
-
-        if (!unregisteredUser.getRegistrationKey().equals(registrationKey)) {
-            errors.add(INVALID_REGISTRATION_KEY);
-            return new GeneralResponse(response, errors);
-        }
-
-        user.setRegistrationStatus(REGISTERED);
-        userRepository.save(user);
-
-        unregisteredUserRepository.delete(unregisteredUser);
-
-        return new GeneralResponse(response, OK, null,
-                projectInvitationRepository.findByReceiver(user));
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, Status.DENIED, errors);
     }
 
-    @GetMapping(path = "/incoming/invites/project")
-    @ResponseBody
-    public GeneralResponse getProjectInvites(HttpServletRequest request, HttpServletResponse response) {
-        List<String> errors = new ArrayList<>();
-
-        Optional<FuseSession> session = fuseSessionController.getSession(request);
-        if (!session.isPresent()) {
-            errors.add(INVALID_SESSION);
-            return new GeneralResponse(response, DENIED, errors);
-        }
-
-        User user = session.get().getUser();
-
-        return new GeneralResponse(response, OK, null,
-                projectInvitationRepository.findByReceiver(user));
+    if (email == null) {
+      errors.add(INVALID_FIELDS);
+      return new GeneralResponse(response, BAD_DATA, errors);
     }
 
-    @GetMapping(path = "/incoming/invites/organization")
-    @ResponseBody
-    public GeneralResponse getOrganizationInvites(HttpServletRequest request, HttpServletResponse response) {
-        List<String> errors = new ArrayList<>();
-
-        Optional<FuseSession> session = fuseSessionController.getSession(request);
-        if (!session.isPresent()) {
-            errors.add(INVALID_SESSION);
-            return new GeneralResponse(response, DENIED, errors);
-        }
-
-        User user = session.get().getUser();
-
-        return new GeneralResponse(response, OK, null,
-                organizationInvitationRepository.findByReceiver(user));
+    User byEmail = userRepository.findByEmail(email);
+    if (byEmail == null) {
+      errors.add(NO_USER_FOUND);
+      return new GeneralResponse(response, BAD_DATA, errors);
     }
 
-    @GetMapping(path = "/incoming/invites/team")
-    @ResponseBody
-    public GeneralResponse getTeamInvites(HttpServletRequest request, HttpServletResponse response) {
-        List<String> errors = new ArrayList<>();
+    return new GeneralResponse(response, OK, null, byEmail);
+  }
 
-        Optional<FuseSession> session = fuseSessionController.getSession(request);
-        if (!session.isPresent()) {
-            errors.add(INVALID_SESSION);
-            return new GeneralResponse(response, DENIED, errors);
-        }
-
-        User user = session.get().getUser();
-
-        return new GeneralResponse(response, OK, null,
-                teamInvitationRepository.findByReceiver(user));
+  @CrossOrigin
+  @ApiOperation(value = "Updates a user (must be logged in as that user)")
+  @PutMapping(path = "/{id}")
+  @ResponseBody
+  public GeneralResponse updateCurrentUser(
+          @ApiParam(value = "ID of the user to update")
+          @PathVariable long id, @RequestBody User userData, HttpServletRequest request, HttpServletResponse response) {
+    //to Use profile for profile
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, Status.DENIED, errors);
     }
 
-    @PostMapping(path = "/accept/invite/team")
-    @ResponseBody
-    public GeneralResponse acceptTeamInvite(@RequestBody TeamInvitation teamInvitation, HttpServletRequest request, HttpServletResponse response) {
-        List<String> errors = new ArrayList<>();
+    User userToSave = session.get().getUser();
 
-        Optional<FuseSession> session = fuseSessionController.getSession(request);
-        if (!session.isPresent()) {
-            errors.add(INVALID_SESSION);
-            return new GeneralResponse(response, DENIED, errors);
-        }
+    if(id != userToSave.getId()){
+      // have this take care of misc updates by admins/moderators (e.g. flag user or revoke access)
 
-        TeamInvitation savedInvitation = teamInvitationRepository.findOne(teamInvitation.getId());
-        if (savedInvitation == null) {
-            errors.add(NO_INVITATION_FOUND);
-            return new GeneralResponse(response, BAD_DATA, errors);
-        }
-
-        User user = session.get().getUser();
-        if (!user.getId().equals(savedInvitation.getReceiver().getId())) {
-            errors.add(INSUFFICIENT_PRIVELAGES);
-            return new GeneralResponse(response, DENIED, errors);
-        }
-
-        Team group = savedInvitation.getGroup();
-        UserToTeamPermission permission = permissionFactory.createUserToTeamPermission(user, group);
-
-        UserToTeamRelationship userToTeamRelationship = relationshipFactory.createUserToTeamRelationship(user, group);
-        PossibleError possibleError = addRelationshipsIfNotError(savedInvitation, permission, userToTeamRelationship);
-
-        if (!possibleError.hasError()) {
-            savedInvitation.setStatus(ACCEPTED);
-            teamInvitationRepository.save(savedInvitation);
-        }
-        return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
+      errors.add("Unable to edit user, permission denied");
+      return new GeneralResponse(response, Status.DENIED, errors);
     }
 
-    @PostMapping(path = "/accept/invite/project")
-    @ResponseBody
-    public GeneralResponse acceptProjectInvite(@RequestBody ProjectInvitation projectInvitation, HttpServletRequest request, HttpServletResponse response) {
-        List<String> errors = new ArrayList<>();
+    // Merging instead of direct copying ensures we're very clear about what can be edited, and it provides easy checks
 
-        Optional<FuseSession> session = fuseSessionController.getSession(request);
-        if (!session.isPresent()) {
-            errors.add(INVALID_SESSION);
-            return new GeneralResponse(response, DENIED, errors);
-        }
+    if (userData.getName() != null)
+      userToSave.setName(userData.getName());
 
-        ProjectInvitation savedInvitation = projectInvitationRepository.findOne(projectInvitation.getId());
-        if (savedInvitation == null) {
-            errors.add(NO_INVITATION_FOUND);
-            return new GeneralResponse(response, BAD_DATA, errors);
-        }
+    if (userData.getEncoded_password() != null)
+      userToSave.setEncoded_password(userData.getEncoded_password());
 
-        User user = session.get().getUser();
-        if (!user.getId().equals(savedInvitation.getReceiver().getId())) {
-            errors.add(INSUFFICIENT_PRIVELAGES);
-            return new GeneralResponse(response, DENIED, errors);
-        }
+    if (userData.getProfile() != null) {
+      if (userToSave.getProfile() == null) {
+        userData.getProfile().setUser(userToSave);
+        UserProfile profile = userProfileRepository.save(userData.getProfile());
+        userToSave.setProfile(profile);
+      } else {
+        userToSave.setProfile(userToSave.getProfile().merge(userToSave.getProfile(), userData.getProfile()));
+      }
+    }
+    userRepository.save(userToSave).indexAsync();
+    return new GeneralResponse(response, Status.OK);
+  }
 
-        Project group = savedInvitation.getGroup();
-        UserToProjectPermission permission = permissionFactory.createUserToProjectPermission(user, group);
+  @GetMapping
+  @ResponseBody
+  @ApiOperation(value = "Get all users")
+  public GeneralResponse getAllUsers(HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
+    return new GeneralResponse(response, OK, null, userRepository.findAll());
+  }
 
-        UserToProjectRelationship userToTeamRelationship = relationshipFactory.createUserToProjectRelationship(user, group);
-        PossibleError possibleError = addRelationshipsIfNotError(savedInvitation, permission, userToTeamRelationship);
+  @GetMapping(path = "/{id}/joined/teams")
+  @ResponseBody
+  @ApiIgnore
+  public GeneralResponse getAllTeamsOfUser(
+          @PathVariable Long id,
+          HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
 
-        if (!possibleError.hasError()) {
-            savedInvitation.setStatus(ACCEPTED);
-            projectInvitationRepository.save(savedInvitation);
-        }
-        return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
+    User user = userRepository.findOne(id);
+
+    return new GeneralResponse(response, OK, null, membersOfGroupController.getTeamsUserIsPartOf(user));
+  }
+
+  @GetMapping(path = "/{id}/joined/organizations")
+  @ResponseBody
+  @ApiOperation(value = "Get all organizations for the specified user")
+  public GeneralResponse getAllOrganizationsOfUser(
+          @PathVariable Long id,
+          HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
+    User user = userRepository.findOne(id);
+
+    return new GeneralResponse(response, OK, null, membersOfGroupController.getOrganizationsUserIsPartOf(user));
+  }
+
+
+  @GetMapping(path = "/{id}/joined/projects")
+  @ResponseBody
+  @ApiOperation(value = "Get all projects for the specified user")
+  public GeneralResponse getAllProjectsOfUser(
+          @PathVariable Long id,
+          HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
+    User user = userRepository.findOne(id);
+
+    return new GeneralResponse(response, OK, null, membersOfGroupController.getProjectsUserIsPartOf(user));
+  }
+
+
+  @GetMapping(path = "/register/{registrationKey}")
+  @ResponseBody
+  @ApiOperation(value = "Verify the user's email address")
+  public GeneralResponse register(@PathVariable(value = "registrationKey") String registrationKey, HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, DENIED, errors);
     }
 
+    User user = session.get().getUser();
 
-    @PostMapping(path = "/accept/invite/organization")
-    @ResponseBody
-    public GeneralResponse acceptOrganizationInvite(@RequestBody OrganizationInvitation organizationInvitation, HttpServletRequest request, HttpServletResponse response) {
-        List<String> errors = new ArrayList<>();
+    UnregisteredUser unregisteredUser = unregisteredUserRepository.findOne(user.getId());
 
-        Optional<FuseSession> session = fuseSessionController.getSession(request);
-        if (!session.isPresent()) {
-            errors.add(INVALID_SESSION);
-            return new GeneralResponse(response, DENIED, errors);
-        }
-
-        OrganizationInvitation savedInvitation = organizationInvitationRepository.findOne(organizationInvitation.getId());
-        if (savedInvitation == null) {
-            errors.add(NO_INVITATION_FOUND);
-            return new GeneralResponse(response, BAD_DATA, errors);
-        }
-
-        User user = session.get().getUser();
-        if (!user.getId().equals(savedInvitation.getReceiver().getId())) {
-            errors.add(INSUFFICIENT_PRIVELAGES);
-            return new GeneralResponse(response, DENIED, errors);
-        }
-
-        Organization group = savedInvitation.getGroup();
-        UserToOrganizationPermission permission = permissionFactory.createUserToOrganizationPermission(user, group);
-
-        UserToOrganizationRelationship userToTeamRelationship = relationshipFactory.createUserToOrganizationRelationship(user, group);
-        PossibleError possibleError = addRelationshipsIfNotError(savedInvitation, permission, userToTeamRelationship);
-
-        if (!possibleError.hasError()) {
-            savedInvitation.setStatus(ACCEPTED);
-            organizationInvitationRepository.save(savedInvitation);
-        }
-        return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
+    if (unregisteredUser == null) {
+      errors.add(NO_USER_FOUND);
+      return new GeneralResponse(response, errors);
     }
 
-
-    private PossibleError addRelationshipsIfNotError(GroupInvitation invitation, UserToGroupPermission permission,
-                                                     UserToGroupRelationship relationship) {
-
-        List<String> errors = new ArrayList<>();
-
-        User user = invitation.getReceiver();
-        Optional<Integer> roleFromInvitationType = RolesUtility.getRoleFromInvitationType(invitation.getType());
-        if (!roleFromInvitationType.isPresent()) {
-            errors.add(INVALID_FIELDS);
-            return new PossibleError(errors);
-        }
-
-        switch (roleFromInvitationType.get()) {
-            case INVITED_TO_INTERVIEW:
-                Interview interview = invitation.getInterview();
-                if (interview == null) {
-                    errors.add(INVALID_FIELDS);
-                    return new PossibleError(errors);
-                }
-
-                if (!permission.hasRole(INVITED_TO_INTERVIEW)) {
-                    errors.add(INSUFFICIENT_PRIVELAGES);
-                    return new PossibleError(errors);
-                }
-
-                relationship.addRelationship(TO_INTERVIEW);
-                relationship.addRelationship(INVITED_TO_INTERVIEW);
-
-                interview.setUser(user);
-                interview.setAvailability(NOT_AVAILABLE);
-                interviewRepository.save(interview);
-                break;
-            case INVITED_TO_JOIN:
-                if (permission.canJoin() != JoinResult.HAS_INVITE) {
-                    errors.add(INSUFFICIENT_PRIVELAGES);
-                    return new PossibleError(errors);
-                }
-                relationship.addRelationship(DEFAULT_USER);
-                relationship.removeRelationship(INVITED_TO_JOIN);
-                break;
-        }
-
-        return new PossibleError(Status.OK);
+    if (!unregisteredUser.getRegistrationKey().equals(registrationKey)) {
+      errors.add(INVALID_REGISTRATION_KEY);
+      return new GeneralResponse(response, errors);
     }
 
+    user.setRegistrationStatus(REGISTERED);
+    userRepository.save(user);
 
+    unregisteredUserRepository.delete(unregisteredUser);
 
-    @GetMapping(path = "/{id}")
-    @ResponseBody
-    public GeneralResponse getUserbyID(@PathVariable(value = "id") Long id, HttpServletResponse response) {
+    return new GeneralResponse(response, OK, null,
+            projectInvitationRepository.findByReceiver(user));
+  }
 
-        List<String> errors = new ArrayList<>();
+  @GetMapping(path = "/incoming/invites/project")
+  @ResponseBody
+  @ApiOperation(value = "Get project invites for the current user")
+  public GeneralResponse getProjectInvites(HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
 
-        if (id == null) {
-            errors.add(INVALID_FIELDS);
-            return new GeneralResponse(response, BAD_DATA, errors);
-        }
-
-        User byId = userRepository.findOne(id);
-        if (byId == null) {
-            errors.add(NO_USER_FOUND);
-            return new GeneralResponse(response, BAD_DATA, errors);
-        }
-
-        return new GeneralResponse(response, OK, null, byId);
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, DENIED, errors);
     }
 
-    private boolean logoutIfLoggedIn(User user, HttpServletRequest request) {
-        UserPermission userPermission = permissionFactory.createUserPermission(user);
-        if (userPermission.isLoggedIn(request)) {
-            Optional<FuseSession> session = fuseSessionController.getSession(request);
-            session.ifPresent(s -> fuseSessionController.deleteSession(s));
-            return true;
-        } else {
-            return false;
-        }
+    User user = session.get().getUser();
+
+    return new GeneralResponse(response, OK, null,
+            projectInvitationRepository.findByReceiver(user));
+  }
+
+  @GetMapping(path = "/incoming/invites/organization")
+  @ResponseBody
+  @ApiOperation(value = "Get organizations invites for the current user")
+  public GeneralResponse getOrganizationInvites(HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, DENIED, errors);
     }
+
+    User user = session.get().getUser();
+
+    return new GeneralResponse(response, OK, null,
+            organizationInvitationRepository.findByReceiver(user));
+  }
+
+
+  @GetMapping(path = "/incoming/invites/team")
+  @ResponseBody
+  @ApiOperation(value = "Get team invites for the current user")
+  public GeneralResponse getTeamInvites(HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+
+    User user = session.get().getUser();
+
+    return new GeneralResponse(response, OK, null,
+            teamInvitationRepository.findByReceiver(user));
+  }
+
+  @PostMapping(path = "/accept/invite/team")
+  @ResponseBody
+  @ApiIgnore
+  public GeneralResponse acceptTeamInvite(
+          @ApiParam(value="The team invitation information to accept")
+          @RequestBody TeamInvitation teamInvitation, HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+
+    TeamInvitation savedInvitation = teamInvitationRepository.findOne(teamInvitation.getId());
+    if (savedInvitation == null) {
+      errors.add(NO_INVITATION_FOUND);
+      return new GeneralResponse(response, BAD_DATA, errors);
+    }
+
+    User user = session.get().getUser();
+    if (!user.getId().equals(savedInvitation.getReceiver().getId())) {
+      errors.add(INSUFFICIENT_PRIVELAGES);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+
+    Team group = savedInvitation.getGroup();
+    UserToTeamPermission permission = permissionFactory.createUserToTeamPermission(user, group);
+
+    UserToTeamRelationship userToTeamRelationship = relationshipFactory.createUserToTeamRelationship(user, group);
+
+    savedInvitation.setInterview(teamInvitation.getInterview());
+    PossibleError possibleError = addRelationshipsIfNotError(savedInvitation, permission, userToTeamRelationship);
+
+    if (!possibleError.hasError()) {
+      savedInvitation.setStatus(ACCEPTED);
+      teamInvitationRepository.save(savedInvitation);
+    }
+    return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
+  }
+
+  @PostMapping(path = "/accept/invite/project")
+  @ResponseBody
+  @ApiOperation(value = "Accept project invite")
+  public GeneralResponse acceptProjectInvite(
+          @ApiParam(value="The project invitation information to accept")
+          @RequestBody ProjectInvitation projectInvitation, HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+
+    ProjectInvitation savedInvitation = projectInvitationRepository.findOne(projectInvitation.getId());
+    if (savedInvitation == null) {
+      errors.add(NO_INVITATION_FOUND);
+      return new GeneralResponse(response, BAD_DATA, errors);
+    }
+
+    User user = session.get().getUser();
+    if (!user.getId().equals(savedInvitation.getReceiver().getId())) {
+      errors.add(INSUFFICIENT_PRIVELAGES);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+
+    Project group = savedInvitation.getGroup();
+    UserToProjectPermission permission = permissionFactory.createUserToProjectPermission(user, group);
+
+    UserToProjectRelationship userToTeamRelationship = relationshipFactory.createUserToProjectRelationship(user, group);
+
+    savedInvitation.setInterview(projectInvitation.getInterview());
+    PossibleError possibleError = addRelationshipsIfNotError(savedInvitation, permission, userToTeamRelationship);
+
+    if (!possibleError.hasError()) {
+      savedInvitation.setStatus(ACCEPTED);
+      projectInvitationRepository.save(savedInvitation);
+    }
+    return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
+  }
+
+
+  @PostMapping(path = "/accept/invite/organization")
+  @ResponseBody
+  @ApiOperation(value = "Accept organization invite")
+  public GeneralResponse acceptOrganizationInvite(
+          @ApiParam(value="The organization invitation information to accept")
+          @RequestBody OrganizationInvitation organizationInvitation, HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+
+    OrganizationInvitation savedInvitation = organizationInvitationRepository.findOne(organizationInvitation.getId());
+    if (savedInvitation == null) {
+      errors.add(NO_INVITATION_FOUND);
+      return new GeneralResponse(response, BAD_DATA, errors);
+    }
+
+    User user = session.get().getUser();
+    if (!user.getId().equals(savedInvitation.getReceiver().getId())) {
+      errors.add(INSUFFICIENT_PRIVELAGES);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+
+    Organization group = savedInvitation.getGroup();
+    UserToOrganizationPermission permission = permissionFactory.createUserToOrganizationPermission(user, group);
+
+    UserToOrganizationRelationship userToTeamRelationship = relationshipFactory.createUserToOrganizationRelationship(user, group);
+
+    savedInvitation.setInterview(organizationInvitation.getInterview());
+    PossibleError possibleError = addRelationshipsIfNotError(savedInvitation, permission, userToTeamRelationship);
+
+    if (!possibleError.hasError()) {
+      savedInvitation.setStatus(ACCEPTED);
+      organizationInvitationRepository.save(savedInvitation);
+    }
+    return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
+  }
+
+
+  private PossibleError addRelationshipsIfNotError(GroupInvitation invitation, UserToGroupPermission permission,
+                                                   UserToGroupRelationship relationship) {
+
+    List<String> errors = new ArrayList<>();
+
+    User user = invitation.getReceiver();
+    Optional<Integer> roleFromInvitationType = RolesUtility.getRoleFromInvitationType(invitation.getType());
+    if (!roleFromInvitationType.isPresent()) {
+      errors.add(INVALID_FIELDS);
+      return new PossibleError(errors);
+    }
+
+    switch (roleFromInvitationType.get()) {
+      case INVITED_TO_INTERVIEW:
+        Interview interview = invitation.getInterview();
+        if (interview == null) {
+          errors.add(INVALID_FIELDS);
+          return new PossibleError(errors);
+        }
+        Group group = invitation.getGroup();
+        LocalDateTime currentDateTime = ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime();
+
+        List<Interview> availableInterviewsAfterDate = interviewRepository
+                .getAvailableInterviewsAfterDate(group.getId(), group.getGroupType(), currentDateTime);
+
+        long count = availableInterviewsAfterDate.stream().map(Interview::getId)
+                .filter(id -> Objects.equals(id, interview.getId())).count();
+
+        if (count < 1) {
+          errors.add(NO_INTERVIEW_FOUND);
+          return new PossibleError(errors);
+        }
+
+        if (!permission.hasRole(INVITED_TO_INTERVIEW)) {
+          errors.add(INSUFFICIENT_PRIVELAGES);
+          return new PossibleError(errors);
+        }
+
+        relationship.addRelationship(TO_INTERVIEW);
+        relationship.removeRelationship(INVITED_TO_INTERVIEW);
+
+        interview.setUser(user);
+        interview.setAvailability(NOT_AVAILABLE);
+        interviewRepository.save(interview);
+        break;
+      case INVITED_TO_JOIN:
+        if (permission.canJoin() != JoinResult.HAS_INVITE) {
+          errors.add(INSUFFICIENT_PRIVELAGES);
+          return new PossibleError(errors);
+        }
+        relationship.addRelationship(DEFAULT_USER);
+        relationship.removeRelationship(INVITED_TO_JOIN);
+        break;
+    }
+
+    return new PossibleError(Status.OK);
+  }
+
+
+  private boolean logoutIfLoggedIn(User user, HttpServletRequest request) {
+    UserPermission userPermission = permissionFactory.createUserPermission(user);
+    if (userPermission.isLoggedIn(request)) {
+      Optional<FuseSession> session = fuseSessionController.getSession(request);
+      session.ifPresent(s -> fuseSessionController.deleteSession(s));
+      return true;
+    } else {
+      return false;
+    }
+  }
 }

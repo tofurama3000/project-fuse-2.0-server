@@ -23,18 +23,20 @@ import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
 import static server.controllers.rest.response.GeneralResponse.Status.ERROR;
 import static server.controllers.rest.response.GeneralResponse.Status.OK;
 import static server.utility.RolesUtility.getRoleFromInvitationType;
+import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
+import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
+import static server.controllers.rest.response.GeneralResponse.Status.ERROR;
+import static server.controllers.rest.response.GeneralResponse.Status.OK;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.CannedResponse;
 import server.controllers.rest.response.GeneralResponse;
@@ -45,20 +47,22 @@ import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.interview.Interview;
 import server.entities.user_to_group.permissions.UserToGroupPermission;
+import server.entities.dto.group.GroupProfile;
 import server.repositories.UserRepository;
 import server.repositories.group.GroupMemberRepository;
+import server.repositories.group.GroupProfileRepository;
 import server.repositories.group.GroupRepository;
 import server.repositories.group.InterviewRepository;
 import server.utility.UserFindHelper;
+import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.websocket.server.PathParam;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @SuppressWarnings("unused")
 public abstract class GroupController<T extends Group, R extends GroupMember<T>> {
@@ -76,13 +80,19 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   private UserFindHelper userFindHelper;
 
   @Autowired
+  private GroupProfileRepository groupProfileRepository;
+
+  @Autowired
   private SessionFactory sessionFactory;
 
   private static Logger logger = LoggerFactory.getLogger(TeamController.class);
 
-  @PostMapping(path = "/create")
+  @PostMapping
   @ResponseBody
-  public synchronized GeneralResponse create(@RequestBody T entity, HttpServletRequest request, HttpServletResponse response) {
+  @ApiOperation("Create a new entity")
+  public synchronized GeneralResponse create(
+          @ApiParam("Entity information")
+          @RequestBody T entity, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -96,6 +106,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       return new GeneralResponse(response, errors);
     }
 
+    if(entity.getProfile() == null){
+      errors.add("Missing profile information!");
+      return new GeneralResponse(response, errors);
+    }
+
     User user = session.get().getUser();
     List<T> entities = getGroupsWith(user, entity);
     entity.setOwner(user);
@@ -104,7 +119,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       Group savedEntity = getGroupRepository().save(entity);
       addRelationship(user, entity, OWNER);
       addRelationship(user, entity, ADMIN);
-
+      savedEntity.indexAsync();
       return new GeneralResponse(response, OK, null, savedEntity);
     } else {
       errors.add("entity name already exists for user");
@@ -112,9 +127,14 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     }
   }
 
-  @PostMapping(path = "/delete")
+  @DeleteMapping("/{id}")
   @ResponseBody
-  public GeneralResponse delete(@RequestBody T entity, HttpServletRequest request, HttpServletResponse response) {
+  @ApiOperation("Delete an entity")
+  @ApiIgnore
+  // TODO: Fix this; it doesn't work due to foreign key constraints with the profile entity
+  public GeneralResponse delete(
+          @ApiParam("ID of the entity to delete")
+          @PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -123,31 +143,31 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       return new GeneralResponse(response, DENIED, errors);
     }
 
-    if (!validFieldsForDelete(entity)) {
-      errors.add(INVALID_FIELDS_FOR_DELETE);
-      return new GeneralResponse(response, errors);
+    Group g = getGroupRepository().findOne(id);
+    if (g == null) {
+      errors.add("Entity does not exist!");
+      return new GeneralResponse(response, ERROR, errors);
     }
 
     User user = session.get().getUser();
-    List<T> entities = getGroupsWith(user, entity);
-
-    if (entities.size() == 0) {
-      errors.add("Could not find entity named: '" + entity.getName() + "' owned by " + user.getName());
-      return new GeneralResponse(response, errors);
-    } else if (entities.size() != 1) {
-      logger.error("Multiple teams found (" + entities.size() + ") for team name: " + entity.getName()
-          + " and owner id: " + user.getId());
-      errors.add(SERVER_ERROR);
-      return new GeneralResponse(response, ERROR, errors);
-    } else {
-      getGroupRepository().delete(entities.get(0));
-      return new GeneralResponse(response);
+    if (!Objects.equals(g.getOwner().getId(), user.getId())) {
+      errors.add("Unable to delete entity, permission denied");
+      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
     }
+
+    getGroupRepository().delete(id);
+    return new GeneralResponse(response);
   }
 
-  @PutMapping(path = "/{id}/update")
+  @CrossOrigin
+  @PutMapping(path = "/{id}")
+  @ApiOperation("Updates the specified entity")
   @ResponseBody
-  public GeneralResponse updateGroup(@PathVariable(value = "id") long id, @RequestBody T groupData, HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse updateGroup(
+          @ApiParam("The ID of the entity to update")
+          @PathVariable(value = "id") long id,
+          @ApiParam("The new data for the entity")
+          @RequestBody T groupData, HttpServletRequest request, HttpServletResponse response) {
 
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -164,21 +184,35 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     boolean canUpdate = permission.canUpdate();
     if (!canUpdate) {
       errors.add(INSUFFICIENT_PRIVELAGES);
-      return new GeneralResponse(response, DENIED, errors);
+      return new GeneralResponse(response, DENIED, errors); 
     }
 
     // Merging instead of direct copying ensures we're very clear about what can be edited, and it provides easy checks
-
     if (groupData.getName() != null)
       groupToSave.setName(groupData.getName());
 
-    getGroupRepository().save(groupToSave);
+    if (groupData.getProfile() != null) {
+
+
+      if (groupToSave.getProfile() == null) {
+        groupData.getProfile().setGroup(groupToSave);
+        GroupProfile profile = saveProfile(groupData);
+        groupToSave.setProfile(profile);
+      } else {
+        groupToSave.setProfile(groupToSave.getProfile().merge(groupToSave.getProfile(), groupData.getProfile()));
+      }
+
+    }
+    getGroupRepository().save(groupToSave).indexAsync();
     return new GeneralResponse(response, OK);
   }
 
-  @PostMapping(path = "/join")
+  @PostMapping(path = "/join/{id}")
+  @ApiOperation("Join the group as the current user")
   @ResponseBody
-  protected synchronized GeneralResponse join(@RequestBody T group, HttpServletRequest request, HttpServletResponse response) {
+  protected synchronized GeneralResponse join(
+          @ApiParam("The id of the group to join")
+          @PathParam("id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -187,22 +221,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       return new GeneralResponse(response, DENIED, errors);
     }
 
-    if (group.getId() != null) {
-      group = getGroupRepository().findOne(group.getId());
-    } else {
-      User owner = group.getOwner();
-      List<T> matching = getGroupsWith(owner, group);
-      if (matching.size() == 0) {
-        errors.add(NO_GROUP_FOUND);
-        return new GeneralResponse(response, BAD_DATA, errors);
-      } else if (matching.size() != 1) {
-        errors.add(SERVER_ERROR);
-        return new GeneralResponse(response, ERROR, errors);
-      }
-
-      group = matching.get(0);
-    }
-
+    T group = getGroupRepository().findOne(id);
     User user = session.get().getUser();
 
     switch (getUserToGroupPermission(user, group).canJoin()) {
@@ -236,7 +255,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     }
 
     User sessionUser = session.get().getUser();
-    UserToGroupPermission senderPermission = getUserToGroupPermission(sessionUser, groupInvitation.getGroup());
+    T group = groupInvitation.getGroup();
+    UserToGroupPermission senderPermission = getUserToGroupPermission(sessionUser, group);
     if (!senderPermission.canInvite()) {
       errors.add(INSUFFICIENT_PRIVELAGES);
       return new GeneralResponse(response, DENIED, errors);
@@ -249,7 +269,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       return new GeneralResponse(response, BAD_DATA, errors);
     }
 
-    UserToGroupPermission receiverPermission = getUserToGroupPermission(receiver.get(), groupInvitation.getGroup());
+    UserToGroupPermission receiverPermission = getUserToGroupPermission(receiver.get(), group);
 
     Optional<Integer> role = getRoleFromInvitationType(groupInvitation.getType());
 
@@ -265,39 +285,35 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
     groupInvitation.setStatus(PENDING);
     groupInvitation.setSender(sessionUser);
-
     switch (role.get()) {
       case INVITED_TO_JOIN:
-        addRelationship(receiver.get(), groupInvitation.getGroup(), INVITED_TO_JOIN);
+        addRelationship(receiver.get(), group, INVITED_TO_JOIN);
         saveInvitation(groupInvitation);
         break;
       case INVITED_TO_INTERVIEW:
-        Interview interview = interviewRepository.findOne(groupInvitation.getInterview().getId());
-
-        if (interview == null) {
-          errors.add(INVALID_FIELDS);
-          return new GeneralResponse(response, BAD_DATA, errors);
-        }
-
         LocalDateTime currentDateTime = ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime();
-
-        if (interview.getAvailability() != AVAILABLE || interview.getStartDateTime().isBefore(currentDateTime)) {
+        List<Interview> availableInterviewsAfterDate = interviewRepository.getAvailableInterviewsAfterDate(group.getId(), group.getGroupType(), currentDateTime);
+        if (availableInterviewsAfterDate.size() == 0) {
           errors.add(INTERVIEW_NOT_AVAILABLE);
           return new GeneralResponse(response, BAD_DATA, errors);
         }
 
-        groupInvitation.setInterview(interview);
+        addRelationship(receiver.get(), group, INVITED_TO_INTERVIEW);
         saveInvitation(groupInvitation);
-        addRelationship(receiver.get(), groupInvitation.getGroup(), INVITED_TO_INTERVIEW);
         break;
     }
 
     return new GeneralResponse(response);
   }
 
-  @PostMapping(path = "/interview_slots/add")
+  @ApiOperation("Add a new interview slot")
+  @PostMapping(path = "/{id}/interview_slots/add")
   @ResponseBody
-  public GeneralResponse addInterviewSlots(@RequestBody List<Interview> interviews, HttpServletRequest request,
+  public GeneralResponse addInterviewSlots(
+          @ApiParam("The ID of the group to add the slot to")
+          @PathVariable("id") long id,
+          @ApiParam("An array of interview slots to add")
+          @RequestBody List<Interview> interviews, HttpServletRequest request,
                                            HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
@@ -307,35 +323,45 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       return new GeneralResponse(response, DENIED, errors);
     }
 
-    if (!isValidInterviewSlots(interviews, session.get().getUser())) {
+    if (!isValidInterviewSlots(interviews, session.get().getUser(), id)) {
       errors.add(INVALID_FIELDS);
       return new GeneralResponse(response, errors);
     }
 
-    T group = getGroupRepository().findOne(interviews.get(0).getGroupId());
+    T group = getGroupRepository().findOne(id);
     for (Interview interview : interviews) {
       interview.setGroupType(group.getGroupType());
       interview.setAvailability(AVAILABLE);
+      interview.setGroupId(id);
     }
 
     interviewRepository.save(interviews);
     return new GeneralResponse(response, OK);
   }
 
-  @PostMapping(path = "/interview_slots/available")
+  @ApiOperation("Returns the available interview slots")
+  @GetMapping(path = "/{id}/interview_slots/available")
   @ResponseBody
-  public GeneralResponse getAvailableInterviews(@RequestBody T group, HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse getAvailableInterviews(
+          @ApiParam("ID of the group to get the interview slots for")
+          @PathVariable("id") long id, HttpServletRequest request, HttpServletResponse response) {
+    Group group = getGroupRepository().findOne(id);
     LocalDateTime currentDateTime = ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime();
 
     List<Interview> availableInterviewsAfterDate =
-        interviewRepository.getAvailableInterviewsAfterDate(group.getId(), group.getGroupType(), currentDateTime);
+        interviewRepository.getAvailableInterviewsAfterDate(id, group.getGroupType(), currentDateTime);
 
     return new GeneralResponse(response, OK, new ArrayList<>(), availableInterviewsAfterDate);
   }
 
+  @ApiOperation("Find a group by the name and/or owner email")
   @GetMapping(path = "/find", params = {"name", "email"})
   @ResponseBody
-  public GeneralResponse findByNameAndOwner(@RequestParam(value = "name") String name, @RequestParam(value = "email") String email,
+  public GeneralResponse findByNameAndOwner(
+          @ApiParam("Name of the group to get")
+          @RequestParam(value = "name") String name,
+          @ApiParam("Email address of the owner")
+          @RequestParam(value = "email") String email,
                                             HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
@@ -361,27 +387,73 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
   protected abstract T createGroup();
 
+  @ApiOperation("Gets the members for the group")
   @GetMapping(path = "/{id}/members")
   @ResponseBody
-  public GeneralResponse getMembersOfGroup(@PathVariable(value = "id") T group, HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse getMembersOfGroup(
+          @ApiParam("The id of the group to get the members for")
+          @PathVariable(value = "id") T group, HttpServletRequest request, HttpServletResponse response) {
     return new GeneralResponse(response, OK, null, getMembersOf(group));
   }
 
-  @GetMapping(path = "/all")
+  @GetMapping
   @ResponseBody
+  @ApiOperation("Gets all of the groups of this type")
   protected GeneralResponse getAll(HttpServletResponse response) {
     return new GeneralResponse(response, OK, null, getGroupRepository().findAll());
   }
 
   @GetMapping(path = "/{id}")
+  @ApiOperation("Gets the group entity by id")
   @ResponseBody
-  protected GeneralResponse getById(@PathVariable(value = "id") Long id, HttpServletResponse response) {
-    Group res = getGroupRepository().findOne(id);
-    if (res != null)
-      return new GeneralResponse(response, OK, null, res);
+  protected GeneralResponse getById(
+          @ApiParam("ID of the gruop to get the id for")
+          @PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+
+    Group res = getGroupRepository().findOne(id);
+    if (res != null){
+      User user = session.get().getUser();
+      T groupToFindRestriction = getGroupRepository().findOne(id);
+      UserToGroupPermission permission = getUserToGroupPermission(user, groupToFindRestriction);
+      res.setCanEdit(permission.canUpdate());
+
+      return new GeneralResponse(response, OK, null, res);
+    }
     errors.add("Invalid ID! Object does not exist!");
+
     return new GeneralResponse(response, BAD_DATA, errors);
+  }
+
+
+  @GetMapping(path = "/{id}/can_edit")
+  @ApiOperation("Returns whether or not the current user can edit the group")
+  @ResponseBody
+  protected GeneralResponse canEdit(
+          @ApiParam("The id of the group to check against")
+          @PathVariable(value = "id") Long id, @RequestBody T groupData, HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+    User user = session.get().getUser();
+    T groupToSave = getGroupRepository().findOne(id);
+    UserToGroupPermission permission = getUserToGroupPermission(user, groupToSave);
+    boolean canUpdate = permission.canUpdate();
+    if (!canUpdate) {
+      errors.add(INSUFFICIENT_PRIVELAGES);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+    return new GeneralResponse(response, GeneralResponse.Status.OK);
+
   }
 
   protected boolean validFieldsForCreate(T entity) {
@@ -393,6 +465,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   }
 
   protected abstract GroupRepository<T> getGroupRepository();
+
+  protected abstract GroupProfile saveProfile(T group);
 
   protected abstract GroupMemberRepository<T, R> getRelationshipRepository();
 
@@ -413,23 +487,17 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     return getGroupRepository().getGroups(owner, group.getName());
   }
 
-  private List<User> getMembersOf(T group) {
-    List<User> users = new ArrayList<>();
+  private Set<User> getMembersOf(T group) {
+    Set<User> users = new HashSet<>();
     Iterable<User> usersByGroup = getRelationshipRepository().getUsersByGroup(group);
     usersByGroup.forEach(users::add);
     return users;
   }
 
-  private boolean isValidInterviewSlots(List<Interview> interviews, User user) {
+  private boolean isValidInterviewSlots(List<Interview> interviews, User user, long groupId) {
     LocalDateTime currentDateTime = ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime();
 
     if (interviews.size() <= 0) {
-      return false;
-    }
-
-    Interview firstInterview = interviews.get(0);
-    Long groupId = firstInterview.getGroupId();
-    if (groupId == null) {
       return false;
     }
 
@@ -439,14 +507,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     }
 
     UserToGroupPermission permission = getUserToGroupPermission(user, group);
-    if (!permission.hasRole(ADMIN)) {
+    if (!permission.canUpdate()) {
       return false;
     }
 
     for (Interview interview : interviews) {
-      if (!interview.getGroupId().equals(groupId)) {
-        return false;
-      }
       if (interview.getStartDateTime() == null || interview.getEndDateTime() == null) {
         return false;
       }

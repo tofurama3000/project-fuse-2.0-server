@@ -11,4 +11,6 @@ import java.util.List;
 @NoRepositoryBean
 public interface GroupRepository<T extends Group> extends CrudRepository<T, Long> {
   List<T> getGroups(@Param("owner") User user, @Param("name") String name);
+
+  List<T> getGroupsByOwner(@Param("owner") User user);
 }
