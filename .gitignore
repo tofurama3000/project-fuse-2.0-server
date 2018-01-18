@@ -35,3 +35,7 @@ target/
 .classpath
 .settings
 .project
+
+
+server_setup/packer/export.sh
+.vscode/*
