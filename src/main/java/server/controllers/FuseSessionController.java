@@ -12,7 +12,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Optional;
 
 @Controller
-public class FuseSessionController {
+public class
+FuseSessionController {
   private static IdGenerator generator = new AlternativeJdkIdGenerator();
   private static String SESSION_ID_NAME = "SESSIONID";
 

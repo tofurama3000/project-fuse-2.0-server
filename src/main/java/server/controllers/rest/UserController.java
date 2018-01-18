@@ -127,7 +127,7 @@ public class UserController {
   private static IdGenerator generator = new AlternativeJdkIdGenerator();
 
   @ApiOperation(value = "Creates a new user",
-    notes = "Must provide a name, password, and email")
+          notes = "Must provide a name, password, and email")
   @PostMapping
   @ResponseBody
   public GeneralResponse addNewUser(
@@ -425,7 +425,7 @@ public class UserController {
     unregisteredUserRepository.delete(unregisteredUser);
 
     return new GeneralResponse(response, OK, null,
-        projectInvitationRepository.findByReceiver(user));
+            projectInvitationRepository.findByReceiver(user));
   }
 
   @GetMapping(path = "/incoming/invites/project")
@@ -443,7 +443,7 @@ public class UserController {
     User user = session.get().getUser();
 
     return new GeneralResponse(response, OK, null,
-        projectInvitationRepository.findByReceiver(user));
+            projectInvitationRepository.findByReceiver(user));
   }
 
   @GetMapping(path = "/incoming/invites/organization")
@@ -461,7 +461,7 @@ public class UserController {
     User user = session.get().getUser();
 
     return new GeneralResponse(response, OK, null,
-        organizationInvitationRepository.findByReceiver(user));
+            organizationInvitationRepository.findByReceiver(user));
   }
 
 
@@ -480,7 +480,7 @@ public class UserController {
     User user = session.get().getUser();
 
     return new GeneralResponse(response, OK, null,
-        teamInvitationRepository.findByReceiver(user));
+            teamInvitationRepository.findByReceiver(user));
   }
 
   @PostMapping(path = "/accept/invite/team")
@@ -631,10 +631,10 @@ public class UserController {
         LocalDateTime currentDateTime = ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime();
 
         List<Interview> availableInterviewsAfterDate = interviewRepository
-            .getAvailableInterviewsAfterDate(group.getId(), group.getGroupType(), currentDateTime);
+                .getAvailableInterviewsAfterDate(group.getId(), group.getGroupType(), currentDateTime);
 
         long count = availableInterviewsAfterDate.stream().map(Interview::getId)
-            .filter(id -> Objects.equals(id, interview.getId())).count();
+                .filter(id -> Objects.equals(id, interview.getId())).count();
 
         if (count < 1) {
           errors.add(NO_INTERVIEW_FOUND);
