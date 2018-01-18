@@ -1,6 +1,8 @@
 package server.controllers.rest;
 
 import com.google.common.hash.Hashing;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
@@ -38,6 +40,7 @@ import static server.controllers.rest.response.GeneralResponse.Status.OK;
 
 @Controller
 @RequestMapping(value = "/files")
+@Api(value="File Endpoints")
 public class FileController {
     @Autowired
     private FuseSessionController fuseSessionController;
@@ -53,6 +56,8 @@ public class FileController {
 
     @PostMapping(path = "/upload")
     @ResponseBody
+    @ApiOperation(value = "Uploads a new file",
+            notes = "Max file size is 128KB")
     public GeneralResponse fileUpload(@RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
         List<String> errors = new ArrayList<>();
 
@@ -95,6 +100,8 @@ public class FileController {
 
     @GetMapping(path = "/download/{id}")
     @ResponseBody
+    @ApiOperation(value = "Downloads a file",
+            notes = "Will download as an attachment")
     public ResponseEntity<Resource> fileDownload(@PathVariable(value = "id") Long id, HttpServletResponse response, HttpServletRequest request) throws Exception {
 
         Optional<FuseSession> session = fuseSessionController.getSession(request);

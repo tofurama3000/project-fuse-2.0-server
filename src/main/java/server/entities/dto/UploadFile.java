@@ -9,10 +9,6 @@ import java.sql.Timestamp;
 @Data
 @Table(name = "files")
 public class UploadFile {
-    public UploadFile() {
-
-    }
-
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id")
