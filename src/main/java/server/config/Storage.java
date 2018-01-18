@@ -1,14 +1,16 @@
-package server.storage;
+package server.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties("storage")
-public class StorageProperties {
+public class Storage {
 
   /**
    * Folder location for storing files
    */
-  private String location = "upload-dir";
+  @Value("${fuse.fileUploadPath}")
+  private String location;
 
   public String getLocation() {
     return location;
