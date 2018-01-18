@@ -1,5 +1,8 @@
 package server.controllers.rest;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,12 +30,16 @@ import static server.controllers.rest.response.GeneralResponse.Status.OK;
  */
 @Controller
 @RequestMapping(value = "/search")
+@Api(tags="Search")
 @SuppressWarnings("unused")
 public class SearchController {
 
+  @ApiOperation(value = "Searches all searchable entities")
   @PostMapping
   @ResponseBody
-  public GeneralResponse searchAll(@RequestBody SearchParams params, HttpServletResponse response) {
+  public GeneralResponse searchAll(
+          @ApiParam(value = "The search query to use", required = true)
+          @RequestBody SearchParams params, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     if(params.getSearchString() == null){
@@ -60,27 +67,30 @@ public class SearchController {
     );
   }
 
+  @ApiOperation(value = "Searches all users")
   @PostMapping("/users")
   @ResponseBody
-  public GeneralResponse searchUser(@RequestBody SearchParams params, HttpServletResponse response) {
+  public GeneralResponse searchUser(
+          @ApiParam(value = "The search query to use", required = true)
+          @RequestBody SearchParams params, HttpServletResponse response) {
     return doSearch(params, response, new String[]{User.esIndex()}, new String[]{User.esType()});
   }
 
+  @ApiOperation(value = "Searches all projects")
   @PostMapping("/projects")
   @ResponseBody
-  public GeneralResponse searchProjects(@RequestBody SearchParams params, HttpServletResponse response) {
+  public GeneralResponse searchProjects(
+          @ApiParam(value = "The search query to use", required = true)
+          @RequestBody SearchParams params, HttpServletResponse response) {
     return doSearch(params, response, new String[]{Project.esIndex()}, new String[]{Project.esType()});
   }
 
-  @PostMapping("/teams")
-  @ResponseBody
-  public GeneralResponse searchTeams(@RequestBody SearchParams params, HttpServletResponse response) {
-    return doSearch(params, response, new String[]{Team.esIndex()}, new String[]{Team.esType()});
-  }
-
+  @ApiOperation(value = "Searches all organizations")
   @PostMapping("/organizations")
   @ResponseBody
-  public GeneralResponse searchOrganizations(@RequestBody SearchParams params, HttpServletResponse response) {
+  public GeneralResponse searchOrganizations(
+          @ApiParam(value = "The search query to use", required = true)
+          @RequestBody SearchParams params, HttpServletResponse response) {
     return doSearch(params, response, new String[]{Organization.esIndex()}, new String[]{Organization.esType()});
   }
 

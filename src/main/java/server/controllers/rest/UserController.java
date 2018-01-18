@@ -12,12 +12,16 @@ import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVE
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_REGISTRATION_KEY;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
+import static server.controllers.rest.response.CannedResponse.NO_INTERVIEW_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_INVITATION_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
 import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
 import static server.controllers.rest.response.GeneralResponse.Status.OK;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -34,6 +38,7 @@ import server.entities.dto.FuseSession;
 import server.entities.dto.UnregisteredUser;
 import server.entities.dto.User;
 import server.entities.dto.UserProfile;
+import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.interview.Interview;
 import server.entities.dto.group.organization.Organization;
@@ -62,14 +67,20 @@ import server.repositories.group.organization.OrganizationInvitationRepository;
 import server.repositories.group.project.ProjectInvitationRepository;
 import server.repositories.group.team.TeamInvitationRepository;
 import server.utility.RolesUtility;
+import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Controller
+@Api(value="User Endpoints")
 @RequestMapping(value = "/users")
 @SuppressWarnings("unused")
 public class UserController {
@@ -115,10 +126,13 @@ public class UserController {
 
   private static IdGenerator generator = new AlternativeJdkIdGenerator();
 
-
+  @ApiOperation(value = "Creates a new user",
+    notes = "Must provide a name, password, and email")
   @PostMapping
   @ResponseBody
-  public GeneralResponse addNewUser(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse addNewUser(
+          @ApiParam(value = "The user information to create with", required = true)
+          @RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
 
     List<String> errors = new ArrayList<>();
 
@@ -166,6 +180,7 @@ public class UserController {
     return new GeneralResponse(response, OK, errors, savedUser);
   }
 
+  @ApiIgnore
   @PostMapping(path = "/login")
   @ResponseBody
   public GeneralResponse login(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
@@ -193,6 +208,7 @@ public class UserController {
     return new GeneralResponse(response, Status.DENIED, errors);
   }
 
+  @ApiIgnore
   @PostMapping(path = "/logout")
   @ResponseBody
   public GeneralResponse logout(HttpServletRequest request, HttpServletResponse response) {
@@ -207,9 +223,13 @@ public class UserController {
     }
   }
 
+  @ApiOperation(value = "Get a user by their id")
   @GetMapping(path = "/{id}")
   @ResponseBody
-  public GeneralResponse getUserbyID(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse getUserbyID(
+          @ApiParam(value = "The ID of the user")
+          @PathVariable(value = "id") Long id,
+          HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -231,9 +251,12 @@ public class UserController {
     return new GeneralResponse(response, OK, null, byId);
   }
 
+  @ApiOperation(value = "Get a user by their email address")
   @GetMapping(path = "/get_by_email/{email}")
   @ResponseBody
-  public GeneralResponse getUserbyEmail(@PathVariable(value = "email") String email, HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse getUserbyEmail(
+          @ApiParam("Email address of the user")
+          @PathVariable(value = "email") String email, HttpServletRequest request, HttpServletResponse response) {
 
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -257,9 +280,12 @@ public class UserController {
   }
 
   @CrossOrigin
+  @ApiOperation(value = "Updates a user (must be logged in as that user)")
   @PutMapping(path = "/{id}")
   @ResponseBody
-  public GeneralResponse updateCurrentUser(@PathVariable long id, @RequestBody User userData, HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse updateCurrentUser(
+          @ApiParam(value = "ID of the user to update")
+          @PathVariable long id, @RequestBody User userData, HttpServletRequest request, HttpServletResponse response) {
     //to Use profile for profile
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -300,6 +326,7 @@ public class UserController {
 
   @GetMapping
   @ResponseBody
+  @ApiOperation(value = "Get all users")
   public GeneralResponse getAllUsers(HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -310,9 +337,12 @@ public class UserController {
     return new GeneralResponse(response, OK, null, userRepository.findAll());
   }
 
-  @GetMapping(path = "/joined/teams")
+  @GetMapping(path = "/{id}/joined/teams")
   @ResponseBody
-  public GeneralResponse getAllTeamsOfUser(HttpServletRequest request, HttpServletResponse response) {
+  @ApiIgnore
+  public GeneralResponse getAllTeamsOfUser(
+          @PathVariable Long id,
+          HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -320,14 +350,17 @@ public class UserController {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, Status.DENIED, errors);
     }
-    User user = session.get().getUser();
+    User user = userRepository.findOne(id);
 
     return new GeneralResponse(response, OK, null, membersOfGroupController.getTeamsUserIsPartOf(user));
   }
 
-  @GetMapping(path = "/joined/organizations")
+  @GetMapping(path = "/{id}/joined/organizations")
   @ResponseBody
-  public GeneralResponse getAllOrganizationsOfUser(HttpServletRequest request, HttpServletResponse response) {
+  @ApiOperation(value = "Get all organizations for the specified user")
+  public GeneralResponse getAllOrganizationsOfUser(
+          @PathVariable Long id,
+          HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -335,15 +368,18 @@ public class UserController {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, Status.DENIED, errors);
     }
-    User user = session.get().getUser();
+    User user = userRepository.findOne(id);
 
     return new GeneralResponse(response, OK, null, membersOfGroupController.getOrganizationsUserIsPartOf(user));
   }
 
 
-  @GetMapping(path = "/joined/projects")
+  @GetMapping(path = "/{id}/joined/projects")
   @ResponseBody
-  public GeneralResponse getAllProjectsOfUser(HttpServletRequest request, HttpServletResponse response) {
+  @ApiOperation(value = "Get all projects for the specified user")
+  public GeneralResponse getAllProjectsOfUser(
+          @PathVariable Long id,
+          HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -351,7 +387,7 @@ public class UserController {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, Status.DENIED, errors);
     }
-    User user = session.get().getUser();
+    User user = userRepository.findOne(id);
 
     return new GeneralResponse(response, OK, null, membersOfGroupController.getProjectsUserIsPartOf(user));
   }
@@ -359,6 +395,7 @@ public class UserController {
 
   @GetMapping(path = "/register/{registrationKey}")
   @ResponseBody
+  @ApiOperation(value = "Verify the user's email address")
   public GeneralResponse register(@PathVariable(value = "registrationKey") String registrationKey, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
@@ -393,6 +430,7 @@ public class UserController {
 
   @GetMapping(path = "/incoming/invites/project")
   @ResponseBody
+  @ApiOperation(value = "Get project invites for the current user")
   public GeneralResponse getProjectInvites(HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
@@ -410,6 +448,7 @@ public class UserController {
 
   @GetMapping(path = "/incoming/invites/organization")
   @ResponseBody
+  @ApiOperation(value = "Get organizations invites for the current user")
   public GeneralResponse getOrganizationInvites(HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
@@ -428,6 +467,7 @@ public class UserController {
 
   @GetMapping(path = "/incoming/invites/team")
   @ResponseBody
+  @ApiOperation(value = "Get team invites for the current user")
   public GeneralResponse getTeamInvites(HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
@@ -445,7 +485,10 @@ public class UserController {
 
   @PostMapping(path = "/accept/invite/team")
   @ResponseBody
-  public GeneralResponse acceptTeamInvite(@RequestBody TeamInvitation teamInvitation, HttpServletRequest request, HttpServletResponse response) {
+  @ApiIgnore
+  public GeneralResponse acceptTeamInvite(
+          @ApiParam(value="The team invitation information to accept")
+          @RequestBody TeamInvitation teamInvitation, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -470,6 +513,8 @@ public class UserController {
     UserToTeamPermission permission = permissionFactory.createUserToTeamPermission(user, group);
 
     UserToTeamRelationship userToTeamRelationship = relationshipFactory.createUserToTeamRelationship(user, group);
+
+    savedInvitation.setInterview(teamInvitation.getInterview());
     PossibleError possibleError = addRelationshipsIfNotError(savedInvitation, permission, userToTeamRelationship);
 
     if (!possibleError.hasError()) {
@@ -481,7 +526,10 @@ public class UserController {
 
   @PostMapping(path = "/accept/invite/project")
   @ResponseBody
-  public GeneralResponse acceptProjectInvite(@RequestBody ProjectInvitation projectInvitation, HttpServletRequest request, HttpServletResponse response) {
+  @ApiOperation(value = "Accept project invite")
+  public GeneralResponse acceptProjectInvite(
+          @ApiParam(value="The project invitation information to accept")
+          @RequestBody ProjectInvitation projectInvitation, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -506,6 +554,8 @@ public class UserController {
     UserToProjectPermission permission = permissionFactory.createUserToProjectPermission(user, group);
 
     UserToProjectRelationship userToTeamRelationship = relationshipFactory.createUserToProjectRelationship(user, group);
+
+    savedInvitation.setInterview(projectInvitation.getInterview());
     PossibleError possibleError = addRelationshipsIfNotError(savedInvitation, permission, userToTeamRelationship);
 
     if (!possibleError.hasError()) {
@@ -518,7 +568,10 @@ public class UserController {
 
   @PostMapping(path = "/accept/invite/organization")
   @ResponseBody
-  public GeneralResponse acceptOrganizationInvite(@RequestBody OrganizationInvitation organizationInvitation, HttpServletRequest request, HttpServletResponse response) {
+  @ApiOperation(value = "Accept organization invite")
+  public GeneralResponse acceptOrganizationInvite(
+          @ApiParam(value="The organization invitation information to accept")
+          @RequestBody OrganizationInvitation organizationInvitation, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -543,6 +596,8 @@ public class UserController {
     UserToOrganizationPermission permission = permissionFactory.createUserToOrganizationPermission(user, group);
 
     UserToOrganizationRelationship userToTeamRelationship = relationshipFactory.createUserToOrganizationRelationship(user, group);
+
+    savedInvitation.setInterview(organizationInvitation.getInterview());
     PossibleError possibleError = addRelationshipsIfNotError(savedInvitation, permission, userToTeamRelationship);
 
     if (!possibleError.hasError()) {
@@ -572,6 +627,19 @@ public class UserController {
           errors.add(INVALID_FIELDS);
           return new PossibleError(errors);
         }
+        Group group = invitation.getGroup();
+        LocalDateTime currentDateTime = ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime();
+
+        List<Interview> availableInterviewsAfterDate = interviewRepository
+            .getAvailableInterviewsAfterDate(group.getId(), group.getGroupType(), currentDateTime);
+
+        long count = availableInterviewsAfterDate.stream().map(Interview::getId)
+            .filter(id -> Objects.equals(id, interview.getId())).count();
+
+        if (count < 1) {
+          errors.add(NO_INTERVIEW_FOUND);
+          return new PossibleError(errors);
+        }
 
         if (!permission.hasRole(INVITED_TO_INTERVIEW)) {
           errors.add(INSUFFICIENT_PRIVELAGES);
@@ -579,7 +647,7 @@ public class UserController {
         }
 
         relationship.addRelationship(TO_INTERVIEW);
-        relationship.addRelationship(INVITED_TO_INTERVIEW);
+        relationship.removeRelationship(INVITED_TO_INTERVIEW);
 
         interview.setUser(user);
         interview.setAvailability(NOT_AVAILABLE);
