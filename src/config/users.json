@@ -1,0 +1,71 @@
+{
+  "settings": {
+    "analysis": {
+      "filter": {
+        "synonyms_skills": {
+          "synonyms": [
+            "ui,ux,gui",
+            "node,nodejs",
+            "js,javascript",
+            "c,cpp,c++,c/c++",
+            "c#,.net",
+            "internationalization,i18n",
+            "localization,l10n",
+            "ai,artificial intelligence",
+            "ml,machine learning",
+            "utf,utf-8,utf-16,unicode",
+            "p2p,peer to peer,peer-to-peer",
+            "dev,devlopement",
+            "web,cloud",
+            "devops,operations",
+            "cad,computer aided design",
+            "gcc,g++",
+            "fedora,linux,ubuntu,opensuse",
+            "db,database",
+            "admin,administrator",
+            "wi-fi,wifi,wireless",
+            "fp,funcitonal programming",
+            "lisp,clojure,common lisp,common-lisp",
+            "asm,assembly",
+            "x86,x86-64,ia-32",
+            "erlang,elixir",
+            "hhvm,php,hack language,hack lang",
+            "lang,language",
+            "gb,gigabyte",
+            "mb,megabyte",
+            "hypertext markup language,html",
+            "cascading style sheet,css",
+            "hyptertext transfer protocol,http",
+            "java development kit,jdk",
+            "sql,sequel,mysql",
+            "oop => object oriented programming",
+            "oo => object oriented",
+            "os,operating system",
+            "scrum,agile"
+          ],
+          "type": "synonym"
+        }
+      },
+      "analyzer": {
+        "synonyms_skills": {
+          "filter": [
+            "lowercase",
+            "synonyms_skills"
+          ],
+          "type": "custom",
+          "tokenizer": "whitespace"
+        }
+      }
+    }
+  },
+  "mappings": {
+    "info": {
+      "properties": {
+        "skills": {
+          "analyzer": "synonyms_skills",
+          "type": "text"
+        }
+      }
+    }
+  }
+}

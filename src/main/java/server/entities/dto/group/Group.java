@@ -5,22 +5,18 @@ import static server.entities.Restriction.NONE;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import server.entities.BaseIndexable;
 import server.entities.Interviewable;
 import server.entities.Restriction;
 import server.entities.dto.User;
 
-import javax.persistence.Column;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Transient;
+import javax.persistence.*;
+import java.util.HashMap;
+import java.util.Map;
 
 @Data
 @MappedSuperclass
-public abstract class Group<Profile extends GroupProfile> implements Interviewable {
+public abstract class Group<Profile extends GroupProfile> extends BaseIndexable implements  Interviewable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
@@ -57,5 +53,34 @@ public abstract class Group<Profile extends GroupProfile> implements Interviewab
   @Override
   public String toString() {
     return getGroupType() + " " + getName() + " " + getOwner();
+  }
+
+
+  @Override
+  public Map<String, Object> getEsJson() {
+    Map<String, Object> map = new HashMap<>();
+
+    map.put("id", this.getId());
+    map.put("name", this.getName());
+    map.put("owner", this.getOwner().getName());
+    map.put("owner_id", this.getOwner().getId());
+    map.put("join_restriction", this.getRestrictionString());
+    map.put("summary", this.getProfile().getSummary());
+    map.put("headline", this.getProfile().getHeadline());
+    map.put("index", this.getEsIndex());
+
+    return map;
+  }
+
+  public static String esType() { return "info"; }
+
+  @Override
+  public String getEsType() {
+    return esType();
+  }
+
+  @Override
+  public String getEsId() {
+    return this.getId().toString();
   }
 }

@@ -1,5 +1,7 @@
 package server.controllers.rest.group;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -32,6 +34,7 @@ import javax.servlet.http.HttpServletResponse;
 @Controller
 @RequestMapping(value = "/projects")
 @Transactional
+@Api("Projects")
 @SuppressWarnings("unused")
 public class ProjectController extends GroupController<Project, ProjectMember> {
 
@@ -100,16 +103,21 @@ public class ProjectController extends GroupController<Project, ProjectMember> {
   }
 
   @PostMapping(path = "/apply/{id}")
+  @ApiOperation("Apply to join")
   @ResponseBody
   public GeneralResponse apply(@PathVariable(value = "id") Long id, @RequestBody ProjectApplicant projectApplicant,
                                HttpServletRequest request, HttpServletResponse response) {
     return generalApply(id, projectApplicant, request, response);
   }
 
+  
+  @ApiOperation("Create an invitation")
   @PostMapping(path = "/invite")
   @ResponseBody
-  public GeneralResponse invite(@RequestBody ProjectInvitation projectInvitation,
-                                HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse invite(
+          @RequestParam("Invitation information")
+          @RequestBody ProjectInvitation projectInvitation,
+          HttpServletRequest request, HttpServletResponse response) {
     return generalInvite(projectInvitation, request, response);
   }
 

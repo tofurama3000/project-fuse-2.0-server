@@ -9,6 +9,8 @@ import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import java.util.HashMap;
+import java.util.Map;
 
 @ToString(exclude = "profile")
 @Entity
@@ -39,5 +41,11 @@ public class Project extends Group<ProjectProfile> {
     profile = p;
   }
 
+  public static String esIndex() { return "projects"; }
+
+  @Override
+  public String getEsIndex() {
+    return esIndex();
+  }
 
 }
