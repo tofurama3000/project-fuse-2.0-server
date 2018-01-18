@@ -10,6 +10,8 @@ import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import java.util.HashMap;
+import java.util.Map;
 
 @ToString(exclude = "profile")
 @Entity
@@ -39,4 +41,12 @@ public class Team extends Group<TeamProfile> {
   public void setProfile(TeamProfile p) {
     profile = p;
   }
+
+  public static String esIndex() { return "teams"; }
+
+  @Override
+  public String getEsIndex() {
+    return esIndex();
+  }
+
 }

@@ -98,6 +98,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       return new GeneralResponse(response, errors);
     }
 
+    if(entity.getProfile() == null){
+      errors.add("Missing profile information!");
+      return new GeneralResponse(response, errors);
+    }
+
     User user = session.get().getUser();
     List<T> entities = getGroupsWith(user, entity);
     entity.setOwner(user);
@@ -106,6 +111,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       Group savedEntity = getGroupRepository().save(entity);
       addRelationship(user, entity, OWNER);
       addRelationship(user, entity, ADMIN);
+      savedEntity.indexAsync();
       return new GeneralResponse(response, OK, null, savedEntity);
     } else {
       errors.add("entity name already exists for user");
@@ -185,7 +191,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       }
 
     }
-    getGroupRepository().save(groupToSave);
+    getGroupRepository().save(groupToSave).indexAsync();
     return new GeneralResponse(response, OK);
   }
 
@@ -394,8 +400,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     Group res = getGroupRepository().findOne(id);
     if (res != null){
       User user = session.get().getUser();
-      T groupToSave = getGroupRepository().findOne(id);
-      UserToGroupPermission permission = getUserToGroupPermission(user, groupToSave);
+      T groupToFindRestriction = getGroupRepository().findOne(id);
+      UserToGroupPermission permission = getUserToGroupPermission(user, groupToFindRestriction);
       res.setCanEdit(permission.canUpdate());
 
       return new GeneralResponse(response, OK, null, res);
