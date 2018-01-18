@@ -17,7 +17,7 @@ public interface Indexable {
   @JsonIgnore
   String getEsIndex();
 
-  // The type of document in the Ealsticsearch Index
+  // The type of document in the Elasticsearch Index
   @JsonIgnore
   String getEsType();
 

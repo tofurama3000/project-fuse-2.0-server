@@ -11,7 +11,7 @@ public class MessageFactory {
   private String baseUrl;
 
   public String createRegistrationBody(String registrationKey) {
-    return "<p>Register with this link: </p>" + createLink(baseUrl + "/user/register/" + registrationKey, "Register");
+    return "<p>Register with this link: </p>" + createLink(baseUrl + "/users/register/" + registrationKey, "Register");
   }
 
   private String createLink(String url, String text) {

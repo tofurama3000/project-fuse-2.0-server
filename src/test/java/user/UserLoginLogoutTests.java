@@ -41,7 +41,7 @@ public class UserLoginLogoutTests extends RestTester {
     String contents = requestHelper.getContentsFromResources("addUser/addUser2");
     primaryUser = new ObjectMapper().readValue(contents, User.class);
 
-    mockMvc.perform(post("/user/add")
+    mockMvc.perform(post("/users")
         .contentType(MediaType.APPLICATION_JSON_UTF8)
         .content(contents)).andReturn();
   }
@@ -50,7 +50,7 @@ public class UserLoginLogoutTests extends RestTester {
   public void testLoginCreatesValidSession() throws Exception {
 
     String contents = requestHelper.getContentsFromResources("login/loginUser2");
-    MvcResult mvcResult = mockMvc.perform(post("/user/login")
+    MvcResult mvcResult = mockMvc.perform(post("/users/login")
         .contentType(MediaType.APPLICATION_JSON_UTF8)
         .content(contents)).andReturn();
 
