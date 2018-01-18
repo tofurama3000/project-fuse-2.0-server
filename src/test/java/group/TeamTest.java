@@ -130,14 +130,14 @@ public class TeamTest extends RestTester {
 
   private boolean tryJoinTeam1(String sessionId, Long teamId) throws Exception {
     String json = "{\"id\":" + teamId + "}";
-    GeneralResponse generalResponse = requestHelper.makePostRequest(sessionId, json, "/teams/join/" + teamId);
+    GeneralResponse generalResponse = requestHelper.makePostRequest(sessionId, json, "/teams/join/" + teamId.toString());
     return generalResponse.getStatus() == OK;
   }
 
   private boolean inviteUser2ToTeam1(String sessionId, User user, Team team) throws Exception {
-    String invitation = jsonHelper.createInvitation(userRepository.findByEmail(user.getEmail()).getId(), team.getId());
+    String invitation = jsonHelper.createInvitation(userRepository.findByEmail(user.getEmail()).getId(), team.getId(), "join");
 
-    GeneralResponse generalResponse = requestHelper.makePutRequest(sessionId, invitation, "/teams/invite");
+    GeneralResponse generalResponse = requestHelper.makePostRequest(sessionId, invitation, "/teams/invite");
     return generalResponse.getStatus() == OK;
   }
 

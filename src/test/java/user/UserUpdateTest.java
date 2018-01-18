@@ -77,7 +77,7 @@ public class UserUpdateTest extends RestTester {
         assertTrue(fuseSession2.isPresent());
 
         String putContents = requestHelper.getContentsFromResources("updateUser/updateUser2");
-        GeneralResponse generalResponse = requestHelper.makePutRequest(fuseSession2.get().getSessionId(), putContents, "/users/" + fuseSession1.get().getUser().getId().toString());
+        GeneralResponse generalResponse = requestHelper.makePutRequest(fuseSession2.get().getSessionId(), putContents, "/users/" + (fuseSession2.get().getUser().getId() - 1));
 
         assertTrue(generalResponse.getStatus() == DENIED);
 
