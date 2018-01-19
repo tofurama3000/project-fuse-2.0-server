@@ -9,7 +9,6 @@ import server.entities.BaseIndexable;
 import server.entities.Interviewable;
 import server.entities.Restriction;
 import server.entities.dto.User;
-import server.entities.dto.group.project.Project;
 
 import javax.persistence.*;
 import java.util.HashMap;

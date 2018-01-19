@@ -2,21 +2,25 @@ package server.controllers.rest;
 
 import static server.constants.Availability.NOT_AVAILABLE;
 import static server.constants.InvitationStatus.ACCEPTED;
+import static server.constants.InvitationStatus.PENDING;
 import static server.constants.RegistrationStatus.REGISTERED;
 import static server.constants.RegistrationStatus.UNREGISTERED;
 import static server.constants.RoleValue.DEFAULT_USER;
 import static server.constants.RoleValue.INVITED_TO_INTERVIEW;
 import static server.constants.RoleValue.INVITED_TO_JOIN;
 import static server.constants.RoleValue.TO_INTERVIEW;
+import static server.controllers.rest.response.CannedResponse.ALREADY_JOINED_MSG;
 import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_REGISTRATION_KEY;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import static server.controllers.rest.response.CannedResponse.NO_INTERVIEW_FOUND;
+import static server.controllers.rest.response.CannedResponse.NO_GROUP_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_INVITATION_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
 import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
+import static server.controllers.rest.response.GeneralResponse.Status.ERROR;
 import static server.controllers.rest.response.GeneralResponse.Status.OK;
 
 import io.swagger.annotations.Api;
@@ -27,7 +31,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.AlternativeJdkIdGenerator;
 import org.springframework.util.IdGenerator;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
 import server.controllers.MembersOfGroupController;
 import server.controllers.rest.response.GeneralResponse;
@@ -42,10 +53,13 @@ import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.interview.Interview;
 import server.entities.dto.group.organization.Organization;
+import server.entities.dto.group.organization.OrganizationApplicant;
 import server.entities.dto.group.organization.OrganizationInvitation;
 import server.entities.dto.group.project.Project;
+import server.entities.dto.group.project.ProjectApplicant;
 import server.entities.dto.group.project.ProjectInvitation;
 import server.entities.dto.group.team.Team;
+import server.entities.dto.group.team.TeamApplicant;
 import server.entities.dto.group.team.TeamInvitation;
 import server.entities.user_to_group.permissions.PermissionFactory;
 import server.entities.user_to_group.permissions.UserPermission;
@@ -63,9 +77,15 @@ import server.repositories.UnregisteredUserRepository;
 import server.repositories.UserProfileRepository;
 import server.repositories.UserRepository;
 import server.repositories.group.InterviewRepository;
+import server.repositories.group.organization.OrganizationApplicantRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
+import server.repositories.group.organization.OrganizationRepository;
+import server.repositories.group.project.ProjectApplicantRepository;
 import server.repositories.group.project.ProjectInvitationRepository;
+import server.repositories.group.project.ProjectRepository;
+import server.repositories.group.team.TeamApplicantRepository;
 import server.repositories.group.team.TeamInvitationRepository;
+import server.repositories.group.team.TeamRepository;
 import server.utility.RolesUtility;
 import springfox.documentation.annotations.ApiIgnore;
 
@@ -98,13 +118,31 @@ public class UserController {
   private TeamInvitationRepository teamInvitationRepository;
 
   @Autowired
+  private TeamApplicantRepository teamApplicantRepository;
+
+  @Autowired
+  private TeamRepository teamRepository;
+
+  @Autowired
+  private ProjectApplicantRepository projectApplicantRepository;
+
+  @Autowired
   private ProjectInvitationRepository projectInvitationRepository;
+
+  @Autowired
+  private ProjectRepository projectRepository;
 
   @Autowired
   private UserProfileRepository userProfileRepository;
 
   @Autowired
   private OrganizationInvitationRepository organizationInvitationRepository;
+
+  @Autowired
+  private OrganizationRepository organizationRepository;
+
+  @Autowired
+  private OrganizationApplicantRepository organizationApplicantRepository;
 
   @Autowired
   private UnregisteredUserRepository unregisteredUserRepository;
@@ -296,7 +334,7 @@ public class UserController {
 
     User userToSave = session.get().getUser();
 
-    if(id != userToSave.getId()){
+    if (id != userToSave.getId()) {
       // have this take care of misc updates by admins/moderators (e.g. flag user or revoke access)
 
       errors.add("Unable to edit user, permission denied");

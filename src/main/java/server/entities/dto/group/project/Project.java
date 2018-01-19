@@ -3,8 +3,6 @@ package server.entities.dto.group.project;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.ToString;
 import server.entities.dto.group.Group;
-import server.entities.dto.group.GroupProfile;
-import server.entities.dto.group.team.TeamProfile;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;

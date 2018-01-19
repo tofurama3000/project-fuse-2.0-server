@@ -7,25 +7,22 @@ import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.User;
-import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.GroupProfile;
 import server.entities.dto.group.organization.Organization;
+import server.entities.dto.group.organization.OrganizationApplicant;
 import server.entities.dto.group.organization.OrganizationInvitation;
 import server.entities.dto.group.organization.OrganizationMember;
-import server.entities.dto.group.organization.OrganizationProfile;
 import server.entities.user_to_group.permissions.PermissionFactory;
 import server.entities.user_to_group.permissions.UserToGroupPermission;
 import server.entities.user_to_group.relationships.RelationshipFactory;
+import server.repositories.group.GroupApplicantRepository;
 import server.repositories.group.GroupMemberRepository;
-import server.repositories.group.GroupProfileRepository;
 import server.repositories.group.GroupRepository;
+import server.repositories.group.organization.OrganizationApplicantRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
 import server.repositories.group.organization.OrganizationMemberRepository;
 import server.repositories.group.organization.OrganizationProfileRepository;
@@ -46,6 +43,9 @@ public class OrganizationController extends GroupController<Organization, Organi
 
   @Autowired
   private OrganizationRepository organizationRepository;
+
+  @Autowired
+  private OrganizationApplicantRepository organizationApplicantRepository;
 
   @Autowired
   OrganizationProfileRepository organizationProfileRepository;
@@ -70,6 +70,11 @@ public class OrganizationController extends GroupController<Organization, Organi
   @Override
   protected GroupRepository<Organization> getGroupRepository() {
     return organizationRepository;
+  }
+
+  @Override
+  protected GroupApplicantRepository getGroupApplicantRepository() {
+    return organizationApplicantRepository;
   }
 
   @Override
@@ -105,6 +110,13 @@ public class OrganizationController extends GroupController<Organization, Organi
           @RequestBody OrganizationInvitation organizationInvitation,
           HttpServletRequest request, HttpServletResponse response) {
     return generalInvite(organizationInvitation, request, response);
+  }
+
+  @PostMapping(path = "/apply/{id}")
+  @ResponseBody
+  public GeneralResponse apply(@PathVariable(value = "id") Long id, @RequestBody OrganizationApplicant organizationApplicant,
+                               HttpServletRequest request, HttpServletResponse response) {
+    return generalApply(id, organizationApplicant, request, response);
   }
 
   @Override

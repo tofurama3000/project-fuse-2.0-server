@@ -3,7 +3,6 @@ package server.entities.dto.group.organization;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.ToString;
 import server.entities.dto.group.Group;
-import server.entities.dto.group.GroupProfile;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -16,7 +15,7 @@ import javax.persistence.Table;
 @Table(name = "organization")
 public class Organization extends Group<OrganizationProfile> {
   @JsonManagedReference
-  @OneToOne( cascade = CascadeType.ALL)
+  @OneToOne(cascade = CascadeType.ALL)
   @JoinColumn(name = "organization_profile_id", referencedColumnName = "id")
   private OrganizationProfile profile;
 

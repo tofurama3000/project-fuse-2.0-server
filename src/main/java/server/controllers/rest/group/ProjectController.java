@@ -11,14 +11,18 @@ import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.User;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.GroupProfile;
+import server.entities.dto.group.organization.OrganizationInvitation;
 import server.entities.dto.group.project.Project;
+import server.entities.dto.group.project.ProjectApplicant;
 import server.entities.dto.group.project.ProjectInvitation;
 import server.entities.dto.group.project.ProjectMember;
 import server.entities.user_to_group.permissions.PermissionFactory;
 import server.entities.user_to_group.permissions.UserToGroupPermission;
 import server.entities.user_to_group.relationships.RelationshipFactory;
+import server.repositories.group.GroupApplicantRepository;
 import server.repositories.group.GroupMemberRepository;
 import server.repositories.group.GroupRepository;
+import server.repositories.group.project.ProjectApplicantRepository;
 import server.repositories.group.project.ProjectInvitationRepository;
 import server.repositories.group.project.ProjectMemberRepository;
 import server.repositories.group.project.ProjectProfileRepository;
@@ -39,6 +43,9 @@ public class ProjectController extends GroupController<Project, ProjectMember> {
 
   @Autowired
   private ProjectProfileRepository projectProfileRepository;
+
+  @Autowired
+  private ProjectApplicantRepository projecApplicantRepository;
 
   @Autowired
   private ProjectRepository projectRepository;
@@ -66,6 +73,11 @@ public class ProjectController extends GroupController<Project, ProjectMember> {
   }
 
   @Override
+  protected GroupApplicantRepository getGroupApplicantRepository() {
+    return projecApplicantRepository;
+  }
+
+  @Override
   protected GroupProfile<Project> saveProfile(Project project) {
     return projectProfileRepository.save(project.getProfile());
   }
@@ -90,6 +102,15 @@ public class ProjectController extends GroupController<Project, ProjectMember> {
     relationshipFactory.createUserToProjectRelationship(user, group).addRelationship(role);
   }
 
+  @PostMapping(path = "/apply/{id}")
+  @ApiOperation("Apply to join")
+  @ResponseBody
+  public GeneralResponse apply(@PathVariable(value = "id") Long id, @RequestBody ProjectApplicant projectApplicant,
+                               HttpServletRequest request, HttpServletResponse response) {
+    return generalApply(id, projectApplicant, request, response);
+  }
+
+  
   @ApiOperation("Create an invitation")
   @PostMapping(path = "/invite")
   @ResponseBody
