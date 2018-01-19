@@ -67,7 +67,6 @@ import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.websocket.server.PathParam;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -253,7 +252,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   @ResponseBody
   protected synchronized GeneralResponse join(
           @ApiParam("The id of the group to join")
-          @PathParam("id") Long id, HttpServletRequest request, HttpServletResponse response) {
+          @PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);

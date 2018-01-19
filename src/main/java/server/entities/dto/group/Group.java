@@ -83,4 +83,7 @@ public abstract class Group<Profile extends GroupProfile> extends BaseIndexable 
   public String getEsId() {
     return this.getId().toString();
   }
+
+  // Does nothing, it's just to make JSON deserialization happy
+  public void setGroupType(String type) {}
 }

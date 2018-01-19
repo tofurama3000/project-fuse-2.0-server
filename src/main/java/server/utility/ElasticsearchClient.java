@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
  * Created by tofurama on 12/16/17.
  */
 public class ElasticsearchClient {
+  private static String use_elasticsearch = "true";
 
   private ElasticsearchClient() throws UnknownHostException, InvalidObjectException {
     // Spring is not initialized when this is ran, so we need to get properties ourselves
@@ -47,6 +48,7 @@ public class ElasticsearchClient {
       appProps.load(new FileInputStream(appConfigPath));
       hostname = appProps.getProperty("fuse.elasticsearch_host", hostname);
       tcp_protocol = appProps.getProperty("fuse.elasticsearch_tcp_protocol", tcp_protocol);
+      use_elasticsearch = appProps.getProperty("fuse.use_elasticsearch", use_elasticsearch);
       main_port = Integer.parseInt(appProps.getProperty("fuse.elasticsearch_port", main_port.toString()));
       secondary_port = Integer.parseInt(appProps.getProperty("fuse.elasticsearch_sec_port", secondary_port.toString()));
     } catch (IOException e) {
@@ -61,6 +63,8 @@ public class ElasticsearchClient {
   }
 
   public static ElasticsearchClient instance(){
+    if (!ElasticsearchClient.use_elasticsearch.equals("true"))
+      return null;
     // Try to create an instance if one isn't present
     if(inst == null) {
       try {
@@ -71,6 +75,8 @@ public class ElasticsearchClient {
         inst = null;
       }
     }
+    if (!ElasticsearchClient.use_elasticsearch.equals("true"))
+      return null;
     return inst;
   }
 
