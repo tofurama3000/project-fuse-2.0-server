@@ -96,10 +96,8 @@ import javax.websocket.server.PathParam;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
@@ -371,7 +369,7 @@ public class UserController {
   @CrossOrigin
   @PutMapping(path = "/notifications/read/{id}")
   @ResponseBody
-  public GeneralResponse setApplicantsStatus(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse readNotification(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -380,6 +378,22 @@ public class UserController {
     }
     Notification notification = notificationRepository.findOne(id);
     notification.setHasRead(true);
+    notificationRepository.save(notification);
+    return new GeneralResponse(response, OK, null);
+  }
+
+  @CrossOrigin
+  @PutMapping(path = "/notifications/delete/{id}")
+  @ResponseBody
+  public GeneralResponse deleteNotification(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+    }
+    Notification notification = notificationRepository.findOne(id);
+    notification.setDeleted(true);
     notificationRepository.save(notification);
     return new GeneralResponse(response, OK, null);
   }
@@ -721,7 +735,12 @@ public class UserController {
     if (!possibleError.hasError()) {
       savedInvitation.setStatus(ACCEPTED);
       projectInvitationRepository.save(savedInvitation);
+      ZonedDateTime now = ZonedDateTime.now();
+      DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+      String formatDateTime = now.format(formatter);
+
     }
+
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
   }
 
@@ -825,7 +844,6 @@ public class UserController {
 
     return new PossibleError(Status.OK);
   }
-
 
   private boolean logoutIfLoggedIn(User user, HttpServletRequest request) {
     UserPermission userPermission = permissionFactory.createUserPermission(user);

@@ -33,14 +33,7 @@ import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.CannedResponse;
 import server.controllers.rest.response.GeneralResponse;
@@ -72,11 +65,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @SuppressWarnings("unused")
 public abstract class GroupController<T extends Group, R extends GroupMember<T>> {
@@ -201,10 +190,12 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       errors.add(NO_GROUP_FOUND);
       return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
     }
-
+    ZonedDateTime now = ZonedDateTime.now();
+    application.setTime(now.toString());
     getGroupApplicantRepository().save(application);
     Map<String, Object> result = new HashMap<>();
     result.put("applied", true);
+    sendGroupNotificationToAdmins(group, session.get().getUser().getName()+" has applied to " + group.getName(),now.toString());
     return new GeneralResponse(response, GeneralResponse.Status.OK, errors, result);
   }
 
@@ -275,14 +266,17 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
     T group = getGroupRepository().findOne(id);
     User user = session.get().getUser();
+    ZonedDateTime now = ZonedDateTime.now();
 
     switch (getUserToGroupPermission(user, group).canJoin()) {
       case OK:
         addRelationship(user, group, DEFAULT_USER);
+        sendGroupNotificationToAdmins(group, user.getName()+" joined to " + group.getName(),now.toString());
         return new GeneralResponse(response);
       case HAS_INVITE:
         addRelationship(user, group, DEFAULT_USER);
         removeRelationship(user, group, INVITED_TO_JOIN);
+        sendGroupNotificationToAdmins(group, user.getName()+" joined to " + group.getName(),now.toString());
         return new GeneralResponse(response);
       case NEED_INVITE:
         // Apply if an invite is needed
@@ -354,7 +348,9 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
         saveInvitation(groupInvitation);
         break;
     }
+    ZonedDateTime now = ZonedDateTime.now();
 
+    sendNotification(groupInvitation.getReceiver(), "You has invited to " + group.getName(),now.toString());
     return new GeneralResponse(response);
   }
 
@@ -565,6 +561,16 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     GroupApplicantRepository groupApplicantRepository = getGroupApplicantRepository();
     GroupApplicant applicantToSave = (GroupApplicant) groupApplicantRepository.findOne(appId);
     applicantToSave.setStatus(status);
+    if(status.equals("accepted")){
+      ZonedDateTime now = ZonedDateTime.now();
+      sendNotification(applicantToSave.getSender(),applicantToSave.getGroup().getName()+"'s admin accepted your applicant", now.toString());
+      addRelationship(applicantToSave.getSender(), (T) applicantToSave.getGroup(),DEFAULT_USER);
+    }
+
+    if(status.equals("declined")){
+      ZonedDateTime now = ZonedDateTime.now();
+      sendNotification(applicantToSave.getSender(),applicantToSave.getGroup().getName()+"'s admin rejected your applicant", now.toString());
+    }
     groupApplicantRepository.save(applicantToSave);
     return new GeneralResponse(response, OK, null);
   }
@@ -602,7 +608,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     notificationRepository.save(notification);
   }
 
-  protected  void sendGroupNotification(T group, String message, String time){
+  protected  void sendGroupNotificationToAdmins(T group, String message, String time){
     Set<User> users = getMembersOf(group);
     for(User u : users){
       UserToGroupPermission permission = getUserToGroupPermission(u, group);

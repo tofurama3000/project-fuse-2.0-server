@@ -15,6 +15,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface NotificationRepository extends CrudRepository<Notification, Long> {
-  @Query("FROM Notification a where a.receiver = :receiver ")
+  @Query("FROM Notification a where a.receiver = :receiver and a.deleted = 0")
   List<Notification> getNotifications(@Param("receiver") User receiver);
 }

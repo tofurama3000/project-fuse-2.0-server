@@ -37,6 +37,9 @@ public class Notification {
   @Column(name = "hasRead")
   private boolean hasRead;
 
+  @Column(name = "deleted")
+  private boolean deleted;
+
   public void setTime(String dateTime) {
     ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateTime);
     time = zonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
