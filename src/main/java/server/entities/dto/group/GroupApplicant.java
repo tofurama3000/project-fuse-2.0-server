@@ -35,7 +35,7 @@ public abstract class GroupApplicant<T extends Group> {
 
   public void setTime(String dateTime) {
     ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateTime);
-    time = zonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+    this.time = zonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
   }
 
   public void setStatus(String status) {
@@ -53,7 +53,10 @@ public abstract class GroupApplicant<T extends Group> {
   }
 
   public String getTime() {
-    return time.toString() + "+00:00";
+    if (time != null) {
+      return time.toString() + "+00:00";
+    }
+    return "";
   }
 
   @JsonIgnore
@@ -65,9 +68,16 @@ public abstract class GroupApplicant<T extends Group> {
     return valid;
   }
 
-  private static List<String> valid = java.util.Arrays.asList("accepted",
-          "declined",
+  private static List<String> valid = java.util.Arrays.asList(
+          "accepted",
           "pending",
           "interviewed",
-          "interview_scheduled");
+          "interview_scheduled",
+          "declined"
+  );
+
+  public static Integer GetStatusOrder(String status) {
+    final int index = valid.indexOf(status.toLowerCase());
+    return (index >= 0) ? index : valid.size();
+  }
 }

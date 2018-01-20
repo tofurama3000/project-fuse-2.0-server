@@ -43,7 +43,7 @@ public abstract class Group<Profile extends GroupProfile> extends BaseIndexable 
   }
 
   public void setRestriction(String restriction) {
-    restrictionString = restriction;
+    restrictionString = restriction.toUpperCase();
   }
 
   public abstract Profile getProfile();

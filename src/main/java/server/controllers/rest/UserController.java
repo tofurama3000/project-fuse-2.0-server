@@ -50,6 +50,7 @@ import server.entities.dto.UnregisteredUser;
 import server.entities.dto.User;
 import server.entities.dto.UserProfile;
 import server.entities.dto.group.Group;
+import server.entities.dto.group.GroupApplicant;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.interview.Interview;
 import server.entities.dto.group.organization.Organization;
@@ -87,10 +88,12 @@ import server.repositories.group.team.TeamApplicantRepository;
 import server.repositories.group.team.TeamInvitationRepository;
 import server.repositories.group.team.TeamRepository;
 import server.utility.RolesUtility;
+import server.utility.StreamUtil;
 import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.websocket.server.PathParam;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -98,6 +101,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Controller
 @Api(value="User Endpoints")
@@ -425,11 +429,68 @@ public class UserController {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, Status.DENIED, errors);
     }
+
+    if (!Objects.equals(session.get().getUser().getId(), id)) {
+      errors.add("Access Denied");
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
+
     User user = userRepository.findOne(id);
 
     return new GeneralResponse(response, OK, null, membersOfGroupController.getProjectsUserIsPartOf(user));
   }
 
+  @GetMapping(path = "/{id}/projects/applications")
+  @ResponseBody
+  @ApiOperation(value = "Get all project applications for the user")
+  public GeneralResponse getAllApplicationsOfUser(
+          @PathVariable Long id,
+          @PathParam("status") String status,
+          @PathParam("not_status") String not_status,
+          HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
+
+    if (!Objects.equals(session.get().getUser().getId(), id)) {
+      errors.add("Access Denied");
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
+
+    List<ProjectApplicant> applicants;
+    User user = session.get().getUser();
+
+    if (status != null){
+      applicants = projectApplicantRepository.getApplicantsBySenderAndStatus(user, status);
+    } else {
+      applicants = projectApplicantRepository.getApplicantsBySender(user);
+    }
+
+    if (not_status == null) {
+      not_status = "";
+    }
+    final String nstatus = not_status;
+
+    applicants = applicants.stream()
+            .filter(projectApplicant -> projectApplicant.getStatus().compareToIgnoreCase(nstatus) != 0)
+            .sorted((o1, o2) -> {
+              final Integer status1 = GroupApplicant.GetStatusOrder(o1.getStatus());
+              final Integer status2 = GroupApplicant.GetStatusOrder(o2.getStatus());
+              final int statusComp = status1.compareTo(status2);
+              if (statusComp != 0) {
+                return statusComp;
+              }
+              return o1.getProject().getId().compareTo(o2.getProject().getId());
+            })
+            .filter(StreamUtil.uniqueByFunction(projectApplicant -> projectApplicant.getProject().getId()))
+            .collect(Collectors.toList());
+
+    return new GeneralResponse(response, OK, errors, applicants);
+  }
 
   @GetMapping(path = "/register/{registrationKey}")
   @ResponseBody
