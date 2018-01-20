@@ -225,8 +225,6 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       groupToSave.setName(groupData.getName());
 
     if (groupData.getProfile() != null) {
-
-
       if (groupToSave.getProfile() == null) {
         groupData.getProfile().setGroup(groupToSave);
         GroupProfile profile = saveProfile(groupData);
@@ -234,7 +232,10 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       } else {
         groupToSave.setProfile(groupToSave.getProfile().merge(groupToSave.getProfile(), groupData.getProfile()));
       }
+    }
 
+    if (groupData.getRestrictionString() != null) {
+      groupToSave.setRestriction(groupData.getRestrictionString());
     }
     getGroupRepository().save(groupToSave).indexAsync();
     return new GeneralResponse(response, OK);
