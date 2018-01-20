@@ -160,7 +160,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     return new GeneralResponse(response);
   }
 
-  protected GeneralResponse generalApply(Long id, @RequestBody GroupApplicant<T> applicant, HttpServletRequest request, HttpServletResponse response) {
+  protected GeneralResponse generalApply(Long id, HttpServletRequest request, HttpServletResponse response) {
 
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -169,23 +169,27 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
     }
 
+    GroupApplicant<T> application = getAppliction();
+    T group = getGroupRepository().findOne(id);
+    application.setGroup(group);
+
     // UserToTeamPermission permission = permissionFactory.createUserToTeamPermission(session.get().getUser(), applicant.getTeam());
-    switch (getUserToGroupPermission(session.get().getUser(), applicant.getGroup()).canJoin()) {
+    switch (getUserToGroupPermission(session.get().getUser(), application.getGroup()).canJoin()) {
       case ALREADY_JOINED:
         errors.add(ALREADY_JOINED_MSG);
         return new GeneralResponse(response, ERROR, errors);
     }
-    applicant.setSender(session.get().getUser());
-    applicant.setStatus(PENDING);
-    T group = getGroupRepository().findOne(id);
+    application.setSender(session.get().getUser());
+    application.setStatus(PENDING);
     if (group == null) {
       errors.add(NO_GROUP_FOUND);
       return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
     }
 
-    applicant.setGroup(group);
-    getGroupApplicantRepository().save(applicant);
-    return new GeneralResponse(response, GeneralResponse.Status.OK, errors);
+    getGroupApplicantRepository().save(application);
+    Map<String, Object> result = new HashMap<>();
+    result.put("applied", true);
+    return new GeneralResponse(response, GeneralResponse.Status.OK, errors, result);
   }
 
   @CrossOrigin
@@ -236,8 +240,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     return new GeneralResponse(response, OK);
   }
 
-  @PostMapping(path = "/join/{id}")
-  @ApiOperation("Join the group as the current user")
+  @PostMapping(path = "/{id}/join")
+  @ApiOperation("Join the group as the current user or applies if application is needed first")
   @ResponseBody
   protected synchronized GeneralResponse join(
           @ApiParam("The id of the group to join")
@@ -262,8 +266,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
         removeRelationship(user, group, INVITED_TO_JOIN);
         return new GeneralResponse(response);
       case NEED_INVITE:
-        errors.add(NEED_INVITE_MSG);
-        return new GeneralResponse(response, DENIED, errors);
+        // Apply if an invite is needed
+        return generalApply(id, request, response);
       case ALREADY_JOINED:
         errors.add(ALREADY_JOINED_MSG);
         return new GeneralResponse(response, ERROR, errors);
@@ -334,6 +338,20 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
     return new GeneralResponse(response);
   }
+
+  @PostMapping(path = "/{id}/invite/{user_id}/{type}")
+  @ResponseBody
+  public GeneralResponse invite(@PathVariable("id") Long id,
+                                @PathVariable("user_id") Long userId,
+                                @PathVariable("type") String inviteType,
+                                HttpServletRequest request, HttpServletResponse response) {
+    GroupInvitation<T> invite = getInvitation();
+    invite.setGroup(getGroupRepository().findOne(id));
+    invite.setReceiver(userRepository.findOne(userId));
+    invite.setType(inviteType);
+    return generalInvite(invite, request, response);
+  }
+
 
   @ApiOperation("Add a new interview slot")
   @PostMapping(path = "/{id}/interview_slots/add")
@@ -461,8 +479,14 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   }
 
   @GetMapping(path = "/{id}/applicants/{status}")
+  @ApiOperation("Get applicants by status")
   @ResponseBody
-  public GeneralResponse getApplicants(@PathVariable(value = "id") Long id, @PathVariable(value = "status") String status,
+  public GeneralResponse getApplicants(@ApiParam("ID of entity")
+                                       @PathVariable(value = "id")
+                                                 Long id,
+                                       @ApiParam("Applicant status (one of 'accepted', 'declined', 'pending' 'interviewed', 'interview_scheduled')")
+                                       @PathVariable(value = "status")
+                                               String status,
                                        HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
@@ -470,6 +494,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+    }
+
+    if (GroupApplicant.ValidStatuses().indexOf(status) == -1) {
+      errors.add("Invalid status!");
+      return new GeneralResponse(response, GeneralResponse.Status.BAD_DATA, errors);
     }
 
     UserToGroupPermission permission = getUserToGroupPermission(session.get().getUser(), getGroupRepository().findOne(id));
@@ -487,14 +516,24 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   @CrossOrigin
   @PutMapping(path = "/{id}/applicants/{appId}/{status}")
   @ResponseBody
-  public GeneralResponse setApplicantsStatus(@PathVariable(value = "id") Long id, @PathVariable(value = "status") String status,
-                                             @PathVariable(value = "appId") Long appId, HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse setApplicantsStatus(@ApiParam("ID of entity")
+                                             @PathVariable(value = "id") Long id,
+                                             @ApiParam("Applicant status (one of 'accepted', 'declined', 'pending' 'interviewed', 'interview_scheduled')")
+                                             @PathVariable(value = "status") String status,
+                                             @ApiParam("ID of application to update")
+                                             @PathVariable(value = "appId") Long appId,
+                                             HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+    }
+
+    if (GroupApplicant.ValidStatuses().indexOf(status) == -1) {
+      errors.add("Invalid status!");
+      return new GeneralResponse(response, GeneralResponse.Status.BAD_DATA, errors);
     }
 
     UserToGroupPermission permission = getUserToGroupPermission(session.get().getUser(), getGroupRepository().findOne(id));
@@ -606,5 +645,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
     return true;
   }
+
+  protected abstract GroupApplicant<T> getAppliction();
+  protected abstract GroupInvitation<T> getInvitation();
 
 }
