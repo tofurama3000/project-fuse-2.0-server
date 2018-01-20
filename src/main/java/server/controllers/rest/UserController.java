@@ -23,6 +23,9 @@ import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
 import static server.controllers.rest.response.GeneralResponse.Status.ERROR;
 import static server.controllers.rest.response.GeneralResponse.Status.OK;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -84,9 +87,12 @@ import server.repositories.group.team.TeamApplicantRepository;
 import server.repositories.group.team.TeamInvitationRepository;
 import server.repositories.group.team.TeamRepository;
 import server.utility.RolesUtility;
+import server.utility.StreamUtil;
+import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.websocket.server.PathParam;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -94,8 +100,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Controller
+@Api(value="User Endpoints")
 @RequestMapping(value = "/users")
 @SuppressWarnings("unused")
 public class UserController {
@@ -162,10 +170,13 @@ public class UserController {
 
   private static IdGenerator generator = new AlternativeJdkIdGenerator();
 
-
+  @ApiOperation(value = "Creates a new user",
+          notes = "Must provide a name, password, and email")
   @PostMapping
   @ResponseBody
-  public GeneralResponse addNewUser(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse addNewUser(
+          @ApiParam(value = "The user information to create with", required = true)
+          @RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
 
     List<String> errors = new ArrayList<>();
 
@@ -195,6 +206,7 @@ public class UserController {
     }
 
     User savedUser = userRepository.save(user);
+    savedUser.indexAsync();
     Long id = savedUser.getId();
 
     if (requireRegistration) {
@@ -212,6 +224,7 @@ public class UserController {
     return new GeneralResponse(response, OK, errors, savedUser);
   }
 
+  @ApiIgnore
   @PostMapping(path = "/login")
   @ResponseBody
   public GeneralResponse login(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
@@ -239,6 +252,7 @@ public class UserController {
     return new GeneralResponse(response, Status.DENIED, errors);
   }
 
+  @ApiIgnore
   @PostMapping(path = "/logout")
   @ResponseBody
   public GeneralResponse logout(HttpServletRequest request, HttpServletResponse response) {
@@ -253,9 +267,13 @@ public class UserController {
     }
   }
 
+  @ApiOperation(value = "Get a user by their id")
   @GetMapping(path = "/{id}")
   @ResponseBody
-  public GeneralResponse getUserbyID(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse getUserbyID(
+          @ApiParam(value = "The ID of the user")
+          @PathVariable(value = "id") Long id,
+          HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -277,9 +295,12 @@ public class UserController {
     return new GeneralResponse(response, OK, null, byId);
   }
 
+  @ApiOperation(value = "Get a user by their email address")
   @GetMapping(path = "/get_by_email/{email}")
   @ResponseBody
-  public GeneralResponse getUserbyEmail(@PathVariable(value = "email") String email, HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse getUserbyEmail(
+          @ApiParam("Email address of the user")
+          @PathVariable(value = "email") String email, HttpServletRequest request, HttpServletResponse response) {
 
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -303,9 +324,12 @@ public class UserController {
   }
 
   @CrossOrigin
+  @ApiOperation(value = "Updates a user (must be logged in as that user)")
   @PutMapping(path = "/{id}")
   @ResponseBody
-  public GeneralResponse updateCurrentUser(@PathVariable long id, @RequestBody User userData, HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse updateCurrentUser(
+          @ApiParam(value = "ID of the user to update")
+          @PathVariable long id, @RequestBody User userData, HttpServletRequest request, HttpServletResponse response) {
     //to Use profile for profile
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -340,7 +364,7 @@ public class UserController {
         userToSave.setProfile(userToSave.getProfile().merge(userToSave.getProfile(), userData.getProfile()));
       }
     }
-    userRepository.save(userToSave);
+    userRepository.save(userToSave).indexAsync();
     return new GeneralResponse(response, Status.OK);
   }
 
@@ -362,6 +386,7 @@ public class UserController {
 
   @GetMapping
   @ResponseBody
+  @ApiOperation(value = "Get all users")
   public GeneralResponse getAllUsers(HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -372,9 +397,12 @@ public class UserController {
     return new GeneralResponse(response, OK, null, userRepository.findAll());
   }
 
-  @GetMapping(path = "/joined/teams")
+  @GetMapping(path = "/{id}/joined/teams")
   @ResponseBody
-  public GeneralResponse getAllTeamsOfUser(HttpServletRequest request, HttpServletResponse response) {
+  @ApiIgnore
+  public GeneralResponse getAllTeamsOfUser(
+          @PathVariable Long id,
+          HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -382,14 +410,17 @@ public class UserController {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, Status.DENIED, errors);
     }
-    User user = session.get().getUser();
+    User user = userRepository.findOne(id);
 
     return new GeneralResponse(response, OK, null, membersOfGroupController.getTeamsUserIsPartOf(user));
   }
 
-  @GetMapping(path = "/joined/organizations")
+  @GetMapping(path = "/{id}/joined/organizations")
   @ResponseBody
-  public GeneralResponse getAllOrganizationsOfUser(HttpServletRequest request, HttpServletResponse response) {
+  @ApiOperation(value = "Get all organizations for the specified user")
+  public GeneralResponse getAllOrganizationsOfUser(
+          @PathVariable Long id,
+          HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -397,15 +428,18 @@ public class UserController {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, Status.DENIED, errors);
     }
-    User user = session.get().getUser();
+    User user = userRepository.findOne(id);
 
     return new GeneralResponse(response, OK, null, membersOfGroupController.getOrganizationsUserIsPartOf(user));
   }
 
 
-  @GetMapping(path = "/joined/projects")
+  @GetMapping(path = "/{id}/joined/projects")
   @ResponseBody
-  public GeneralResponse getAllProjectsOfUser(HttpServletRequest request, HttpServletResponse response) {
+  @ApiOperation(value = "Get all projects for the specified user")
+  public GeneralResponse getAllProjectsOfUser(
+          @PathVariable Long id,
+          HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -413,14 +447,102 @@ public class UserController {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, Status.DENIED, errors);
     }
-    User user = session.get().getUser();
+
+    if (!Objects.equals(session.get().getUser().getId(), id)) {
+      errors.add("Access Denied");
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
+
+    User user = userRepository.findOne(id);
 
     return new GeneralResponse(response, OK, null, membersOfGroupController.getProjectsUserIsPartOf(user));
   }
 
+  @GetMapping(path = "/{id}/projects/applications")
+  @ResponseBody
+  @ApiOperation(value = "Get all project applications for the user")
+  public GeneralResponse getAllApplicationsOfUserProjs(
+          @PathVariable Long id,
+          @PathParam("status") String status,
+          @PathParam("not_status") String not_status,
+          HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
+
+    if (!Objects.equals(session.get().getUser().getId(), id)) {
+      errors.add("Access Denied");
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
+
+    List<ProjectApplicant> applicants;
+    User user = session.get().getUser();
+
+    if (status != null){
+      applicants = projectApplicantRepository.getApplicantsBySenderAndStatus(user, status);
+    } else {
+      applicants = projectApplicantRepository.getApplicantsBySender(user);
+    }
+
+    return new GeneralResponse(response, OK, errors, filterApplicants(applicants, not_status == null ? "" : not_status));
+  }
+
+  @GetMapping(path = "/{id}/organizations/applications")
+  @ResponseBody
+  @ApiOperation(value = "Get all organization applications for the user")
+  public GeneralResponse getAllApplicationsOfUserOrgs(
+          @PathVariable Long id,
+          @PathParam("status") String status,
+          @PathParam("not_status") String not_status,
+          HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
+
+    if (!Objects.equals(session.get().getUser().getId(), id)) {
+      errors.add("Access Denied");
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
+
+    List<OrganizationApplicant> applicants;
+    User user = session.get().getUser();
+
+    if (status != null){
+      applicants = organizationApplicantRepository.getApplicantsBySenderAndStatus(user, status);
+    } else {
+      applicants = organizationApplicantRepository.getApplicantsBySender(user);
+    }
+
+    return new GeneralResponse(response, OK, errors, filterApplicants(applicants, not_status == null ? "" : not_status));
+  }
+
+  private <T extends GroupApplicant> List<T> filterApplicants(List<T> applicants, final String not_status) {
+    return applicants.stream()
+            .filter(projectApplicant -> projectApplicant.getStatus().compareToIgnoreCase(not_status) != 0)
+            .sorted((o1, o2) -> {
+              final Integer status1 = GroupApplicant.GetStatusOrder(o1.getStatus());
+              final Integer status2 = GroupApplicant.GetStatusOrder(o2.getStatus());
+              final int statusComp = status1.compareTo(status2);
+              if (statusComp != 0) {
+                return statusComp;
+              }
+              return o1.getGroup().getId().compareTo(o2.getGroup().getId());
+            })
+            .filter(StreamUtil.uniqueByFunction(projectApplicant -> projectApplicant.getGroup().getId()))
+            .collect(Collectors.toList());
+  }
 
   @GetMapping(path = "/register/{registrationKey}")
   @ResponseBody
+  @ApiOperation(value = "Verify the user's email address")
   public GeneralResponse register(@PathVariable(value = "registrationKey") String registrationKey, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
@@ -450,11 +572,12 @@ public class UserController {
     unregisteredUserRepository.delete(unregisteredUser);
 
     return new GeneralResponse(response, OK, null,
-        projectInvitationRepository.findByReceiver(user));
+            projectInvitationRepository.findByReceiver(user));
   }
 
   @GetMapping(path = "/incoming/invites/project")
   @ResponseBody
+  @ApiOperation(value = "Get project invites for the current user")
   public GeneralResponse getProjectInvites(HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
@@ -467,11 +590,12 @@ public class UserController {
     User user = session.get().getUser();
 
     return new GeneralResponse(response, OK, null,
-        projectInvitationRepository.findByReceiver(user));
+            projectInvitationRepository.findByReceiver(user));
   }
 
   @GetMapping(path = "/incoming/invites/organization")
   @ResponseBody
+  @ApiOperation(value = "Get organizations invites for the current user")
   public GeneralResponse getOrganizationInvites(HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
@@ -484,12 +608,13 @@ public class UserController {
     User user = session.get().getUser();
 
     return new GeneralResponse(response, OK, null,
-        organizationInvitationRepository.findByReceiver(user));
+            organizationInvitationRepository.findByReceiver(user));
   }
 
 
   @GetMapping(path = "/incoming/invites/team")
   @ResponseBody
+  @ApiOperation(value = "Get team invites for the current user")
   public GeneralResponse getTeamInvites(HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
@@ -502,12 +627,15 @@ public class UserController {
     User user = session.get().getUser();
 
     return new GeneralResponse(response, OK, null,
-        teamInvitationRepository.findByReceiver(user));
+            teamInvitationRepository.findByReceiver(user));
   }
 
   @PostMapping(path = "/accept/invite/team")
   @ResponseBody
-  public GeneralResponse acceptTeamInvite(@RequestBody TeamInvitation teamInvitation, HttpServletRequest request, HttpServletResponse response) {
+  @ApiIgnore
+  public GeneralResponse acceptTeamInvite(
+          @ApiParam(value="The team invitation information to accept")
+          @RequestBody TeamInvitation teamInvitation, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -558,7 +686,10 @@ public class UserController {
 
   @PostMapping(path = "/accept/invite/project")
   @ResponseBody
-  public GeneralResponse acceptProjectInvite(@RequestBody ProjectInvitation projectInvitation, HttpServletRequest request, HttpServletResponse response) {
+  @ApiOperation(value = "Accept project invite")
+  public GeneralResponse acceptProjectInvite(
+          @ApiParam(value="The project invitation information to accept")
+          @RequestBody ProjectInvitation projectInvitation, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -597,7 +728,10 @@ public class UserController {
 
   @PostMapping(path = "/accept/invite/organization")
   @ResponseBody
-  public GeneralResponse acceptOrganizationInvite(@RequestBody OrganizationInvitation organizationInvitation, HttpServletRequest request, HttpServletResponse response) {
+  @ApiOperation(value = "Accept organization invite")
+  public GeneralResponse acceptOrganizationInvite(
+          @ApiParam(value="The organization invitation information to accept")
+          @RequestBody OrganizationInvitation organizationInvitation, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -657,10 +791,10 @@ public class UserController {
         LocalDateTime currentDateTime = ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime();
 
         List<Interview> availableInterviewsAfterDate = interviewRepository
-            .getAvailableInterviewsAfterDate(group.getId(), group.getGroupType(), currentDateTime);
+                .getAvailableInterviewsAfterDate(group.getId(), group.getGroupType(), currentDateTime);
 
         long count = availableInterviewsAfterDate.stream().map(Interview::getId)
-            .filter(id -> Objects.equals(id, interview.getId())).count();
+                .filter(id -> Objects.equals(id, interview.getId())).count();
 
         if (count < 1) {
           errors.add(NO_INTERVIEW_FOUND);

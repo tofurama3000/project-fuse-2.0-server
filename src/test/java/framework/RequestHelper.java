@@ -33,10 +33,17 @@ public class RequestHelper {
   }
 
   public GeneralResponse makePostRequest(String sessionId, String contents, String urlPath) throws Exception {
-    MvcResult mvcResult = mockMvc.perform(post(urlPath)
-        .contentType(MediaType.APPLICATION_JSON_UTF8)
-        .header("SESSIONID", sessionId)
-        .content(contents)).andReturn();
+    MvcResult mvcResult;
+    if (contents != null) {
+      mvcResult = mockMvc.perform(post(urlPath)
+              .contentType(MediaType.APPLICATION_JSON_UTF8)
+              .header("SESSIONID", sessionId)
+              .content(contents)).andReturn();
+    } else {
+      mvcResult = mockMvc.perform(post(urlPath)
+              .contentType(MediaType.APPLICATION_JSON_UTF8)
+              .header("SESSIONID", sessionId)).andReturn();
+    }
 
     String jsonString = mvcResult.getResponse().getContentAsString();
 

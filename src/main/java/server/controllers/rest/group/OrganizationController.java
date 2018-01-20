@@ -1,5 +1,8 @@
 package server.controllers.rest.group;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -7,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.User;
+import server.entities.dto.group.GroupApplicant;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.GroupProfile;
 import server.entities.dto.group.organization.Organization;
@@ -30,6 +34,7 @@ import javax.servlet.http.HttpServletResponse;
 
 @Controller
 @RequestMapping(value = "/organizations")
+@Api("Organizations")
 @Transactional
 @SuppressWarnings("unused")
 public class OrganizationController extends GroupController<Organization, OrganizationMember> {
@@ -98,18 +103,14 @@ public class OrganizationController extends GroupController<Organization, Organi
     relationshipFactory.createUserToOrganizationRelationship(user, group).addRelationship(role);
   }
 
-  @PostMapping(path = "/invite")
-  @ResponseBody
-  public GeneralResponse invite(@RequestBody OrganizationInvitation organizationInvitation,
-                                HttpServletRequest request, HttpServletResponse response) {
-    return generalInvite(organizationInvitation, request, response);
+  @Override
+  protected GroupApplicant<Organization> getAppliction() {
+    return new OrganizationApplicant();
   }
 
-  @PostMapping(path = "/apply/{id}")
-  @ResponseBody
-  public GeneralResponse apply(@PathVariable(value = "id") Long id, @RequestBody OrganizationApplicant organizationApplicant,
-                               HttpServletRequest request, HttpServletResponse response) {
-    return generalApply(id, organizationApplicant, request, response);
+  @Override
+  protected GroupInvitation<Organization> getInvitation() {
+    return new OrganizationInvitation();
   }
 
   @Override

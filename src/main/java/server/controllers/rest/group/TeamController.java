@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.User;
+import server.entities.dto.group.GroupApplicant;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.GroupProfile;
 import server.entities.dto.group.organization.OrganizationApplicant;
@@ -26,6 +27,7 @@ import server.repositories.group.team.TeamInvitationRepository;
 import server.repositories.group.team.TeamMemberRepository;
 import server.repositories.group.team.TeamProfileRepository;
 import server.repositories.group.team.TeamRepository;
+import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -33,6 +35,7 @@ import javax.servlet.http.HttpServletResponse;
 @Controller
 @RequestMapping(value = "/teams")
 @Transactional
+@ApiIgnore
 @SuppressWarnings("unused")
 public class TeamController extends GroupController<Team, TeamMember> {
 
@@ -105,18 +108,14 @@ public class TeamController extends GroupController<Team, TeamMember> {
     return permissionFactory.createUserToTeamPermission(user, team);
   }
 
-  @PostMapping(path = "/apply/{id}")
-  @ResponseBody
-  public GeneralResponse apply(@PathVariable(value = "id") Long id, @RequestBody TeamApplicant teamApplicant,
-                               HttpServletRequest request, HttpServletResponse response) {
-    return generalApply(id, teamApplicant, request, response);
+  @Override
+  protected GroupApplicant<Team> getAppliction() {
+    return new TeamApplicant();
   }
 
-  @PostMapping(path = "/invite")
-  @ResponseBody
-  public GeneralResponse invite(@RequestBody TeamInvitation teamInvitation,
-                                HttpServletRequest request, HttpServletResponse response) {
-    return generalInvite(teamInvitation, request, response);
+  @Override
+  protected GroupInvitation<Team> getInvitation() {
+    return new TeamInvitation();
   }
 
   @Override

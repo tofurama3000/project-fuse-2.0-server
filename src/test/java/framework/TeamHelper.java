@@ -19,7 +19,7 @@ public class TeamHelper {
   private RequestHelper requestHelper;
 
   public Optional<Team> getTeam(String email, String teamName) throws Exception {
-    String url = "/team/find?email=" + email + "&name=" + teamName;
+    String url = "/teams/find?email=" + email + "&name=" + teamName;
     GeneralResponse generalResponse = requestHelper.makeGetRequest(url);
     Team team = new ObjectMapper().convertValue(generalResponse.getData(), Team.class);
     return Optional.ofNullable(team);

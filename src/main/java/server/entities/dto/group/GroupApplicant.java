@@ -14,6 +14,7 @@ import javax.persistence.MappedSuperclass;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 @Data
 @MappedSuperclass
@@ -34,9 +35,17 @@ public abstract class GroupApplicant<T extends Group> {
 
   public void setTime(String dateTime) {
     ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateTime);
-    time = zonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+    this.time = zonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
   }
 
+  public void setStatus(String status) {
+    status = status.toLowerCase();
+    if (ValidStatuses().indexOf(status) != -1) {
+      this.status = status;
+    } else {
+      this.status = null;
+    }
+  }
 
   @JsonIgnore
   public LocalDateTime getDateTime() {
@@ -44,7 +53,10 @@ public abstract class GroupApplicant<T extends Group> {
   }
 
   public String getTime() {
-    return time.toString() + "+00:00";
+    if (time != null) {
+      return time.toString() + "+00:00";
+    }
+    return "";
   }
 
   @JsonIgnore
@@ -52,4 +64,20 @@ public abstract class GroupApplicant<T extends Group> {
 
   public abstract void setGroup(T group);
 
+  public static List<String> ValidStatuses() {
+    return valid;
+  }
+
+  private static List<String> valid = java.util.Arrays.asList(
+          "accepted",
+          "pending",
+          "interviewed",
+          "interview_scheduled",
+          "declined"
+  );
+
+  public static Integer GetStatusOrder(String status) {
+    final int index = valid.indexOf(status.toLowerCase());
+    return (index >= 0) ? index : valid.size();
+  }
 }

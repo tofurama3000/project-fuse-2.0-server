@@ -60,14 +60,14 @@ public class TeamTest extends RestTester {
     String contents = requestHelper.getContentsFromResources("addUser/addUser1");
     user1 = new ObjectMapper().readValue(contents, User.class);
 
-    mockMvc.perform(post("/user/add")
+    mockMvc.perform(post("/users")
         .contentType(MediaType.APPLICATION_JSON_UTF8)
         .content(contents)).andReturn();
 
     contents = requestHelper.getContentsFromResources("addUser/addUser2");
     user2 = new ObjectMapper().readValue(contents, User.class);
 
-    mockMvc.perform(post("/user/add")
+    mockMvc.perform(post("/users")
         .contentType(MediaType.APPLICATION_JSON_UTF8)
         .content(contents)).andReturn();
   }
@@ -108,17 +108,17 @@ public class TeamTest extends RestTester {
 
     String putContents = "{\"id\":" + team.get().getId()  +"," + requestHelper.getContentsFromResources("updateGroup/updateGroup1");
 
-    GeneralResponse generalResponse = requestHelper.makePutRequest(fuseSession1.get().getSessionId(), putContents, "/team/" + team.get().getId());
+    GeneralResponse generalResponse = requestHelper.makePutRequest(fuseSession1.get().getSessionId(), putContents, "/teams/" + team.get().getId());
     TestCase.assertTrue(generalResponse.getStatus() == OK);
     assertNull(generalResponse.getErrors());
     assertEquals( teamRepository.findOne(team.get().getId()).getName(),"fusion");
 
-    GeneralResponse generalResponse2 = requestHelper.makePutRequest(fuseSession2.get().getSessionId(), putContents, "/team/" + team.get().getId());
+    GeneralResponse generalResponse2 = requestHelper.makePutRequest(fuseSession2.get().getSessionId(), putContents, "/teams/" + team.get().getId());
     TestCase.assertTrue(generalResponse2.getStatus() == DENIED);
   }
   private Optional<Team> createTeam1(String sessionId) throws Exception {
     GeneralResponse generalResponse = requestHelper.makePostRequestWithFile(sessionId,
-        "team/createRestrictedTeam1", "/team/create");
+        "team/createRestrictedTeam1", "/teams");
 
     String contents = requestHelper.getContentsFromResources("team/createRestrictedTeam1");
     if (generalResponse.getStatus() == OK) {
@@ -129,15 +129,13 @@ public class TeamTest extends RestTester {
   }
 
   private boolean tryJoinTeam1(String sessionId, Long teamId) throws Exception {
-    String json = "{\"id\":" + teamId + "}";
-    GeneralResponse generalResponse = requestHelper.makePostRequest(sessionId, json, "/team/join");
-    return generalResponse.getStatus() == OK;
+    GeneralResponse generalResponse = requestHelper.makePostRequest(sessionId, null, "/teams/" + teamId.toString() + "/join" );
+    return generalResponse.getStatus() == OK && generalResponse.getData() == null;
   }
 
   private boolean inviteUser2ToTeam1(String sessionId, User user, Team team) throws Exception {
-    String invitation = jsonHelper.createInvitation(userRepository.findByEmail(user.getEmail()).getId(), team.getId());
-
-    GeneralResponse generalResponse = requestHelper.makePostRequest(sessionId, invitation, "/team/invite");
+    GeneralResponse generalResponse = requestHelper.makePostRequest(sessionId, null,
+            "/teams/" + team.getId() + "/invite/" + userRepository.findByEmail(user.getEmail()).getId() + "/join");
     return generalResponse.getStatus() == OK;
   }
 

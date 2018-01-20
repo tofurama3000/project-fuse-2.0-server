@@ -31,3 +31,11 @@ log/
 target/
 
 *application.properties
+
+.classpath
+.settings
+.project
+.vscode
+server_setup/packer/export.sh
+*.vagrant*
+

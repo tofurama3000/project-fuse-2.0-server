@@ -1,5 +1,7 @@
 package server.controllers.rest.group;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -7,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.User;
+import server.entities.dto.group.GroupApplicant;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.GroupProfile;
 import server.entities.dto.group.organization.OrganizationInvitation;
@@ -32,6 +35,7 @@ import javax.servlet.http.HttpServletResponse;
 @Controller
 @RequestMapping(value = "/projects")
 @Transactional
+@Api("Projects")
 @SuppressWarnings("unused")
 public class ProjectController extends GroupController<Project, ProjectMember> {
 
@@ -99,18 +103,14 @@ public class ProjectController extends GroupController<Project, ProjectMember> {
     relationshipFactory.createUserToProjectRelationship(user, group).addRelationship(role);
   }
 
-  @PostMapping(path = "/apply/{id}")
-  @ResponseBody
-  public GeneralResponse apply(@PathVariable(value = "id") Long id, @RequestBody ProjectApplicant projectApplicant,
-                               HttpServletRequest request, HttpServletResponse response) {
-    return generalApply(id, projectApplicant, request, response);
+  @Override
+  protected GroupApplicant<Project> getAppliction() {
+    return new ProjectApplicant();
   }
 
-  @PostMapping(path = "/invite")
-  @ResponseBody
-  public GeneralResponse invite(@RequestBody ProjectInvitation projectInvitation,
-                                HttpServletRequest request, HttpServletResponse response) {
-    return generalInvite(projectInvitation, request, response);
+  @Override
+  protected GroupInvitation<Project> getInvitation() {
+    return new ProjectInvitation();
   }
 
   @Override
