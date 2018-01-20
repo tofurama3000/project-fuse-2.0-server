@@ -43,6 +43,7 @@ import server.controllers.rest.response.CannedResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.FuseSession;
 import server.entities.dto.GroupMember;
+import server.entities.dto.Notification;
 import server.entities.dto.User;
 import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupApplicant;
@@ -53,6 +54,7 @@ import server.entities.dto.group.team.Team;
 import server.entities.dto.group.team.TeamApplicant;
 import server.entities.user_to_group.permissions.UserToGroupPermission;
 import server.entities.user_to_group.permissions.UserToTeamPermission;
+import server.repositories.NotificationRepository;
 import server.repositories.UserRepository;
 import server.repositories.group.GroupApplicantRepository;
 import server.repositories.group.GroupMemberRepository;
@@ -89,6 +91,9 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
   @Autowired
   private GroupProfileRepository groupProfileRepository;
+
+  @Autowired
+  private NotificationRepository notificationRepository;
 
   @Autowired
   private SessionFactory sessionFactory;
@@ -167,8 +172,6 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
     }
-
-    // UserToTeamPermission permission = permissionFactory.createUserToTeamPermission(session.get().getUser(), applicant.getTeam());
     switch (getUserToGroupPermission(session.get().getUser(), applicant.getGroup()).canJoin()) {
       case ALREADY_JOINED:
         errors.add(ALREADY_JOINED_MSG);
@@ -184,6 +187,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
     applicant.setGroup(group);
     getGroupApplicantRepository().save(applicant);
+    sendGroupNotification(group,"test",applicant.getTime());
     return new GeneralResponse(response, GeneralResponse.Status.OK, errors);
   }
 
@@ -337,7 +341,6 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
         saveInvitation(groupInvitation);
         break;
     }
-
     return new GeneralResponse(response);
   }
 
@@ -515,6 +518,26 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     }
     return new GeneralResponse(response, GeneralResponse.Status.OK);
 
+  }
+
+  protected  void sendNotification(User user, String message, String time){
+    Notification notification = new Notification();
+    notification.setReceiver(user);
+    notification.setMessage(message);
+    notification.setHasRead(false);
+    notification.setTime(time);
+    notificationRepository.save(notification);
+  }
+
+  protected  void sendGroupNotification(T group, String message, String time){
+    Set<User> users = getMembersOf(group);
+    for(User u : users){
+      UserToGroupPermission permission = getUserToGroupPermission(u, group);
+      boolean canUpdate = permission.canUpdate();
+      if (canUpdate) {
+        sendNotification(u, message,time);
+      }
+    }
   }
 
   protected boolean validFieldsForCreate(T entity) {

@@ -42,11 +42,9 @@ import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.GeneralResponse.Status;
 import server.email.StandardEmailSender;
 import server.entities.PossibleError;
-import server.entities.dto.FuseSession;
-import server.entities.dto.UnregisteredUser;
-import server.entities.dto.User;
-import server.entities.dto.UserProfile;
+import server.entities.dto.*;
 import server.entities.dto.group.Group;
+import server.entities.dto.group.GroupApplicant;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.interview.Interview;
 import server.entities.dto.group.organization.Organization;
@@ -70,9 +68,11 @@ import server.entities.user_to_group.relationships.UserToGroupRelationship;
 import server.entities.user_to_group.relationships.UserToOrganizationRelationship;
 import server.entities.user_to_group.relationships.UserToProjectRelationship;
 import server.entities.user_to_group.relationships.UserToTeamRelationship;
+import server.repositories.NotificationRepository;
 import server.repositories.UnregisteredUserRepository;
 import server.repositories.UserProfileRepository;
 import server.repositories.UserRepository;
+import server.repositories.group.GroupApplicantRepository;
 import server.repositories.group.InterviewRepository;
 import server.repositories.group.organization.OrganizationApplicantRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
@@ -102,6 +102,9 @@ public class UserController {
 
   @Autowired
   private UserRepository userRepository;
+
+  @Autowired
+  private NotificationRepository notificationRepository;
 
   @Autowired
   private FuseSessionController fuseSessionController;
@@ -341,6 +344,22 @@ public class UserController {
     return new GeneralResponse(response, Status.OK);
   }
 
+  @CrossOrigin
+  @PutMapping(path = "/notifications/read/{id}")
+  @ResponseBody
+  public GeneralResponse setApplicantsStatus(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+    }
+    Notification notification = notificationRepository.findOne(id);
+    notification.setHasRead(true);
+    notificationRepository.save(notification);
+    return new GeneralResponse(response, OK, null);
+  }
+
   @GetMapping
   @ResponseBody
   public GeneralResponse getAllUsers(HttpServletRequest request, HttpServletResponse response) {
@@ -522,6 +541,19 @@ public class UserController {
       teamInvitationRepository.save(savedInvitation);
     }
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
+  }
+
+  @GetMapping(path = "/notifications")
+  @ResponseBody
+  public GeneralResponse getNotifications(HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+    }
+
+    return new GeneralResponse(response, OK, null,notificationRepository.getNotifications(session.get().getUser()));
   }
 
   @PostMapping(path = "/accept/invite/project")
