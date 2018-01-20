@@ -476,7 +476,6 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   public GeneralResponse setApplicantsStatus(@PathVariable(value = "id") Long id, @PathVariable(value = "status") String status,
                                              @PathVariable(value = "appId") Long appId, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
-
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
