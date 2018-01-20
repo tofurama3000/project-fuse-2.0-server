@@ -77,6 +77,7 @@ import server.entities.user_to_group.relationships.UserToTeamRelationship;
 import server.repositories.UnregisteredUserRepository;
 import server.repositories.UserProfileRepository;
 import server.repositories.UserRepository;
+import server.repositories.group.GroupApplicantRepository;
 import server.repositories.group.InterviewRepository;
 import server.repositories.group.organization.OrganizationApplicantRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
@@ -443,7 +444,7 @@ public class UserController {
   @GetMapping(path = "/{id}/projects/applications")
   @ResponseBody
   @ApiOperation(value = "Get all project applications for the user")
-  public GeneralResponse getAllApplicationsOfUser(
+  public GeneralResponse getAllApplicationsOfUserProjs(
           @PathVariable Long id,
           @PathParam("status") String status,
           @PathParam("not_status") String not_status,
@@ -470,13 +471,45 @@ public class UserController {
       applicants = projectApplicantRepository.getApplicantsBySender(user);
     }
 
-    if (not_status == null) {
-      not_status = "";
-    }
-    final String nstatus = not_status;
+    return new GeneralResponse(response, OK, errors, filterApplicants(applicants, not_status == null ? "" : not_status));
+  }
 
-    applicants = applicants.stream()
-            .filter(projectApplicant -> projectApplicant.getStatus().compareToIgnoreCase(nstatus) != 0)
+  @GetMapping(path = "/{id}/organizations/applications")
+  @ResponseBody
+  @ApiOperation(value = "Get all organization applications for the user")
+  public GeneralResponse getAllApplicationsOfUserOrgs(
+          @PathVariable Long id,
+          @PathParam("status") String status,
+          @PathParam("not_status") String not_status,
+          HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
+
+    if (!Objects.equals(session.get().getUser().getId(), id)) {
+      errors.add("Access Denied");
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
+
+    List<OrganizationApplicant> applicants;
+    User user = session.get().getUser();
+
+    if (status != null){
+      applicants = organizationApplicantRepository.getApplicantsBySenderAndStatus(user, status);
+    } else {
+      applicants = organizationApplicantRepository.getApplicantsBySender(user);
+    }
+
+    return new GeneralResponse(response, OK, errors, filterApplicants(applicants, not_status == null ? "" : not_status));
+  }
+
+  private <T extends GroupApplicant> List<T> filterApplicants(List<T> applicants, final String not_status) {
+    return applicants.stream()
+            .filter(projectApplicant -> projectApplicant.getStatus().compareToIgnoreCase(not_status) != 0)
             .sorted((o1, o2) -> {
               final Integer status1 = GroupApplicant.GetStatusOrder(o1.getStatus());
               final Integer status2 = GroupApplicant.GetStatusOrder(o2.getStatus());
@@ -484,12 +517,10 @@ public class UserController {
               if (statusComp != 0) {
                 return statusComp;
               }
-              return o1.getProject().getId().compareTo(o2.getProject().getId());
+              return o1.getGroup().getId().compareTo(o2.getGroup().getId());
             })
-            .filter(StreamUtil.uniqueByFunction(projectApplicant -> projectApplicant.getProject().getId()))
+            .filter(StreamUtil.uniqueByFunction(projectApplicant -> projectApplicant.getGroup().getId()))
             .collect(Collectors.toList());
-
-    return new GeneralResponse(response, OK, errors, applicants);
   }
 
   @GetMapping(path = "/register/{registrationKey}")
