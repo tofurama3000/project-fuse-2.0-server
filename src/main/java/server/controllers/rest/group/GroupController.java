@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import server.controllers.FuseSessionController;
+import server.controllers.rest.NotificationController;
 import server.controllers.rest.response.CannedResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.FuseSession;
@@ -68,10 +69,13 @@ import java.time.ZonedDateTime;
 import java.util.*;
 
 @SuppressWarnings("unused")
-public abstract class GroupController<T extends Group, R extends GroupMember<T>> {
+public abstract class GroupController<T extends Group, R extends GroupMember<T>>  {
 
   @Autowired
   private FuseSessionController fuseSessionController;
+
+  @Autowired
+  private NotificationController notificationController;
 
   @Autowired
   private UserRepository userRepository;
@@ -195,7 +199,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     getGroupApplicantRepository().save(application);
     Map<String, Object> result = new HashMap<>();
     result.put("applied", true);
-    sendGroupNotificationToAdmins(group, session.get().getUser().getName()+" has applied to " + group.getName(),now.toString());
+    notificationController.sendGroupNotificationToAdmins(group, session.get().getUser().getName()+" has applied to " + group.getName(),now.toString());
     return new GeneralResponse(response, GeneralResponse.Status.OK, errors, result);
   }
 
@@ -271,12 +275,12 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     switch (getUserToGroupPermission(user, group).canJoin()) {
       case OK:
         addRelationship(user, group, DEFAULT_USER);
-        sendGroupNotificationToAdmins(group, user.getName()+" joined to " + group.getName(),now.toString());
+        notificationController.sendGroupNotificationToAdmins(group, user.getName()+" joined to " + group.getName(),now.toString());
         return new GeneralResponse(response);
       case HAS_INVITE:
         addRelationship(user, group, DEFAULT_USER);
         removeRelationship(user, group, INVITED_TO_JOIN);
-        sendGroupNotificationToAdmins(group, user.getName()+" joined to " + group.getName(),now.toString());
+        notificationController.sendGroupNotificationToAdmins(group, user.getName()+" joined to " + group.getName(),now.toString());
         return new GeneralResponse(response);
       case NEED_INVITE:
         // Apply if an invite is needed
@@ -350,7 +354,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     }
     ZonedDateTime now = ZonedDateTime.now();
 
-    sendNotification(groupInvitation.getReceiver(), "You has invited to " + group.getName(),now.toString());
+    notificationController.sendNotification(groupInvitation.getReceiver(), "You has invited to " + group.getName(),now.toString());
     return new GeneralResponse(response);
   }
 
@@ -563,13 +567,14 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     applicantToSave.setStatus(status);
     if(status.equals("accepted")){
       ZonedDateTime now = ZonedDateTime.now();
-      sendNotification(applicantToSave.getSender(),applicantToSave.getGroup().getName()+"'s admin accepted your applicant", now.toString());
+      notificationController.sendNotification(applicantToSave.getSender(),applicantToSave.getGroup().getName()+"'s admin accepted your applicant", now.toString());
       addRelationship(applicantToSave.getSender(), (T) applicantToSave.getGroup(),DEFAULT_USER);
     }
 
     if(status.equals("declined")){
       ZonedDateTime now = ZonedDateTime.now();
-      sendNotification(applicantToSave.getSender(),applicantToSave.getGroup().getName()+"'s admin rejected your applicant", now.toString());
+      notificationController.sendNotification(applicantToSave.getSender(),applicantToSave.getGroup().getName()+"'s admin rejected your applicant", now.toString());
+
     }
     groupApplicantRepository.save(applicantToSave);
     return new GeneralResponse(response, OK, null);
@@ -599,25 +604,25 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
   }
 
-  protected  void sendNotification(User user, String message, String time){
-    Notification notification = new Notification();
-    notification.setReceiver(user);
-    notification.setMessage(message);
-    notification.setHasRead(false);
-    notification.setTime(time);
-    notificationRepository.save(notification);
-  }
+//  protected   void sendNotification(User user, String message, String time){
+//    Notification notification = new Notification();
+//    notification.setReceiver(user);
+//    notification.setMessage(message);
+//    notification.setHasRead(false);
+//    notification.setTime(time);
+//    notificationRepository.save(notification);
+//  }
 
-  protected  void sendGroupNotificationToAdmins(T group, String message, String time){
-    Set<User> users = getMembersOf(group);
-    for(User u : users){
-      UserToGroupPermission permission = getUserToGroupPermission(u, group);
-      boolean canUpdate = permission.canUpdate();
-      if (canUpdate) {
-        sendNotification(u, message,time);
-      }
-    }
-  }
+//  protected  void sendGroupNotificationToAdmins(T group, String message, String time){
+//    Set<User> users = getMembersOf(group);
+//    for(User u : users){
+//      UserToGroupPermission permission = getUserToGroupPermission(u, group);
+//      boolean canUpdate = permission.canUpdate();
+//      if (canUpdate) {
+//        notificationController.sendNotification(u, message,time);
+//      }
+//    }
+//  }
 
   protected boolean validFieldsForCreate(T entity) {
     return entity.getName() != null;

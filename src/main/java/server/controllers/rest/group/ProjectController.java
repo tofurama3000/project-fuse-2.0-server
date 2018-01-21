@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.User;
+import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupApplicant;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.GroupProfile;
@@ -117,4 +118,6 @@ public class ProjectController extends GroupController<Project, ProjectMember> {
   protected void saveInvitation(GroupInvitation<Project> invitation) {
     projectInvitationRepository.save(((ProjectInvitation) invitation));
   }
+
+
 }

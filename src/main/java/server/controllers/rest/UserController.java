@@ -366,37 +366,9 @@ public class UserController {
     return new GeneralResponse(response, Status.OK);
   }
 
-  @CrossOrigin
-  @PutMapping(path = "/notifications/read/{id}")
-  @ResponseBody
-  public GeneralResponse readNotification(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
-    List<String> errors = new ArrayList<>();
-    Optional<FuseSession> session = fuseSessionController.getSession(request);
-    if (!session.isPresent()) {
-      errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
-    }
-    Notification notification = notificationRepository.findOne(id);
-    notification.setHasRead(true);
-    notificationRepository.save(notification);
-    return new GeneralResponse(response, OK, null);
-  }
 
-  @CrossOrigin
-  @PutMapping(path = "/notifications/delete/{id}")
-  @ResponseBody
-  public GeneralResponse deleteNotification(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
-    List<String> errors = new ArrayList<>();
-    Optional<FuseSession> session = fuseSessionController.getSession(request);
-    if (!session.isPresent()) {
-      errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
-    }
-    Notification notification = notificationRepository.findOne(id);
-    notification.setDeleted(true);
-    notificationRepository.save(notification);
-    return new GeneralResponse(response, OK, null);
-  }
+
+
 
   @GetMapping
   @ResponseBody
