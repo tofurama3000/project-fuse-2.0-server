@@ -57,16 +57,16 @@ public class ElasticsearchClient {
 
     // Now create the elasticsearch REST client
     this.elasticsearch_client = new RestHighLevelClient(
-            RestClient.builder(
-                    new HttpHost(hostname, main_port, tcp_protocol),
-                    new HttpHost(hostname, secondary_port, tcp_protocol)));
+        RestClient.builder(
+            new HttpHost(hostname, main_port, tcp_protocol),
+            new HttpHost(hostname, secondary_port, tcp_protocol)));
   }
 
-  public static ElasticsearchClient instance(){
+  public static ElasticsearchClient instance() {
     if (!ElasticsearchClient.use_elasticsearch.equals("true"))
       return null;
     // Try to create an instance if one isn't present
-    if(inst == null) {
+    if (inst == null) {
       try {
         inst = new ElasticsearchClient();
       } catch (UnknownHostException | InvalidObjectException e) {
@@ -81,24 +81,24 @@ public class ElasticsearchClient {
   }
 
   // Create an index request for an indexable document
-  private IndexRequest getIndexRequst(Indexable doc){
+  private IndexRequest getIndexRequst(Indexable doc) {
     return new IndexRequest(doc.getEsIndex(), doc.getEsType(), doc.getEsId())
-                            .source(doc.getEsJson());
+        .source(doc.getEsJson());
   }
 
   // Create an index request for an indexable document
-  private GetRequest getGetRequst(Indexable doc){
+  private GetRequest getGetRequst(Indexable doc) {
     return new GetRequest(doc.getEsIndex(), doc.getEsType(), doc.getEsId());
   }
 
   // Create an index request for an indexable document
-  private UpdateRequest getUpdateRequest(Indexable doc){
+  private UpdateRequest getUpdateRequest(Indexable doc) {
     return new UpdateRequest(doc.getEsIndex(), doc.getEsType(), doc.getEsId())
-                            .doc(doc.getEsJson());
+        .doc(doc.getEsJson());
   }
 
   // This is the default async handler, currently it just prints to the console the result
-  private static <T> ActionListener<T> getDefaultAsyncHandler(){
+  private static <T> ActionListener<T> getDefaultAsyncHandler() {
     return new ActionListener<T>() {
       @Override
       public void onResponse(T response) {
@@ -138,13 +138,13 @@ public class ElasticsearchClient {
     try {
       SearchResponse resp = elasticsearch_client.search(req);
       return Arrays.stream(resp.getHits().getHits())
-              .sorted((res1, res2) -> Float.compare(res2.getScore(), res1.getScore()))
-              .map(res -> {
-                Map<String, Object> map = res.getSourceAsMap();
-                map.put("score", res.getScore());
-                return map;
-              })
-              .collect(Collectors.toList());
+          .sorted((res1, res2) -> Float.compare(res2.getScore(), res1.getScore()))
+          .map(res -> {
+            Map<String, Object> map = res.getSourceAsMap();
+            map.put("score", res.getScore());
+            return map;
+          })
+          .collect(Collectors.toList());
     } catch (IOException e) {
       e.printStackTrace();
       return null;

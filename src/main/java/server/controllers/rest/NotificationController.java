@@ -30,9 +30,9 @@ import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import static server.controllers.rest.response.GeneralResponse.Status.OK;
 
 @Controller
-@RequestMapping(value = "/notification")
-@Api(tags="notification")
-public  class NotificationController <T extends Group> {
+@RequestMapping(value = "/notifications")
+@Api(tags = "notification")
+public class NotificationController<T extends Group> {
 
   @Autowired
   private FuseSessionController fuseSessionController;
@@ -62,45 +62,43 @@ public  class NotificationController <T extends Group> {
     String type = group.getGroupType();
     if (type.equals("Team")) {
       List<User> usersByGroup = teamMemberRepository.getUsersByGroup((Team) group);
-      for (User u : usersByGroup) {
+      Set<User> s = new HashSet<>(usersByGroup);
+      for (User u : s) {
         List<Integer> roleList = teamMemberRepository.getRoles((Team) group, u);
+
         for (int i : roleList) {
           if (i == ADMIN || i == OWNER) {
             sendNotification(u, message, time);
+            break;
           }
         }
       }
 
     } else if (type.equals("Project")) {
       List<User> usersByGroup = projectMemberRepository.getUsersByGroup((Project) group);
-      for (User u : usersByGroup) {
+      Set<User> s = new HashSet<>(usersByGroup);
+      for (User u : s) {
         List<Integer> roleList = projectMemberRepository.getRoles((Project) group, u);
         for (int i : roleList) {
           if (i == ADMIN || i == OWNER) {
             sendNotification(u, message, time);
+            break;
           }
         }
       }
     } else if (type.equals("Organization")) {
       List<User> usersByGroup = organizationMemberRepository.getUsersByGroup((Organization) group);
-      for (User u : usersByGroup) {
+      Set<User> s = new HashSet<>(usersByGroup);
+      for (User u : s) {
         List<Integer> roleList = organizationMemberRepository.getRoles((Organization) group, u);
         for (int i : roleList) {
           if (i == ADMIN || i == OWNER) {
             sendNotification(u, message, time);
+            break;
           }
         }
       }
-//    Set<User> users = getMembersOf(group);
-//    for(User u : users){
-//      UserToGroupPermission permission = getUserToGroupPermission(u, group);
-//      boolean canUpdate = permission.canUpdate();
-//      if (canUpdate) {
-//        notificationController.sendNotification(u, message,time);
-//      }
-//    }
     }
-
   }
 
   @CrossOrigin
@@ -118,6 +116,7 @@ public  class NotificationController <T extends Group> {
     notificationRepository.save(notification);
     return new GeneralResponse(response, OK, null);
   }
+
   @CrossOrigin
   @PutMapping(path = "/delete/{id}")
   @ResponseBody
@@ -133,6 +132,7 @@ public  class NotificationController <T extends Group> {
     notificationRepository.save(notification);
     return new GeneralResponse(response, OK, null);
   }
+
   @GetMapping
   @ResponseBody
   public GeneralResponse getNotifications(HttpServletRequest request, HttpServletResponse response) {
@@ -143,6 +143,6 @@ public  class NotificationController <T extends Group> {
       return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
     }
 
-    return new GeneralResponse(response, OK, null,notificationRepository.getNotifications(session.get().getUser()));
+    return new GeneralResponse(response, OK, null, notificationRepository.getNotifications(session.get().getUser()));
   }
 }

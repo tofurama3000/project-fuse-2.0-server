@@ -16,7 +16,7 @@ import java.util.Map;
 
 @Data
 @MappedSuperclass
-public abstract class Group<Profile extends GroupProfile> extends BaseIndexable implements  Interviewable {
+public abstract class Group<Profile extends GroupProfile> extends BaseIndexable implements Interviewable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
@@ -72,7 +72,9 @@ public abstract class Group<Profile extends GroupProfile> extends BaseIndexable 
     return map;
   }
 
-  public static String esType() { return "info"; }
+  public static String esType() {
+    return "info";
+  }
 
   @Override
   public String getEsType() {
@@ -85,5 +87,6 @@ public abstract class Group<Profile extends GroupProfile> extends BaseIndexable 
   }
 
   // Does nothing, it's just to make JSON deserialization happy
-  public void setGroupType(String type) {}
+  public void setGroupType(String type) {
+  }
 }

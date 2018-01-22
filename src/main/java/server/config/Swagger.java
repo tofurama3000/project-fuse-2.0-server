@@ -15,8 +15,8 @@ public class Swagger {
   @Bean
   public Docket api() {
     return new Docket(DocumentationType.SWAGGER_2)
-            .select()
-            .paths(Predicates.not(PathSelectors.regex("/error"))) // Exclude Spring error controllers
-            .build();
+        .select()
+        .paths(Predicates.not(PathSelectors.regex("/error"))) // Exclude Spring error controllers
+        .build();
   }
 }

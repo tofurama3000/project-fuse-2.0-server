@@ -12,7 +12,7 @@ import server.utility.ElasticsearchClient;
 @EnableScheduling
 public class Application {
   public static void main(String[] args) {
-    if(ElasticsearchClient.instance() == null)// ensure we have elasticsearch setup
+    if (ElasticsearchClient.instance() == null)// ensure we have elasticsearch setup
       System.err.println("Unable to connect to Elasticsearch! Continuing, but will retry to connect!");
     SpringApplication.run(Application.class, args);
   }

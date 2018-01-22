@@ -51,7 +51,6 @@ import server.entities.dto.group.team.Team;
 import server.entities.dto.group.team.TeamApplicant;
 import server.entities.user_to_group.permissions.UserToGroupPermission;
 import server.entities.user_to_group.permissions.UserToTeamPermission;
-import server.repositories.NotificationRepository;
 import server.repositories.UserRepository;
 import server.repositories.group.GroupApplicantRepository;
 import server.repositories.group.GroupMemberRepository;
@@ -69,7 +68,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 
 @SuppressWarnings("unused")
-public abstract class GroupController<T extends Group, R extends GroupMember<T>>  {
+public abstract class GroupController<T extends Group, R extends GroupMember<T>> {
 
   @Autowired
   private FuseSessionController fuseSessionController;
@@ -90,9 +89,6 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   private GroupProfileRepository groupProfileRepository;
 
   @Autowired
-  private NotificationRepository notificationRepository;
-
-  @Autowired
   private SessionFactory sessionFactory;
 
   private static Logger logger = LoggerFactory.getLogger(TeamController.class);
@@ -101,8 +97,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   @ResponseBody
   @ApiOperation("Create a new entity")
   public synchronized GeneralResponse create(
-          @ApiParam("Entity information")
-          @RequestBody T entity, HttpServletRequest request, HttpServletResponse response) {
+      @ApiParam("Entity information")
+      @RequestBody T entity, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -116,7 +112,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       return new GeneralResponse(response, errors);
     }
 
-    if(entity.getProfile() == null){
+    if (entity.getProfile() == null) {
       errors.add("Missing profile information!");
       return new GeneralResponse(response, errors);
     }
@@ -143,8 +139,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   @ApiIgnore
   // TODO: Fix this; it doesn't work due to foreign key constraints with the profile entity
   public GeneralResponse delete(
-          @ApiParam("ID of the entity to delete")
-          @PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
+      @ApiParam("ID of the entity to delete")
+      @PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -188,6 +184,13 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
         errors.add(ALREADY_JOINED_MSG);
         return new GeneralResponse(response, ERROR, errors);
     }
+    List<GroupApplicant> list = getGroupApplicantRepository().getApplicantsBySender(session.get().getUser());
+    for (GroupApplicant a : list) {
+      if (a.getGroup().getId() == id) {
+        errors.add("Already applied");
+        return new GeneralResponse(response, ERROR, errors);
+      }
+    }
     application.setSender(session.get().getUser());
     application.setStatus(PENDING);
     if (group == null) {
@@ -199,7 +202,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     getGroupApplicantRepository().save(application);
     Map<String, Object> result = new HashMap<>();
     result.put("applied", true);
-    notificationController.sendGroupNotificationToAdmins(group, session.get().getUser().getName()+" has applied to " + group.getName(),now.toString());
+    notificationController.sendGroupNotificationToAdmins(group, session.get().getUser().getName() + " has applied to " + group.getName(), now.toString());
     return new GeneralResponse(response, GeneralResponse.Status.OK, errors, result);
   }
 
@@ -208,10 +211,10 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   @ApiOperation("Updates the specified entity")
   @ResponseBody
   public GeneralResponse updateGroup(
-          @ApiParam("The ID of the entity to update")
-          @PathVariable(value = "id") long id,
-          @ApiParam("The new data for the entity")
-          @RequestBody T groupData, HttpServletRequest request, HttpServletResponse response) {
+      @ApiParam("The ID of the entity to update")
+      @PathVariable(value = "id") long id,
+      @ApiParam("The new data for the entity")
+      @RequestBody T groupData, HttpServletRequest request, HttpServletResponse response) {
 
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -258,8 +261,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   @ApiOperation("Join the group as the current user or applies if application is needed first")
   @ResponseBody
   protected synchronized GeneralResponse join(
-          @ApiParam("The id of the group to join")
-          @PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response) {
+      @ApiParam("The id of the group to join")
+      @PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -275,12 +278,12 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     switch (getUserToGroupPermission(user, group).canJoin()) {
       case OK:
         addRelationship(user, group, DEFAULT_USER);
-        notificationController.sendGroupNotificationToAdmins(group, user.getName()+" joined to " + group.getName(),now.toString());
+        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " joined to " + group.getName(), now.toString());
         return new GeneralResponse(response);
       case HAS_INVITE:
         addRelationship(user, group, DEFAULT_USER);
         removeRelationship(user, group, INVITED_TO_JOIN);
-        notificationController.sendGroupNotificationToAdmins(group, user.getName()+" joined to " + group.getName(),now.toString());
+        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " joined to " + group.getName(), now.toString());
         return new GeneralResponse(response);
       case NEED_INVITE:
         // Apply if an invite is needed
@@ -354,7 +357,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     }
     ZonedDateTime now = ZonedDateTime.now();
 
-    notificationController.sendNotification(groupInvitation.getReceiver(), "You has invited to " + group.getName(),now.toString());
+    notificationController.sendNotification(groupInvitation.getReceiver(), "You has invited to " + group.getName(), now.toString());
     return new GeneralResponse(response);
   }
 
@@ -376,11 +379,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   @PostMapping(path = "/{id}/interview_slots/add")
   @ResponseBody
   public GeneralResponse addInterviewSlots(
-          @ApiParam("The ID of the group to add the slot to")
-          @PathVariable("id") long id,
-          @ApiParam("An array of interview slots to add")
-          @RequestBody List<Interview> interviews, HttpServletRequest request,
-                                           HttpServletResponse response) {
+      @ApiParam("The ID of the group to add the slot to")
+      @PathVariable("id") long id,
+      @ApiParam("An array of interview slots to add")
+      @RequestBody List<Interview> interviews, HttpServletRequest request,
+      HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -409,8 +412,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   @GetMapping(path = "/{id}/interview_slots/available")
   @ResponseBody
   public GeneralResponse getAvailableInterviews(
-          @ApiParam("ID of the group to get the interview slots for")
-          @PathVariable("id") long id, HttpServletRequest request, HttpServletResponse response) {
+      @ApiParam("ID of the group to get the interview slots for")
+      @PathVariable("id") long id, HttpServletRequest request, HttpServletResponse response) {
     Group group = getGroupRepository().findOne(id);
     LocalDateTime currentDateTime = ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime();
 
@@ -424,11 +427,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   @GetMapping(path = "/find", params = {"name", "email"})
   @ResponseBody
   public GeneralResponse findByNameAndOwner(
-          @ApiParam("Name of the group to get")
-          @RequestParam(value = "name") String name,
-          @ApiParam("Email address of the owner")
-          @RequestParam(value = "email") String email,
-                                            HttpServletRequest request, HttpServletResponse response) {
+      @ApiParam("Name of the group to get")
+      @RequestParam(value = "name") String name,
+      @ApiParam("Email address of the owner")
+      @RequestParam(value = "email") String email,
+      HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     User user = new User();
@@ -457,8 +460,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   @GetMapping(path = "/{id}/members")
   @ResponseBody
   public GeneralResponse getMembersOfGroup(
-          @ApiParam("The id of the group to get the members for")
-          @PathVariable(value = "id") T group, HttpServletRequest request, HttpServletResponse response) {
+      @ApiParam("The id of the group to get the members for")
+      @PathVariable(value = "id") T group, HttpServletRequest request, HttpServletResponse response) {
     return new GeneralResponse(response, OK, null, getMembersOf(group));
   }
 
@@ -473,8 +476,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   @ApiOperation("Gets the group entity by id")
   @ResponseBody
   protected GeneralResponse getById(
-          @ApiParam("ID of the gruop to get the id for")
-          @PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
+      @ApiParam("ID of the gruop to get the id for")
+      @PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -502,10 +505,10 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   @ResponseBody
   public GeneralResponse getApplicants(@ApiParam("ID of entity")
                                        @PathVariable(value = "id")
-                                                 Long id,
+                                           Long id,
                                        @ApiParam("Applicant status (one of 'accepted', 'declined', 'pending' 'interviewed', 'interview_scheduled')")
                                        @PathVariable(value = "status")
-                                               String status,
+                                           String status,
                                        HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
@@ -565,15 +568,15 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     GroupApplicantRepository groupApplicantRepository = getGroupApplicantRepository();
     GroupApplicant applicantToSave = (GroupApplicant) groupApplicantRepository.findOne(appId);
     applicantToSave.setStatus(status);
-    if(status.equals("accepted")){
+    if (status.equals("accepted")) {
       ZonedDateTime now = ZonedDateTime.now();
-      notificationController.sendNotification(applicantToSave.getSender(),applicantToSave.getGroup().getName()+"'s admin accepted your applicant", now.toString());
-      addRelationship(applicantToSave.getSender(), (T) applicantToSave.getGroup(),DEFAULT_USER);
+      notificationController.sendNotification(applicantToSave.getSender(), applicantToSave.getGroup().getName() + "'s admin accepted your applicant", now.toString());
+      addRelationship(applicantToSave.getSender(), (T) applicantToSave.getGroup(), DEFAULT_USER);
     }
 
-    if(status.equals("declined")){
+    if (status.equals("declined")) {
       ZonedDateTime now = ZonedDateTime.now();
-      notificationController.sendNotification(applicantToSave.getSender(),applicantToSave.getGroup().getName()+"'s admin rejected your applicant", now.toString());
+      notificationController.sendNotification(applicantToSave.getSender(), applicantToSave.getGroup().getName() + "'s admin rejected your applicant", now.toString());
 
     }
     groupApplicantRepository.save(applicantToSave);
@@ -584,8 +587,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   @ApiOperation("Returns whether or not the current user can edit the group")
   @ResponseBody
   protected GeneralResponse canEdit(
-          @ApiParam("The id of the group to check against")
-          @PathVariable(value = "id") Long id, @RequestBody T groupData, HttpServletRequest request, HttpServletResponse response) {
+      @ApiParam("The id of the group to check against")
+      @PathVariable(value = "id") Long id, @RequestBody T groupData, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -603,26 +606,6 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     return new GeneralResponse(response, GeneralResponse.Status.OK);
 
   }
-
-//  protected   void sendNotification(User user, String message, String time){
-//    Notification notification = new Notification();
-//    notification.setReceiver(user);
-//    notification.setMessage(message);
-//    notification.setHasRead(false);
-//    notification.setTime(time);
-//    notificationRepository.save(notification);
-//  }
-
-//  protected  void sendGroupNotificationToAdmins(T group, String message, String time){
-//    Set<User> users = getMembersOf(group);
-//    for(User u : users){
-//      UserToGroupPermission permission = getUserToGroupPermission(u, group);
-//      boolean canUpdate = permission.canUpdate();
-//      if (canUpdate) {
-//        notificationController.sendNotification(u, message,time);
-//      }
-//    }
-//  }
 
   protected boolean validFieldsForCreate(T entity) {
     return entity.getName() != null;
@@ -697,6 +680,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
   }
 
   protected abstract GroupApplicant<T> getAppliction();
+
   protected abstract GroupInvitation<T> getInvitation();
 
 }

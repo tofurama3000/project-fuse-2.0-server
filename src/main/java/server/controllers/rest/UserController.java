@@ -71,7 +71,6 @@ import server.entities.user_to_group.relationships.UserToGroupRelationship;
 import server.entities.user_to_group.relationships.UserToOrganizationRelationship;
 import server.entities.user_to_group.relationships.UserToProjectRelationship;
 import server.entities.user_to_group.relationships.UserToTeamRelationship;
-import server.repositories.NotificationRepository;
 import server.repositories.UnregisteredUserRepository;
 import server.repositories.UserProfileRepository;
 import server.repositories.UserRepository;
@@ -101,7 +100,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
-@Api(value="User Endpoints")
+@Api(value = "User Endpoints")
 @RequestMapping(value = "/users")
 @SuppressWarnings("unused")
 public class UserController {
@@ -110,7 +109,7 @@ public class UserController {
   private UserRepository userRepository;
 
   @Autowired
-  private NotificationRepository notificationRepository;
+  private NotificationController notificationController;
 
   @Autowired
   private FuseSessionController fuseSessionController;
@@ -169,12 +168,12 @@ public class UserController {
   private static IdGenerator generator = new AlternativeJdkIdGenerator();
 
   @ApiOperation(value = "Creates a new user",
-          notes = "Must provide a name, password, and email")
+      notes = "Must provide a name, password, and email")
   @PostMapping
   @ResponseBody
   public GeneralResponse addNewUser(
-          @ApiParam(value = "The user information to create with", required = true)
-          @RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
+      @ApiParam(value = "The user information to create with", required = true)
+      @RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
 
     List<String> errors = new ArrayList<>();
 
@@ -269,9 +268,9 @@ public class UserController {
   @GetMapping(path = "/{id}")
   @ResponseBody
   public GeneralResponse getUserbyID(
-          @ApiParam(value = "The ID of the user")
-          @PathVariable(value = "id") Long id,
-          HttpServletRequest request, HttpServletResponse response) {
+      @ApiParam(value = "The ID of the user")
+      @PathVariable(value = "id") Long id,
+      HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -297,8 +296,8 @@ public class UserController {
   @GetMapping(path = "/get_by_email/{email}")
   @ResponseBody
   public GeneralResponse getUserbyEmail(
-          @ApiParam("Email address of the user")
-          @PathVariable(value = "email") String email, HttpServletRequest request, HttpServletResponse response) {
+      @ApiParam("Email address of the user")
+      @PathVariable(value = "email") String email, HttpServletRequest request, HttpServletResponse response) {
 
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -326,8 +325,8 @@ public class UserController {
   @PutMapping(path = "/{id}")
   @ResponseBody
   public GeneralResponse updateCurrentUser(
-          @ApiParam(value = "ID of the user to update")
-          @PathVariable long id, @RequestBody User userData, HttpServletRequest request, HttpServletResponse response) {
+      @ApiParam(value = "ID of the user to update")
+      @PathVariable long id, @RequestBody User userData, HttpServletRequest request, HttpServletResponse response) {
     //to Use profile for profile
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -367,9 +366,6 @@ public class UserController {
   }
 
 
-
-
-
   @GetMapping
   @ResponseBody
   @ApiOperation(value = "Get all users")
@@ -387,8 +383,8 @@ public class UserController {
   @ResponseBody
   @ApiIgnore
   public GeneralResponse getAllTeamsOfUser(
-          @PathVariable Long id,
-          HttpServletRequest request, HttpServletResponse response) {
+      @PathVariable Long id,
+      HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -405,8 +401,8 @@ public class UserController {
   @ResponseBody
   @ApiOperation(value = "Get all organizations for the specified user")
   public GeneralResponse getAllOrganizationsOfUser(
-          @PathVariable Long id,
-          HttpServletRequest request, HttpServletResponse response) {
+      @PathVariable Long id,
+      HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -424,8 +420,8 @@ public class UserController {
   @ResponseBody
   @ApiOperation(value = "Get all projects for the specified user")
   public GeneralResponse getAllProjectsOfUser(
-          @PathVariable Long id,
-          HttpServletRequest request, HttpServletResponse response) {
+      @PathVariable Long id,
+      HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -448,10 +444,10 @@ public class UserController {
   @ResponseBody
   @ApiOperation(value = "Get all project applications for the user")
   public GeneralResponse getAllApplicationsOfUserProjs(
-          @PathVariable Long id,
-          @PathParam("status") String status,
-          @PathParam("not_status") String not_status,
-          HttpServletRequest request, HttpServletResponse response) {
+      @PathVariable Long id,
+      @PathParam("status") String status,
+      @PathParam("not_status") String not_status,
+      HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -468,7 +464,7 @@ public class UserController {
     List<ProjectApplicant> applicants;
     User user = session.get().getUser();
 
-    if (status != null){
+    if (status != null) {
       applicants = projectApplicantRepository.getApplicantsBySenderAndStatus(user, status);
     } else {
       applicants = projectApplicantRepository.getApplicantsBySender(user);
@@ -481,10 +477,10 @@ public class UserController {
   @ResponseBody
   @ApiOperation(value = "Get all organization applications for the user")
   public GeneralResponse getAllApplicationsOfUserOrgs(
-          @PathVariable Long id,
-          @PathParam("status") String status,
-          @PathParam("not_status") String not_status,
-          HttpServletRequest request, HttpServletResponse response) {
+      @PathVariable Long id,
+      @PathParam("status") String status,
+      @PathParam("not_status") String not_status,
+      HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -501,7 +497,7 @@ public class UserController {
     List<OrganizationApplicant> applicants;
     User user = session.get().getUser();
 
-    if (status != null){
+    if (status != null) {
       applicants = organizationApplicantRepository.getApplicantsBySenderAndStatus(user, status);
     } else {
       applicants = organizationApplicantRepository.getApplicantsBySender(user);
@@ -512,18 +508,18 @@ public class UserController {
 
   private <T extends GroupApplicant> List<T> filterApplicants(List<T> applicants, final String not_status) {
     return applicants.stream()
-            .filter(projectApplicant -> projectApplicant.getStatus().compareToIgnoreCase(not_status) != 0)
-            .sorted((o1, o2) -> {
-              final Integer status1 = GroupApplicant.GetStatusOrder(o1.getStatus());
-              final Integer status2 = GroupApplicant.GetStatusOrder(o2.getStatus());
-              final int statusComp = status1.compareTo(status2);
-              if (statusComp != 0) {
-                return statusComp;
-              }
-              return o1.getGroup().getId().compareTo(o2.getGroup().getId());
-            })
-            .filter(StreamUtil.uniqueByFunction(projectApplicant -> projectApplicant.getGroup().getId()))
-            .collect(Collectors.toList());
+        .filter(projectApplicant -> projectApplicant.getStatus().compareToIgnoreCase(not_status) != 0)
+        .sorted((o1, o2) -> {
+          final Integer status1 = GroupApplicant.GetStatusOrder(o1.getStatus());
+          final Integer status2 = GroupApplicant.GetStatusOrder(o2.getStatus());
+          final int statusComp = status1.compareTo(status2);
+          if (statusComp != 0) {
+            return statusComp;
+          }
+          return o1.getGroup().getId().compareTo(o2.getGroup().getId());
+        })
+        .filter(StreamUtil.uniqueByFunction(projectApplicant -> projectApplicant.getGroup().getId()))
+        .collect(Collectors.toList());
   }
 
   @GetMapping(path = "/register/{registrationKey}")
@@ -558,7 +554,7 @@ public class UserController {
     unregisteredUserRepository.delete(unregisteredUser);
 
     return new GeneralResponse(response, OK, null,
-            projectInvitationRepository.findByReceiver(user));
+        projectInvitationRepository.findByReceiver(user));
   }
 
   @GetMapping(path = "/incoming/invites/project")
@@ -576,7 +572,7 @@ public class UserController {
     User user = session.get().getUser();
 
     return new GeneralResponse(response, OK, null,
-            projectInvitationRepository.findByReceiver(user));
+        projectInvitationRepository.findByReceiver(user));
   }
 
   @GetMapping(path = "/incoming/invites/organization")
@@ -594,7 +590,7 @@ public class UserController {
     User user = session.get().getUser();
 
     return new GeneralResponse(response, OK, null,
-            organizationInvitationRepository.findByReceiver(user));
+        organizationInvitationRepository.findByReceiver(user));
   }
 
 
@@ -613,15 +609,15 @@ public class UserController {
     User user = session.get().getUser();
 
     return new GeneralResponse(response, OK, null,
-            teamInvitationRepository.findByReceiver(user));
+        teamInvitationRepository.findByReceiver(user));
   }
 
   @PostMapping(path = "/accept/invite/team")
   @ResponseBody
   @ApiIgnore
   public GeneralResponse acceptTeamInvite(
-          @ApiParam(value="The team invitation information to accept")
-          @RequestBody TeamInvitation teamInvitation, HttpServletRequest request, HttpServletResponse response) {
+      @ApiParam(value = "The team invitation information to accept")
+      @RequestBody TeamInvitation teamInvitation, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -654,28 +650,17 @@ public class UserController {
       savedInvitation.setStatus(ACCEPTED);
       teamInvitationRepository.save(savedInvitation);
     }
+    ZonedDateTime now = ZonedDateTime.now();
+    notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(), now.toString());
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
-  }
-
-  @GetMapping(path = "/notifications")
-  @ResponseBody
-  public GeneralResponse getNotifications(HttpServletRequest request, HttpServletResponse response) {
-    List<String> errors = new ArrayList<>();
-    Optional<FuseSession> session = fuseSessionController.getSession(request);
-    if (!session.isPresent()) {
-      errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
-    }
-
-    return new GeneralResponse(response, OK, null,notificationRepository.getNotifications(session.get().getUser()));
   }
 
   @PostMapping(path = "/accept/invite/project")
   @ResponseBody
   @ApiOperation(value = "Accept project invite")
   public GeneralResponse acceptProjectInvite(
-          @ApiParam(value="The project invitation information to accept")
-          @RequestBody ProjectInvitation projectInvitation, HttpServletRequest request, HttpServletResponse response) {
+      @ApiParam(value = "The project invitation information to accept")
+      @RequestBody ProjectInvitation projectInvitation, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -712,7 +697,8 @@ public class UserController {
       String formatDateTime = now.format(formatter);
 
     }
-
+    ZonedDateTime now = ZonedDateTime.now();
+    notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(), now.toString());
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
   }
 
@@ -721,8 +707,8 @@ public class UserController {
   @ResponseBody
   @ApiOperation(value = "Accept organization invite")
   public GeneralResponse acceptOrganizationInvite(
-          @ApiParam(value="The organization invitation information to accept")
-          @RequestBody OrganizationInvitation organizationInvitation, HttpServletRequest request, HttpServletResponse response) {
+      @ApiParam(value = "The organization invitation information to accept")
+      @RequestBody OrganizationInvitation organizationInvitation, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -755,6 +741,8 @@ public class UserController {
       savedInvitation.setStatus(ACCEPTED);
       organizationInvitationRepository.save(savedInvitation);
     }
+    ZonedDateTime now = ZonedDateTime.now();
+    notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(), now.toString());
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
   }
 
@@ -782,10 +770,10 @@ public class UserController {
         LocalDateTime currentDateTime = ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime();
 
         List<Interview> availableInterviewsAfterDate = interviewRepository
-                .getAvailableInterviewsAfterDate(group.getId(), group.getGroupType(), currentDateTime);
+            .getAvailableInterviewsAfterDate(group.getId(), group.getGroupType(), currentDateTime);
 
         long count = availableInterviewsAfterDate.stream().map(Interview::getId)
-                .filter(id -> Objects.equals(id, interview.getId())).count();
+            .filter(id -> Objects.equals(id, interview.getId())).count();
 
         if (count < 1) {
           errors.add(NO_INTERVIEW_FOUND);

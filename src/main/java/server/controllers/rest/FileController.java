@@ -40,92 +40,91 @@ import static server.controllers.rest.response.GeneralResponse.Status.OK;
 
 @Controller
 @RequestMapping(value = "/files")
-@Api(value="File Endpoints")
+@Api(value = "File Endpoints")
 public class FileController {
-    @Autowired
-    private FuseSessionController fuseSessionController;
+  @Autowired
+  private FuseSessionController fuseSessionController;
 
-    @Autowired
-    private FileRepository fileRepository;
+  @Autowired
+  private FileRepository fileRepository;
 
-    @Autowired
-    private FileDownloadRepository fileDownloadRepository;
+  @Autowired
+  private FileDownloadRepository fileDownloadRepository;
 
-    @Value("${fuse.fileUploadPath}")
-    private String fileUploadPath;
+  @Value("${fuse.fileUploadPath}")
+  private String fileUploadPath;
 
-    @PostMapping(path = "/upload")
-    @ResponseBody
-    @ApiOperation(value = "Uploads a new file",
-            notes = "Max file size is 128KB")
-    public GeneralResponse fileUpload(@RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
-        List<String> errors = new ArrayList<>();
+  @PostMapping(path = "/upload")
+  @ResponseBody
+  @ApiOperation(value = "Uploads a new file",
+      notes = "Max file size is 128KB")
+  public GeneralResponse fileUpload(@RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
+    List<String> errors = new ArrayList<>();
 
-        Optional<FuseSession> session = fuseSessionController.getSession(request);
-        if (!session.isPresent()) {
-            errors.add(INVALID_SESSION);
-            return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
-        }
-        User currentUser = session.get().getUser();
-        UploadFile uploadFile;
-        if (fileToUpload != null) {
-            if (fileToUpload.getSize() > 0 && fileToUpload.getName().equals("file")) {
-                uploadFile = new UploadFile();
-
-                String hash = Hashing.sha256()
-                        .hashString(fileToUpload.getOriginalFilename(), StandardCharsets.UTF_8)
-                        .toString();
-                Timestamp ts = new Timestamp(System.currentTimeMillis());
-                long timestamp = ((ts.getTime())/1000) * 1000;
-                String fileName = hash + "." + timestamp + "." + currentUser.getId().toString();
-                File fileToSave = new File(fileUploadPath, fileName);
-                if(!fileToSave.createNewFile())
-                {
-                    errors.add("Unable to create file.");
-                    return new GeneralResponse(response, ERROR, errors);
-                }
-                fileToUpload.transferTo(fileToSave);
-                uploadFile.setHash(hash);
-                uploadFile.setUpload_time(new Timestamp(timestamp));
-                uploadFile.setFile_size(fileToUpload.getSize());
-                uploadFile.setFileName(fileToUpload.getOriginalFilename());
-                uploadFile.setMime_type(fileToUpload.getContentType());
-                uploadFile.setUser(currentUser);
-                return new GeneralResponse(response, OK, null, fileRepository.save(uploadFile));
-            }
-        }
-        errors.add("Invalid file, unable to save");
-        return new GeneralResponse(response, BAD_DATA, errors);
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
     }
+    User currentUser = session.get().getUser();
+    UploadFile uploadFile;
+    if (fileToUpload != null) {
+      if (fileToUpload.getSize() > 0 && fileToUpload.getName().equals("file")) {
+        uploadFile = new UploadFile();
 
-    @GetMapping(path = "/download/{id}")
-    @ResponseBody
-    @ApiOperation(value = "Downloads a file",
-            notes = "Will download as an attachment")
-    public ResponseEntity<Resource> fileDownload(@PathVariable(value = "id") Long id, HttpServletResponse response, HttpServletRequest request) throws Exception {
-
-        Optional<FuseSession> session = fuseSessionController.getSession(request);
-        if (!session.isPresent()) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return null;
+        String hash = Hashing.sha256()
+            .hashString(fileToUpload.getOriginalFilename(), StandardCharsets.UTF_8)
+            .toString();
+        Timestamp ts = new Timestamp(System.currentTimeMillis());
+        long timestamp = ((ts.getTime()) / 1000) * 1000;
+        String fileName = hash + "." + timestamp + "." + currentUser.getId().toString();
+        File fileToSave = new File(fileUploadPath, fileName);
+        if (!fileToSave.createNewFile()) {
+          errors.add("Unable to create file.");
+          return new GeneralResponse(response, ERROR, errors);
         }
-        UploadFile fileToFind = fileDownloadRepository.findOne(id);
-        if (fileToFind == null) {
-            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            return null;
-        }
-        String originalFileName = fileToFind.getFileName();
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + originalFileName);
-        String fileName = fileToFind.getHash() + "." + fileToFind.getUpload_time().getTime() + "." + fileToFind.getUser().getId();
-        Path path = Paths.get(fileUploadPath, fileName);
-        ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(path));
-        File file = new File(fileUploadPath, fileName);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .contentLength(file.length())
-                .contentType(MediaType.parseMediaType("application/octet-stream")).body(resource);
+        fileToUpload.transferTo(fileToSave);
+        uploadFile.setHash(hash);
+        uploadFile.setUpload_time(new Timestamp(timestamp));
+        uploadFile.setFile_size(fileToUpload.getSize());
+        uploadFile.setFileName(fileToUpload.getOriginalFilename());
+        uploadFile.setMime_type(fileToUpload.getContentType());
+        uploadFile.setUser(currentUser);
+        return new GeneralResponse(response, OK, null, fileRepository.save(uploadFile));
+      }
     }
+    errors.add("Invalid file, unable to save");
+    return new GeneralResponse(response, BAD_DATA, errors);
+  }
+
+  @GetMapping(path = "/download/{id}")
+  @ResponseBody
+  @ApiOperation(value = "Downloads a file",
+      notes = "Will download as an attachment")
+  public ResponseEntity<Resource> fileDownload(@PathVariable(value = "id") Long id, HttpServletResponse response, HttpServletRequest request) throws Exception {
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+      return null;
+    }
+    UploadFile fileToFind = fileDownloadRepository.findOne(id);
+    if (fileToFind == null) {
+      response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+      return null;
+    }
+    String originalFileName = fileToFind.getFileName();
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + originalFileName);
+    String fileName = fileToFind.getHash() + "." + fileToFind.getUpload_time().getTime() + "." + fileToFind.getUser().getId();
+    Path path = Paths.get(fileUploadPath, fileName);
+    ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(path));
+    File file = new File(fileUploadPath, fileName);
+
+    return ResponseEntity.ok()
+        .headers(headers)
+        .contentLength(file.length())
+        .contentType(MediaType.parseMediaType("application/octet-stream")).body(resource);
+  }
 }

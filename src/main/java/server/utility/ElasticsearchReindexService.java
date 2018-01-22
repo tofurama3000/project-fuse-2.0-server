@@ -32,15 +32,14 @@ public class ElasticsearchReindexService {
   @Autowired
   private ProjectRepository projectRepository;
 
-  private static <T extends BaseIndexable> Consumer<T> getConsumer(){
+  private static <T extends BaseIndexable> Consumer<T> getConsumer() {
     return new Consumer<T>() {
       @Override
       public void accept(T t) {
         String docId = t.getEsIndex() + "/" + t.getEsType() + "/" + t.getEsId();
-        if(!t.tryToIndex()){
+        if (!t.tryToIndex()) {
           logger.error("Unable to index document " + docId);
-        }
-        else{
+        } else {
           logger.info("Indexed doucment " + docId);
         }
       }

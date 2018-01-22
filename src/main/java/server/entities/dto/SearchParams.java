@@ -36,12 +36,12 @@ public class SearchParams {
     List<String> entityMatches = new LinkedList<>();
     Matcher matcher = entityIdentifierPattern.matcher(query);
 
-    while(matcher.find()) {
+    while (matcher.find()) {
       entityMatches.add(matcher.group());
     }
 
     searchString = query.replaceAll(entityIdentifierRegex, "").trim();
-    if(searchString.equals("")){
+    if (searchString.equals("")) {
       searchString = "*";
     }
 
@@ -51,38 +51,38 @@ public class SearchParams {
     StringBuffer s = new StringBuffer();
     while (m.find()) {
       String group = m.group(1);
-      searchString =searchString.replaceAll(group, " " + m.group(1).trim() + "* ");
+      searchString = searchString.replaceAll(group, " " + m.group(1).trim() + "* ");
     }
 
     entityMatches.forEach(this::mapEntityToIndexAndType);
   }
 
-  private void mapEntityToIndexAndType(String entity){
+  private void mapEntityToIndexAndType(String entity) {
     if (entity.length() > 3 && entity.substring(0, 3).equals("in:")) {
       entity = entity.substring(3);
     }
-    if(entity.contains(",")) {
+    if (entity.contains(",")) {
       String[] entities = entity.trim().substring(3).split(",");
       indices.addAll(Arrays.stream(entities)
-                      .map(SearchParams::mapEntityToIndex)
-                      .filter(Objects::nonNull)
-                      .collect(Collectors.toList()));
+          .map(SearchParams::mapEntityToIndex)
+          .filter(Objects::nonNull)
+          .collect(Collectors.toList()));
       types.addAll(Arrays.stream(entities)
-                    .map(SearchParams::mapEntityToType)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList()));
+          .map(SearchParams::mapEntityToType)
+          .filter(Objects::nonNull)
+          .collect(Collectors.toList()));
     } else {
       String indexName = mapEntityToIndex(entity);
       String typeName = mapEntityToType(entity);
-      if(indexName != null) {
+      if (indexName != null) {
         indices.add(indexName);
         types.add(typeName);
       }
     }
   }
 
-  private static String mapEntityToIndex(String entity){
-    switch(entity.toLowerCase()){
+  private static String mapEntityToIndex(String entity) {
+    switch (entity.toLowerCase()) {
       case "t":
       case "team":
       case "teams":
@@ -107,8 +107,8 @@ public class SearchParams {
     }
   }
 
-  private static String mapEntityToType(String entity){
-    switch(entity.toLowerCase()){
+  private static String mapEntityToType(String entity) {
+    switch (entity.toLowerCase()) {
       case "t":
       case "team":
       case "teams":
@@ -133,18 +133,18 @@ public class SearchParams {
     }
   }
 
-  public static List<String> allTypes(){
+  public static List<String> allTypes() {
     return Arrays.asList(Team.esType(),
-            Organization.esType(),
-            Project.esType(),
-            User.esType());
+        Organization.esType(),
+        Project.esType(),
+        User.esType());
   }
 
   public static List<String> allIndices() {
     return Arrays.asList(
-            Team.esIndex(),
-            Organization.esIndex(),
-            Project.esIndex(),
-            User.esIndex());
+        Team.esIndex(),
+        Organization.esIndex(),
+        Project.esIndex(),
+        User.esIndex());
   }
 }

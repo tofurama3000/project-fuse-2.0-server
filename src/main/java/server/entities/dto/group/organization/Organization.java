@@ -38,7 +38,9 @@ public class Organization extends Group<OrganizationProfile> {
     profile = p;
   }
 
-  public static String esIndex() { return "organizations"; }
+  public static String esIndex() {
+    return "organizations";
+  }
 
   @Override
   public String getEsIndex() {
