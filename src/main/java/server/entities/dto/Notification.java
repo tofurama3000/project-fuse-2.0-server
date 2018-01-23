@@ -34,7 +34,7 @@ public class Notification {
   @Column(name = "time")
   private LocalDateTime time;
 
-  @Column(name = "hasRead")
+  @Column(name = "read")
   private boolean hasRead;
 
   @Column(name = "deleted")

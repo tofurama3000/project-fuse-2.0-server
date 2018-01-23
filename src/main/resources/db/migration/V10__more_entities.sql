@@ -5,15 +5,15 @@ ALTER TABLE project ADD project_profile_id INT(11);
 ALTER TABLE organization ADD organization_profile_id INT(11);
 
 CREATE TABLE IF NOT EXISTS notification (
-    id INT(11) PRIMARY KEY AUTO_INCREMENT,
-    sender_id INT(11),
-    receiver_id INT(11),
-    message TEXT,
-    time DATETIME,
-    hasRead    tinyint,
-    FOREIGN KEY (sender_id ) REFERENCES user(id),
-    FOREIGN KEY (receiver_id ) REFERENCES user(id)
-  );
+  id INT(11) PRIMARY KEY AUTO_INCREMENT,
+  sender_id INT(11),
+  receiver_id INT(11),
+  message TEXT,
+  time DATETIME,
+  hasRead    tinyint,
+  FOREIGN KEY (sender_id ) REFERENCES user(id),
+  FOREIGN KEY (receiver_id ) REFERENCES user(id)
+);
 
 CREATE TABLE IF NOT EXISTS project_profile (
   id INT(11) PRIMARY KEY AUTO_INCREMENT,
@@ -47,6 +47,5 @@ CREATE TABLE IF NOT EXISTS user_profile (
   user_id INT(11),
   FOREIGN KEY (user_id) REFERENCES user(id)
 );
-
 
 
