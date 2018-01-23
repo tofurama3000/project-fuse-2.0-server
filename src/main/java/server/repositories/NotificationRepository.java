@@ -2,6 +2,7 @@ package server.repositories;
 
 import static server.constants.Availability.AVAILABLE;
 
+import com.sun.xml.internal.bind.v2.TODO;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -17,4 +18,10 @@ import java.util.List;
 public interface NotificationRepository extends CrudRepository<Notification, Long> {
   @Query("FROM Notification a where a.receiver = :receiver and a.deleted = 0")
   List<Notification> getNotifications(@Param("receiver") User receiver);
+  //TODO: need to get endpoint for that
+  @Query("FROM Notification a where a.receiver = :receiver and a.deleted = 0 and a.hasRead=1")
+  List<Notification> getReadNotifications(@Param("receiver") User receiver);
+  @Query("FROM Notification a where a.receiver = :receiver and a.deleted = 0 and a.hasRead=0")
+  List<Notification> getUnreadNotifications(@Param("receiver") User receiver);
+
 }
