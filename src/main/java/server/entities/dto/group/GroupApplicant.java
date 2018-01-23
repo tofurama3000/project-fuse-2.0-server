@@ -69,11 +69,11 @@ public abstract class GroupApplicant<T extends Group> {
   }
 
   private static List<String> valid = java.util.Arrays.asList(
-          "accepted",
-          "pending",
-          "interviewed",
-          "interview_scheduled",
-          "declined"
+      "accepted",
+      "pending",
+      "interviewed",
+      "interview_scheduled",
+      "declined"
   );
 
   public static Integer GetStatusOrder(String status) {

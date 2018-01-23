@@ -30,7 +30,7 @@ import static server.controllers.rest.response.GeneralResponse.Status.OK;
  */
 @Controller
 @RequestMapping(value = "/search")
-@Api(tags="Search")
+@Api(tags = "Search")
 @SuppressWarnings("unused")
 public class SearchController {
 
@@ -38,11 +38,11 @@ public class SearchController {
   @PostMapping
   @ResponseBody
   public GeneralResponse searchAll(
-          @ApiParam(value = "The search query to use", required = true)
-          @RequestBody SearchParams params, HttpServletResponse response) {
+      @ApiParam(value = "The search query to use", required = true)
+      @RequestBody SearchParams params, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
-    if(params.getSearchString() == null){
+    if (params.getSearchString() == null) {
       errors.add("Missing search string");
       return new GeneralResponse(response, BAD_DATA, errors);
     }
@@ -50,20 +50,20 @@ public class SearchController {
     List<String> indices = params.getIndices();
     List<String> types = params.getTypes();
 
-    if (indices == null || types == null || params.getIndices().isEmpty() || params.getTypes().isEmpty()){
+    if (indices == null || types == null || params.getIndices().isEmpty() || params.getTypes().isEmpty()) {
       indices = SearchParams.allIndices();
       types = SearchParams.allTypes();
     }
 
     return new GeneralResponse(
+        response,
+        OK,
+        errors,
+        doSearch(params,
             response,
-            OK,
-            errors,
-            doSearch(params,
-                    response,
-                    indices.stream().toArray(String[]::new),
-                    types.stream().toArray(String[]::new)
-            )
+            indices.stream().toArray(String[]::new),
+            types.stream().toArray(String[]::new)
+        )
     );
   }
 
@@ -71,8 +71,8 @@ public class SearchController {
   @PostMapping("/users")
   @ResponseBody
   public GeneralResponse searchUser(
-          @ApiParam(value = "The search query to use", required = true)
-          @RequestBody SearchParams params, HttpServletResponse response) {
+      @ApiParam(value = "The search query to use", required = true)
+      @RequestBody SearchParams params, HttpServletResponse response) {
     return doSearch(params, response, new String[]{User.esIndex()}, new String[]{User.esType()});
   }
 
@@ -80,8 +80,8 @@ public class SearchController {
   @PostMapping("/projects")
   @ResponseBody
   public GeneralResponse searchProjects(
-          @ApiParam(value = "The search query to use", required = true)
-          @RequestBody SearchParams params, HttpServletResponse response) {
+      @ApiParam(value = "The search query to use", required = true)
+      @RequestBody SearchParams params, HttpServletResponse response) {
     return doSearch(params, response, new String[]{Project.esIndex()}, new String[]{Project.esType()});
   }
 
@@ -89,8 +89,8 @@ public class SearchController {
   @PostMapping("/organizations")
   @ResponseBody
   public GeneralResponse searchOrganizations(
-          @ApiParam(value = "The search query to use", required = true)
-          @RequestBody SearchParams params, HttpServletResponse response) {
+      @ApiParam(value = "The search query to use", required = true)
+      @RequestBody SearchParams params, HttpServletResponse response) {
     return doSearch(params, response, new String[]{Organization.esIndex()}, new String[]{Organization.esType()});
   }
 
@@ -98,16 +98,16 @@ public class SearchController {
                                               String[] indices, String[] types) {
     List<String> errors = new ArrayList<>();
 
-    if(params.getSearchString() == null) {
+    if (params.getSearchString() == null) {
       errors.add("Missing search string");
       return new GeneralResponse(response, BAD_DATA, errors);
     }
 
     return new GeneralResponse(response, OK, errors,
-            ElasticsearchClient.instance().searchSimpleQuery(
-                    indices,
-                    types,
-                    params.getSearchString())
+        ElasticsearchClient.instance().searchSimpleQuery(
+            indices,
+            types,
+            params.getSearchString())
     );
   }
 }

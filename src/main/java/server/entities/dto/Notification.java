@@ -1,5 +1,6 @@
 package server.entities.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import javax.persistence.Column;
@@ -11,6 +12,9 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 @Entity
 @Table(name = "notification")
@@ -21,10 +25,6 @@ public class Notification {
   private long id;
 
   @ManyToOne
-  @JoinColumn(name = "sender_id", referencedColumnName = "id")
-  private User sender;
-
-  @ManyToOne
   @JoinColumn(name = "receiver_id", referencedColumnName = "id")
   private User receiver;
 
@@ -32,8 +32,25 @@ public class Notification {
   private String message;
 
   @Column(name = "time")
-  private Timestamp time;
+  private LocalDateTime time;
 
   @Column(name = "hasRead")
-  private short hasRead;
+  private boolean hasRead;
+
+  @Column(name = "deleted")
+  private boolean deleted;
+
+  public void setTime(String dateTime) {
+    ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateTime);
+    time = zonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+  }
+
+  @JsonIgnore
+  public LocalDateTime getDateTime() {
+    return time;
+  }
+
+  public String getTime() {
+    return time.toString() + "+00:00";
+  }
 }
