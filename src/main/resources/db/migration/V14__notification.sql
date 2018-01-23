@@ -5,7 +5,7 @@ CREATE TABLE `notification` (
   `receiver_id` INT NOT NULL,
   `message` TEXT,
   `time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `read` TINYINT(1) NOT NULL DEFAULT 0,
+  `hasRead` TINYINT(1) NOT NULL DEFAULT 0,
   `deleted` TINYINT(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   INDEX `notification_receiver_idx` (`receiver_id` ASC),
