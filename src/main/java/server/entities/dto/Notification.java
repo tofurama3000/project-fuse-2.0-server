@@ -31,6 +31,12 @@ public class Notification {
   @Column(name = "message")
   private String message;
 
+  @Column(name = "objectType")
+  private String objectType;
+
+  @Column(name = "objectId")
+  private long objectId;
+
   @Column(name = "time")
   private LocalDateTime time;
 
