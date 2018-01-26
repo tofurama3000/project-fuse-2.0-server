@@ -57,6 +57,9 @@ public class Notification {
   }
 
   public String getTime() {
-    return time.toString() + "+00:00";
+    if (time != null) {
+      return time.toString() + "+00:00";
+    }
+    return "";
   }
 }
