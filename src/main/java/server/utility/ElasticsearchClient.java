@@ -130,27 +130,21 @@ public class ElasticsearchClient {
   private RestHighLevelClient elasticsearch_client;
 
   public List<Object> searchSimpleQuery(String[] indices, String[] types, String searchString) {
-    return searchSimpleQuery(indices, types, searchString, 0, 15);
-  }
-
-  public List<Object> searchSimpleQuery(String[] indices, String[] types, String searchString, Integer page, Integer pageSize) {
     SearchRequest req = new SearchRequest(indices);
     req.types(types);
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-    searchSourceBuilder.query(QueryBuilders
-            .simpleQueryStringQuery(searchString)
-            .analyzeWildcard(true)).from(page * pageSize).size(pageSize);
+    searchSourceBuilder.query(QueryBuilders.simpleQueryStringQuery(searchString).analyzeWildcard(true));
     req.source(searchSourceBuilder);
     try {
       SearchResponse resp = elasticsearch_client.search(req);
       return Arrays.stream(resp.getHits().getHits())
-              .sorted((res1, res2) -> Float.compare(res2.getScore(), res1.getScore()))
-              .map(res -> {
-                Map<String, Object> map = res.getSourceAsMap();
-                map.put("score", res.getScore());
-                return map;
-              })
-              .collect(Collectors.toList());
+          .sorted((res1, res2) -> Float.compare(res2.getScore(), res1.getScore()))
+          .map(res -> {
+            Map<String, Object> map = res.getSourceAsMap();
+            map.put("score", res.getScore());
+            return map;
+          })
+          .collect(Collectors.toList());
     } catch (IOException e) {
       e.printStackTrace();
       return null;

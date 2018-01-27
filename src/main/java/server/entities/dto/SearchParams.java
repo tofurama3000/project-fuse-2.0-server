@@ -62,9 +62,8 @@ public class SearchParams {
       entity = entity.substring(3);
     }
     if (entity.contains(",")) {
-      String[] entities = entity.split(",");
+      String[] entities = entity.trim().substring(3).split(",");
       indices.addAll(Arrays.stream(entities)
-          .map(String::trim)
           .map(SearchParams::mapEntityToIndex)
           .filter(Objects::nonNull)
           .collect(Collectors.toList()));
@@ -102,9 +101,6 @@ public class SearchParams {
       case "u":
       case "user":
       case "users":
-      case "people":
-      case "person":
-      case "persons":
         return User.esIndex();
       default:
         return null;
