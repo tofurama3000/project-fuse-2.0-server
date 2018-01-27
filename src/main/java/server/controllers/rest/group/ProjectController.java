@@ -1,5 +1,6 @@
 package server.controllers.rest.group;
 
+import static server.controllers.rest.response.GeneralResponse.Status.OK;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.hibernate.SessionFactory;
@@ -8,11 +9,13 @@ import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import server.controllers.rest.response.GeneralResponse;
+import server.entities.PossibleError;
 import server.entities.dto.User;
 import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupApplicant;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.GroupProfile;
+import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.organization.OrganizationInvitation;
 import server.entities.dto.group.project.Project;
 import server.entities.dto.group.project.ProjectApplicant;
@@ -20,6 +23,7 @@ import server.entities.dto.group.project.ProjectInvitation;
 import server.entities.dto.group.project.ProjectMember;
 import server.entities.user_to_group.permissions.PermissionFactory;
 import server.entities.user_to_group.permissions.UserToGroupPermission;
+import server.entities.user_to_group.permissions.UserToOrganizationPermission;
 import server.entities.user_to_group.relationships.RelationshipFactory;
 import server.repositories.group.GroupApplicantRepository;
 import server.repositories.group.GroupMemberRepository;
@@ -32,6 +36,8 @@ import server.repositories.group.project.ProjectRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.List;
 
 @Controller
 @RequestMapping(value = "/projects")
@@ -105,7 +111,7 @@ public class ProjectController extends GroupController<Project, ProjectMember> {
   }
 
   @Override
-  protected GroupApplicant<Project> getAppliction() {
+  protected GroupApplicant<Project> getApplication() {
     return new ProjectApplicant();
   }
 
@@ -115,9 +121,24 @@ public class ProjectController extends GroupController<Project, ProjectMember> {
   }
 
   @Override
+  protected PossibleError validateGroup(User user, Project group) {
+    Organization parentOrganization = group.getOrganization();
+    if (parentOrganization != null) {
+      UserToOrganizationPermission permission = permissionFactory.createUserToOrganizationPermission(user, parentOrganization);
+      if (permission.canCreateProjectsInOrganization()) {
+        return new PossibleError(OK);
+      } else {
+        List<String> errors = new ArrayList<>();
+        errors.add("Do not have permission to add project to group");
+        return new PossibleError(errors, GeneralResponse.Status.DENIED);
+      }
+    } else {
+      return new PossibleError(OK);
+    }
+  }
+
+  @Override
   protected void saveInvitation(GroupInvitation<Project> invitation) {
     projectInvitationRepository.save(((ProjectInvitation) invitation));
   }
-
-
 }
