@@ -3,23 +3,17 @@ package server.utility;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.DocWriteResponse;
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.SimpleQueryStringBuilder;
-import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.springframework.beans.factory.annotation.Autowired;
 import server.entities.Indexable;
+import server.entities.dto.PagedResults;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -129,22 +123,35 @@ public class ElasticsearchClient {
   private static ElasticsearchClient inst = null;
   private RestHighLevelClient elasticsearch_client;
 
-  public List<Object> searchSimpleQuery(String[] indices, String[] types, String searchString) {
+  public PagedResults searchSimpleQuery(String[] indices, String[] types, String searchString) {
+    return searchSimpleQuery(indices, types, searchString, 0, 15);
+  }
+
+  public PagedResults searchSimpleQuery(String[] indices, String[] types, String searchString, Integer page, Integer pageSize) {
     SearchRequest req = new SearchRequest(indices);
     req.types(types);
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-    searchSourceBuilder.query(QueryBuilders.simpleQueryStringQuery(searchString).analyzeWildcard(true));
+    searchSourceBuilder.query(QueryBuilders
+            .simpleQueryStringQuery(searchString)
+            .analyzeWildcard(true)).from(page * pageSize).size(pageSize);
     req.source(searchSourceBuilder);
     try {
       SearchResponse resp = elasticsearch_client.search(req);
-      return Arrays.stream(resp.getHits().getHits())
-          .sorted((res1, res2) -> Float.compare(res2.getScore(), res1.getScore()))
-          .map(res -> {
-            Map<String, Object> map = res.getSourceAsMap();
-            map.put("score", res.getScore());
-            return map;
-          })
-          .collect(Collectors.toList());
+      PagedResults results = new PagedResults();
+      results.setStart(page*pageSize);
+      List<Object> resultItems = Arrays.stream(resp.getHits().getHits())
+              .sorted((res1, res2) -> Float.compare(res2.getScore(), res1.getScore()))
+              .map(res -> {
+                Map<String, Object> map = res.getSourceAsMap();
+                map.put("score", res.getScore());
+                return map;
+              })
+              .collect(Collectors.toList());
+      results.setEnd(page*pageSize + resultItems.size() - 1);
+      results.setItems(resultItems);
+      results.setTotalItems(resp.getHits().getTotalHits());
+      results.setPageSize(pageSize);
+      return results;
     } catch (IOException e) {
       e.printStackTrace();
       return null;

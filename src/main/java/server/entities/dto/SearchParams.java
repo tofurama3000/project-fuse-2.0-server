@@ -109,10 +109,6 @@ public class SearchParams {
 
   private static String mapEntityToType(String entity) {
     switch (entity.toLowerCase()) {
-      case "t":
-      case "team":
-      case "teams":
-        return Team.esType();
       case "o":
       case "org":
       case "orgs":
@@ -134,7 +130,7 @@ public class SearchParams {
   }
 
   public static List<String> allTypes() {
-    return Arrays.asList(Team.esType(),
+    return Arrays.asList(
         Organization.esType(),
         Project.esType(),
         User.esType());
@@ -142,7 +138,6 @@ public class SearchParams {
 
   public static List<String> allIndices() {
     return Arrays.asList(
-        Team.esIndex(),
         Organization.esIndex(),
         Project.esIndex(),
         User.esIndex());
