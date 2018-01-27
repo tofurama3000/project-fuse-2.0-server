@@ -17,5 +17,4 @@ public class CannedResponse {
   public static final String INTERVIEW_NOT_AVAILABLE = "interview not available";
   public static final String EMAIL_ALREADY_EXISTS = "Email already exists";
   public static final String NO_INVITATION_FOUND = "No invitation found";
-  public static final String Friend_FOUND = "User is your friend already";
 }
