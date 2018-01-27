@@ -49,18 +49,16 @@ public class NotificationController<T extends Group> {
   @Autowired
   private OrganizationMemberRepository organizationMemberRepository;
 
-  public void sendNotification(User user, String message, String time, String type, long id) {
+  public void sendNotification(User user, String message, String time) {
     Notification notification = new Notification();
     notification.setReceiver(user);
     notification.setMessage(message);
     notification.setHasRead(false);
     notification.setTime(time);
-    notification.setObjectType(type);
-    notification.setObjectId(id);
     notificationRepository.save(notification);
   }
 
-  public void sendGroupNotificationToAdmins(T group, String message, String time, String objectType, long id) {
+  public void sendGroupNotificationToAdmins(T group, String message, String time) {
     String type = group.getGroupType();
     if (type.equals("Team")) {
       List<User> usersByGroup = teamMemberRepository.getUsersByGroup((Team) group);
@@ -70,7 +68,7 @@ public class NotificationController<T extends Group> {
 
         for (int i : roleList) {
           if (i == ADMIN || i == OWNER) {
-            sendNotification(u, message, time, objectType,id);
+            sendNotification(u, message, time);
             break;
           }
         }
@@ -83,7 +81,7 @@ public class NotificationController<T extends Group> {
         List<Integer> roleList = projectMemberRepository.getRoles((Project) group, u);
         for (int i : roleList) {
           if (i == ADMIN || i == OWNER) {
-            sendNotification(u, message, time,objectType,id);
+            sendNotification(u, message, time);
             break;
           }
         }
@@ -95,7 +93,7 @@ public class NotificationController<T extends Group> {
         List<Integer> roleList = organizationMemberRepository.getRoles((Organization) group, u);
         for (int i : roleList) {
           if (i == ADMIN || i == OWNER) {
-            sendNotification(u, message, time,objectType,id);
+            sendNotification(u, message, time);
             break;
           }
         }
