@@ -650,9 +650,8 @@ public class UserController {
       savedInvitation.setStatus(ACCEPTED);
       teamInvitationRepository.save(savedInvitation);
     }
-
-    notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(),
-        "TeamInvitation: accepted",group.getId());
+    ZonedDateTime now = ZonedDateTime.now();
+    notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(), now.toString());
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
   }
 
@@ -698,9 +697,8 @@ public class UserController {
       String formatDateTime = now.format(formatter);
 
     }
-
-    notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(),
-        "ProjectInvitation: accepted",group.getId());
+    ZonedDateTime now = ZonedDateTime.now();
+    notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(), now.toString());
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
   }
 
@@ -743,8 +741,8 @@ public class UserController {
       savedInvitation.setStatus(ACCEPTED);
       organizationInvitationRepository.save(savedInvitation);
     }
-    notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName()
-        ,"OrganizationInvitation: accepted",group.getId());
+    ZonedDateTime now = ZonedDateTime.now();
+    notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(), now.toString());
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
   }
 

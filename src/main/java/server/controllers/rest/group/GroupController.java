@@ -202,8 +202,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     getGroupApplicantRepository().save(application);
     Map<String, Object> result = new HashMap<>();
     result.put("applied", true);
-    notificationController.sendGroupNotificationToAdmins(group, session.get().getUser().getName() + " has applied to " + group.getName(),
-        group.getGroupType() + "Applicant",group.getId());
+    notificationController.sendGroupNotificationToAdmins(group, session.get().getUser().getName() + " has applied to " + group.getName(), now.toString());
     return new GeneralResponse(response, GeneralResponse.Status.OK, errors, result);
   }
 
@@ -274,19 +273,17 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
     T group = getGroupRepository().findOne(id);
     User user = session.get().getUser();
-
+    ZonedDateTime now = ZonedDateTime.now();
 
     switch (getUserToGroupPermission(user, group).canJoin()) {
       case OK:
         addRelationship(user, group, DEFAULT_USER);
-        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " joined to " + group.getName(),
-            group.getGroupType() + ": joined",group.getId());
+        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " joined to " + group.getName(), now.toString());
         return new GeneralResponse(response);
       case HAS_INVITE:
         addRelationship(user, group, DEFAULT_USER);
         removeRelationship(user, group, INVITED_TO_JOIN);
-        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " joined to " + group.getName(),
-            group.getGroupType() + ": joined",group.getId());
+        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " joined to " + group.getName(), now.toString());
         return new GeneralResponse(response);
       case NEED_INVITE:
         // Apply if an invite is needed
@@ -358,9 +355,9 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
         saveInvitation(groupInvitation);
         break;
     }
+    ZonedDateTime now = ZonedDateTime.now();
 
-
-    notificationController.sendNotification(groupInvitation.getReceiver(), "You has invited to " + group.getName(),group.getName()+"Invitation",groupInvitation.getId());
+    notificationController.sendNotification(groupInvitation.getReceiver(), "You has invited to " + group.getName(), now.toString());
     return new GeneralResponse(response);
   }
 
@@ -572,16 +569,14 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     GroupApplicant applicantToSave = (GroupApplicant) groupApplicantRepository.findOne(appId);
     applicantToSave.setStatus(status);
     if (status.equals("accepted")) {
-
-      notificationController.sendNotification(applicantToSave.getSender(), applicantToSave.getGroup().getName() + "'s admin accepted your applicant",
-          applicantToSave.getGroup().getGroupType() + "Applicant: accepted",applicantToSave.getId());
+      ZonedDateTime now = ZonedDateTime.now();
+      notificationController.sendNotification(applicantToSave.getSender(), applicantToSave.getGroup().getName() + "'s admin accepted your applicant", now.toString());
       addRelationship(applicantToSave.getSender(), (T) applicantToSave.getGroup(), DEFAULT_USER);
     }
 
     if (status.equals("declined")) {
-
-      notificationController.sendNotification(applicantToSave.getSender(), applicantToSave.getGroup().getName() + "'s admin rejected your applicant"
-      ,applicantToSave.getGroup().getGroupType() + "Applicant: declined",applicantToSave.getId());
+      ZonedDateTime now = ZonedDateTime.now();
+      notificationController.sendNotification(applicantToSave.getSender(), applicantToSave.getGroup().getName() + "'s admin rejected your applicant", now.toString());
 
     }
     groupApplicantRepository.save(applicantToSave);
