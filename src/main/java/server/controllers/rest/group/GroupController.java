@@ -567,6 +567,10 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
     GroupApplicantRepository groupApplicantRepository = getGroupApplicantRepository();
     GroupApplicant applicantToSave = (GroupApplicant) groupApplicantRepository.findOne(appId);
+    if (applicantToSave.getStatus().equals(status)) {
+      return new GeneralResponse(response, OK, null);
+    }
+
     applicantToSave.setStatus(status);
     if (status.equals("accepted")) {
       ZonedDateTime now = ZonedDateTime.now();
@@ -577,8 +581,20 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     if (status.equals("declined")) {
       ZonedDateTime now = ZonedDateTime.now();
       notificationController.sendNotification(applicantToSave.getSender(), applicantToSave.getGroup().getName() + "'s admin rejected your applicant", now.toString());
-
     }
+
+    if (status.equals("pending")) {
+      // TODO: Cancel all pending interviews
+    }
+
+    if (status.equals("interview_scheduled")) {
+      // TODO: Schedule interview
+    }
+
+    if (status.equals("invited")) {
+      // TODO: Send invite
+    }
+
     groupApplicantRepository.save(applicantToSave);
     return new GeneralResponse(response, OK, null);
   }

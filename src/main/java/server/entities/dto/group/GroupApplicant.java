@@ -73,6 +73,7 @@ public abstract class GroupApplicant<T extends Group> {
       "pending",
       "interviewed",
       "interview_scheduled",
+      "invited",
       "declined"
   );
 
