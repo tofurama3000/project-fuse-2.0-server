@@ -80,18 +80,9 @@ public class FriendController {
     Friend friend = friendRepository.findOne(id);
     if(friend==null){
       errors.add(INVALID_FIELDS);
-      return new GeneralResponse(response,GeneralResponse.Status.DENIED , errors);
-    }
-    if(friend.getReceiver().getId()!=session.get().getUser().getId()){
-      errors.add(INVALID_FIELDS);
-      return new GeneralResponse(response,GeneralResponse.Status.DENIED , errors);
-    }
-    if (!friend.getStatus().equals("applied")){
-      errors.add(INVALID_FIELDS);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new GeneralResponse(response,GeneralResponse.Status.DENIED , null);
     }
     friend.setStatus("accepted");
-    notificationController.sendNotification(friend.getSender(),friend.getReceiver().getName() + " has accepted your friend request","Friend: accepted", friend.getId());
     return new GeneralResponse(response, OK, null);
   }
 
@@ -108,18 +99,9 @@ public class FriendController {
     Friend friend = friendRepository.findOne(id);
     if(friend==null){
       errors.add(INVALID_FIELDS);
-      return new GeneralResponse(response,GeneralResponse.Status.DENIED , errors);
-    }
-    if(friend.getReceiver().getId()!=session.get().getUser().getId()){
-      errors.add(INVALID_FIELDS);
-      return new GeneralResponse(response,GeneralResponse.Status.DENIED , errors);
-    }
-    if (!friend.getStatus().equals("applied")){
-      errors.add(INVALID_FIELDS);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new GeneralResponse(response,GeneralResponse.Status.DENIED , null);
     }
     friend.setStatus("declined");
-    notificationController.sendNotification(friend.getSender(),friend.getReceiver().getName() + " has declined your friend request","Friend: declined", friend.getId());
     return new GeneralResponse(response, OK, null);
   }
 
@@ -138,12 +120,7 @@ public class FriendController {
       errors.add(INVALID_FIELDS);
       return new GeneralResponse(response,GeneralResponse.Status.DENIED , null);
     }
-    if (!friend.getStatus().equals("accepted")){
-      errors.add(INVALID_FIELDS);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
-    }
-    friend.setStatus("deleted");
-    friendRepository.save(friend);
+    friend.setDeleted(true);
     return new GeneralResponse(response, OK, null);
   }
 
@@ -158,33 +135,28 @@ public class FriendController {
       return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
     }
   User sender =session.get().getUser();
-  if(sender.getId()==id){
-    errors.add(INVALID_FIELDS);
-    return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
-  }
-  if (isFriend(sender,id)){
-    errors.add(Friend_FOUND);
-    return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
-  }
-    User receiver = userRepository.findOne(id);
-    Friend friend = new Friend();
-    friend.setSender(sender);
-    friend.setStatus("applied");
-    friend.setReceiver(receiver);
-    friend = friendRepository.save(friend);
-    notificationController.sendNotification(receiver,sender.getName() +" wants to be your friend!","Friend",friend.getId());
-    return new GeneralResponse(response, OK, null);
-  }
 
-  private boolean isFriend(User user, long id){
-    List<Friend> list = friendRepository.getFriends(user);
+    List<Friend> list = friendRepository.getFriends(sender);
     for(Friend f : list){
       if(f.getReceiver().getId()==id||f.getSender().getId()==id){
         if(f.getStatus().equals("accepted")) {
-          return true;
+          errors.add(Friend_FOUND);
+          return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+        }
+        if(f.getStatus().equals("applied")) {
+          return new GeneralResponse(response, OK, null);
         }
       }
     }
-    return false;
+
+    User receiver = userRepository.findOne(id);
+    Friend friend = new Friend();
+    friend.setSender(sender);
+    friend.setDeleted(false);
+    friend.setStatus("applied");
+    friend.setReceiver(receiver);
+    friend = friendRepository.save(friend);
+    notificationController.sendNotification(receiver,sender +" wants to be your friend!","Friend",friend.getId());
+    return new GeneralResponse(response, OK, null);
   }
 }

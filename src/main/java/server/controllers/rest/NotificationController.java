@@ -27,7 +27,6 @@ import java.util.*;
 
 import static server.constants.RoleValue.ADMIN;
 import static server.constants.RoleValue.OWNER;
-import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import static server.controllers.rest.response.GeneralResponse.Status.OK;
@@ -118,10 +117,6 @@ public class NotificationController<T extends Group> {
       return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
     }
     Notification notification = notificationRepository.findOne(id);
-    if(notification.getReceiver().getId()!=session.get().getUser().getId()){
-      errors.add(INSUFFICIENT_PRIVELAGES);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
-    }
     notification.setHasRead(true);
     notificationRepository.save(notification);
     return new GeneralResponse(response, OK, null);
@@ -138,10 +133,6 @@ public class NotificationController<T extends Group> {
       return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
     }
     Notification notification = notificationRepository.findOne(id);
-    if(notification.getReceiver().getId()!=session.get().getUser().getId()){
-      errors.add(INSUFFICIENT_PRIVELAGES);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
-    }
     notification.setDeleted(true);
     notificationRepository.save(notification);
     return new GeneralResponse(response, OK, null);

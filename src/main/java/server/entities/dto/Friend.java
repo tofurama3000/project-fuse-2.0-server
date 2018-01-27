@@ -24,6 +24,9 @@ public class Friend {
   @Column(name = "status")
   private String status;
 
+  @Column(name = "deleted")
+  private boolean deleted;
+
   public void setStatus(String status) {
     status = status.toLowerCase();
     if (ValidStatuses().indexOf(status) != -1) {
