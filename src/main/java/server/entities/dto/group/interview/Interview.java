@@ -41,6 +41,9 @@ public class Interview {
   @Column(name = "available")
   private char availability;
 
+  @Column(name = "cancelled")
+  private boolean cancelled;
+
   @ManyToOne
   @JoinColumn(name = "user_id", referencedColumnName = "id")
   private User user;

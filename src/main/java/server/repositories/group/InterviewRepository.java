@@ -12,7 +12,10 @@ import java.util.List;
 
 public interface InterviewRepository extends CrudRepository<Interview, Long> {
   @Query("FROM Interview a where a.groupId = :groupId and a.groupType = :groupType "
-      + "and a.availability = '" + AVAILABLE + "' and a.startDateTime > :date")
+      + "and a.availability = '" + AVAILABLE + "' and a.startDateTime > :date and a.cancelled = 0")
   List<Interview> getAvailableInterviewsAfterDate(@Param("groupId") Long groupId, @Param("groupType") String groupType,
                                                   @Param("date") LocalDateTime date);
+
+  @Query("FROM Interview a where a.groupId = :groupId and a.groupType = :groupType and a.userId = :userId and a.cancelled = 0")
+  List<Interview> getAllByUserGroupTypeGroup(Long userId, String type, Long groupId);
 }

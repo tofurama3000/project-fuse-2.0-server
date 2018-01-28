@@ -577,18 +577,29 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       notificationController.sendNotification(applicantToSave.getSender(), applicantToSave.getGroup().getName() + "'s admin accepted your applicant", now.toString());
       addRelationship(applicantToSave.getSender(), (T) applicantToSave.getGroup(), DEFAULT_USER);
     }
+    ZonedDateTime now = ZonedDateTime.now();
 
     if (status.equals("declined")) {
-      ZonedDateTime now = ZonedDateTime.now();
       notificationController.sendNotification(applicantToSave.getSender(), applicantToSave.getGroup().getName() + "'s admin rejected your applicant", now.toString());
     }
 
     if (status.equals("pending")) {
       // TODO: Cancel all pending interviews
+      List<Interview> interviews = interviewRepository.getAllByUserGroupTypeGroup(applicantToSave.getSender().getId(), applicantToSave.getGroup().getGroupType(), applicantToSave.getGroup().getId());
+      for(Interview interview : interviews) {
+        interview.setCancelled(true);
+      }
+      interviewRepository.save(interviews);
     }
 
     if (status.equals("interview_scheduled")) {
       // TODO: Schedule interview
+      Interview interview = new Interview();
+      interview.setGroupId(applicantToSave.getGroup().getId());
+      interview.setUser(applicantToSave.getSender());
+      interview.setAvailability(AVAILABLE);
+      interview = interviewRepository.save(interview);
+      notificationController.sendNotification(applicantToSave.getSender(), applicantToSave.getGroup().getGroupType() + "Interview:Invite", now.toString());
     }
 
     if (status.equals("invited")) {
