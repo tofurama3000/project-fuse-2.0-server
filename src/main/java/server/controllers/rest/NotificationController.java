@@ -114,7 +114,7 @@ public class NotificationController<T extends Group> {
     Notification notification = notificationRepository.findOne(id);
     notification.setHasRead(true);
     notificationRepository.save(notification);
-    return new GeneralResponse(response, OK, null);
+    return new GeneralResponse(response, OK);
   }
 
   @CrossOrigin
@@ -130,7 +130,7 @@ public class NotificationController<T extends Group> {
     Notification notification = notificationRepository.findOne(id);
     notification.setDeleted(true);
     notificationRepository.save(notification);
-    return new GeneralResponse(response, OK, null);
+    return new GeneralResponse(response, OK);
   }
 
   @GetMapping

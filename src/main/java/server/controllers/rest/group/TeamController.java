@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.GeneralResponse;
+import server.entities.PossibleError;
 import server.entities.dto.User;
 import server.entities.dto.group.GroupApplicant;
 import server.entities.dto.group.GroupInvitation;
@@ -37,6 +38,7 @@ import javax.servlet.http.HttpServletResponse;
 @Transactional
 @ApiIgnore
 @SuppressWarnings("unused")
+@Deprecated
 public class TeamController extends GroupController<Team, TeamMember> {
 
   @Autowired
@@ -82,7 +84,6 @@ public class TeamController extends GroupController<Team, TeamMember> {
     return new Team();
   }
 
-
   @Override
   protected GroupRepository<Team> getGroupRepository() {
     return teamRepository;
@@ -109,13 +110,18 @@ public class TeamController extends GroupController<Team, TeamMember> {
   }
 
   @Override
-  protected GroupApplicant<Team> getAppliction() {
+  protected GroupApplicant<Team> getApplication() {
     return new TeamApplicant();
   }
 
   @Override
   protected GroupInvitation<Team> getInvitation() {
     return new TeamInvitation();
+  }
+
+  @Override
+  protected PossibleError validateGroup(User user, Team group) {
+    return null;
   }
 
   @Override
