@@ -23,6 +23,7 @@ import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
 import static server.controllers.rest.response.GeneralResponse.Status.ERROR;
 import static server.controllers.rest.response.GeneralResponse.Status.OK;
 
+import com.google.common.hash.Hashing;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -31,14 +32,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.AlternativeJdkIdGenerator;
 import org.springframework.util.IdGenerator;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import server.controllers.FuseSessionController;
 import server.controllers.MembersOfGroupController;
 import server.controllers.rest.response.GeneralResponse;
@@ -71,6 +66,7 @@ import server.entities.user_to_group.relationships.UserToGroupRelationship;
 import server.entities.user_to_group.relationships.UserToOrganizationRelationship;
 import server.entities.user_to_group.relationships.UserToProjectRelationship;
 import server.entities.user_to_group.relationships.UserToTeamRelationship;
+import server.repositories.FileRepository;
 import server.repositories.UnregisteredUserRepository;
 import server.repositories.UserProfileRepository;
 import server.repositories.UserRepository;
@@ -92,6 +88,9 @@ import springfox.documentation.annotations.ApiIgnore;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.websocket.server.PathParam;
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -110,6 +109,9 @@ public class UserController {
 
   @Autowired
   private NotificationController notificationController;
+
+  @Autowired
+  private FileController fileController;
 
   @Autowired
   private FuseSessionController fuseSessionController;
@@ -158,6 +160,9 @@ public class UserController {
 
   @Autowired
   private MembersOfGroupController membersOfGroupController;
+
+  @Value("${fuse.fileUploadPath}")
+  private String fileUploadPath;
 
   @Value("${fuse.requireRegistration}")
   private boolean requireRegistration;
@@ -702,6 +707,99 @@ public class UserController {
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
   }
 
+  @PostMapping(path = "/upload/thumbnail")
+  @ResponseBody
+  @ApiOperation(value = "Uploads a new thumbnail",
+      notes = "Max file size is 128KB")
+  public GeneralResponse uploadThumbnail(@RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+    }
+
+    String fileType = fileToUpload.getContentType().split("/")[0];
+    if(!fileType.equals("image")){
+      return new GeneralResponse(response, BAD_DATA, errors);
+    }
+    GeneralResponse response1 = fileController.fileUpload(fileToUpload,request,response);
+    if(response1.getStatus()==DENIED){
+      return new GeneralResponse(response, response1.getStatus(), response1.getErrors());
+    }
+    UploadFile uploadFile = (UploadFile) response1.getData();
+    User user = session.get().getUser();
+    UserProfile profile =  user.getProfile();
+    if(profile==null){
+      profile = new UserProfile();
+      user.setProfile(profile);
+    }
+    profile.setThumbnail_id(uploadFile.getId());
+    userProfileRepository.save(user.getProfile());
+    return new GeneralResponse(response, OK, errors);
+  }
+
+
+  @PostMapping(path = "/upload/background")
+  @ResponseBody
+  @ApiOperation(value = "Uploads a new background",
+      notes = "Max file size is 128KB")
+  public GeneralResponse uploadBackground(@RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+    }
+
+    String fileType = fileToUpload.getContentType().split("/")[0];
+    if(!fileType.equals("image")){
+      return new GeneralResponse(response, BAD_DATA, errors);
+    }
+    GeneralResponse response1 = fileController.fileUpload(fileToUpload,request,response);
+    if(response1.getStatus()==DENIED){
+      return new GeneralResponse(response, response1.getStatus(), response1.getErrors());
+    }
+    UploadFile uploadFile = (UploadFile) response1.getData();
+    User user = session.get().getUser();
+    UserProfile profile =  user.getProfile();
+    if(profile==null){
+      profile = new UserProfile();
+      user.setProfile(profile);
+    }
+    profile.setBackground_Id(uploadFile.getId());
+    userProfileRepository.save(user.getProfile());
+    return new GeneralResponse(response, OK, errors);
+  }
+
+  @GetMapping(path = "/download/background")
+  @ResponseBody
+  @ApiOperation(value = "Download a background file")
+  public GeneralResponse downloadBackground( HttpServletRequest request, HttpServletResponse response) throws Exception {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+    }
+    User user = session.get().getUser();
+    return new GeneralResponse(response, OK,null,  user.getProfile().getBackground_Id());
+  }
+
+
+  @GetMapping(path = "/download/thumbnail")
+  @ResponseBody
+  @ApiOperation(value = "Download a background file")
+  public GeneralResponse downloadThumbnail( HttpServletRequest request, HttpServletResponse response) throws Exception {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+    }
+    User user = session.get().getUser();
+    return new GeneralResponse(response, OK,null,  user.getProfile().getThumbnail_id());
+  }
 
   @PostMapping(path = "/accept/invite/organization")
   @ResponseBody

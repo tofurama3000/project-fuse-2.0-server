@@ -127,4 +127,17 @@ public class FileController {
         .contentLength(file.length())
         .contentType(MediaType.parseMediaType("application/octet-stream")).body(resource);
   }
+
+  @GetMapping
+  @ResponseBody
+  public GeneralResponse getNotifications(HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+    }
+
+    return new GeneralResponse(response, OK, null, fileRepository.getUploadFiles(session.get().getUser()));
+  }
 }
