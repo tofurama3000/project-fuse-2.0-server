@@ -92,7 +92,7 @@ public class FriendController {
     }
     friend.setStatus("accepted");
     notificationController.sendNotification(friend.getSender(),friend.getReceiver().getName() + " has accepted your friend request","Friend: accepted", friend.getId());
-    return new GeneralResponse(response, OK, null);
+    return new GeneralResponse(response, OK);
   }
 
   @CrossOrigin
@@ -120,7 +120,7 @@ public class FriendController {
     }
     friend.setStatus("declined");
     notificationController.sendNotification(friend.getSender(),friend.getReceiver().getName() + " has declined your friend request","Friend: declined", friend.getId());
-    return new GeneralResponse(response, OK, null);
+    return new GeneralResponse(response, OK);
   }
 
   @CrossOrigin
@@ -136,7 +136,7 @@ public class FriendController {
     Friend friend = friendRepository.findOne(id);
     if(friend==null){
       errors.add(INVALID_FIELDS);
-      return new GeneralResponse(response,GeneralResponse.Status.DENIED , null);
+      return new GeneralResponse(response,GeneralResponse.Status.DENIED);
     }
     if (!friend.getStatus().equals("accepted")){
       errors.add(INVALID_FIELDS);
@@ -144,7 +144,7 @@ public class FriendController {
     }
     friend.setStatus("deleted");
     friendRepository.save(friend);
-    return new GeneralResponse(response, OK, null);
+    return new GeneralResponse(response, OK);
   }
 
 
@@ -173,7 +173,7 @@ public class FriendController {
     friend.setReceiver(receiver);
     friend = friendRepository.save(friend);
     notificationController.sendNotification(receiver,sender.getName() +" wants to be your friend!","Friend",friend.getId());
-    return new GeneralResponse(response, OK, null);
+    return new GeneralResponse(response, OK);
   }
 
   private boolean isFriend(User user, long id){

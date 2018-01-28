@@ -64,6 +64,16 @@ public class NotificationController<T extends Group> {
     notificationRepository.save(notification);
   }
 
+  public void sendNotification(User user, String message, String time, Long id) {
+    Notification notification = new Notification();
+    notification.setReceiver(user);
+    notification.setMessage(message);
+    notification.setHasRead(false);
+    notification.setTime(time);
+    notification.setId(id);
+    notificationRepository.save(notification);
+  }
+
   public void sendGroupNotificationToAdmins(T group, String message, String objectType, long id) {
     String type = group.getGroupType();
     if (type.equals("Team")) {
