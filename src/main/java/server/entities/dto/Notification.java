@@ -31,6 +31,12 @@ public class Notification {
   @Column(name = "message")
   private String message;
 
+  @Column(name = "objectType")
+  private String objectType;
+
+  @Column(name = "objectId")
+  private long objectId;
+
   @Column(name = "time")
   private LocalDateTime time;
 
@@ -51,6 +57,9 @@ public class Notification {
   }
 
   public String getTime() {
-    return time.toString() + "+00:00";
+    if (time != null) {
+      return time.toString() + "+00:00";
+    }
+    return "";
   }
 }

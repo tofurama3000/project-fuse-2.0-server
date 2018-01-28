@@ -17,4 +17,8 @@ import java.util.List;
 public interface NotificationRepository extends CrudRepository<Notification, Long> {
   @Query("FROM Notification a where a.receiver = :receiver and a.deleted = 0")
   List<Notification> getNotifications(@Param("receiver") User receiver);
+  @Query("FROM Notification a where a.receiver = :receiver and a.deleted = 0 and a.hasRead=1")
+  List<Notification> getReadNotifications(@Param("receiver") User receiver);
+  @Query("FROM Notification a where a.receiver = :receiver and a.deleted = 0 and a.hasRead=0")
+  List<Notification> getUnreadNotifications(@Param("receiver") User receiver);
 }

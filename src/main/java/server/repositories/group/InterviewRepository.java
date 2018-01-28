@@ -5,6 +5,7 @@ import static server.constants.Availability.AVAILABLE;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import server.entities.dto.User;
 import server.entities.dto.group.interview.Interview;
 
 import java.time.LocalDateTime;
@@ -16,6 +17,8 @@ public interface InterviewRepository extends CrudRepository<Interview, Long> {
   List<Interview> getAvailableInterviewsAfterDate(@Param("groupId") Long groupId, @Param("groupType") String groupType,
                                                   @Param("date") LocalDateTime date);
 
-  @Query("FROM Interview a where a.groupId = :groupId and a.groupType = :groupType and a.userId = :userId and a.cancelled = 0")
-  List<Interview> getAllByUserGroupTypeGroup(Long userId, String type, Long groupId);
+  @Query("FROM Interview a where a.groupId = :groupId and a.groupType = :groupType and a.user = :user and a.cancelled = 0")
+  List<Interview> getAllByUserGroupTypeGroup(@Param("user") User user,
+                                             @Param("groupType") String type,
+                                             @Param("groupId") Long groupId);
 }

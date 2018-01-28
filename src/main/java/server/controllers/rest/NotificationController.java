@@ -22,10 +22,13 @@ import server.repositories.group.team.TeamMemberRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 import static server.constants.RoleValue.ADMIN;
 import static server.constants.RoleValue.OWNER;
+import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
+import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import static server.controllers.rest.response.GeneralResponse.Status.OK;
 
@@ -49,12 +52,15 @@ public class NotificationController<T extends Group> {
   @Autowired
   private OrganizationMemberRepository organizationMemberRepository;
 
-  public void sendNotification(User user, String message, String time) {
+  public void sendNotification(User user, String message, String type, long id) {
     Notification notification = new Notification();
     notification.setReceiver(user);
     notification.setMessage(message);
     notification.setHasRead(false);
-    notification.setTime(time);
+    ZonedDateTime now = ZonedDateTime.now();
+    notification.setTime(now.toString());
+    notification.setObjectType(type);
+    notification.setObjectId(id);
     notificationRepository.save(notification);
   }
 
@@ -68,7 +74,7 @@ public class NotificationController<T extends Group> {
     notificationRepository.save(notification);
   }
 
-  public void sendGroupNotificationToAdmins(T group, String message, String time) {
+  public void sendGroupNotificationToAdmins(T group, String message, String objectType, long id) {
     String type = group.getGroupType();
     if (type.equals("Team")) {
       List<User> usersByGroup = teamMemberRepository.getUsersByGroup((Team) group);
@@ -78,7 +84,7 @@ public class NotificationController<T extends Group> {
 
         for (int i : roleList) {
           if (i == ADMIN || i == OWNER) {
-            sendNotification(u, message, time);
+            sendNotification(u, message, objectType,id);
             break;
           }
         }
@@ -91,7 +97,7 @@ public class NotificationController<T extends Group> {
         List<Integer> roleList = projectMemberRepository.getRoles((Project) group, u);
         for (int i : roleList) {
           if (i == ADMIN || i == OWNER) {
-            sendNotification(u, message, time);
+            sendNotification(u, message,objectType,id);
             break;
           }
         }
@@ -103,7 +109,7 @@ public class NotificationController<T extends Group> {
         List<Integer> roleList = organizationMemberRepository.getRoles((Organization) group, u);
         for (int i : roleList) {
           if (i == ADMIN || i == OWNER) {
-            sendNotification(u, message, time);
+            sendNotification(u, message,objectType,id);
             break;
           }
         }
@@ -122,6 +128,10 @@ public class NotificationController<T extends Group> {
       return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
     }
     Notification notification = notificationRepository.findOne(id);
+    if(notification.getReceiver().getId()!=session.get().getUser().getId()){
+      errors.add(INSUFFICIENT_PRIVELAGES);
+      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+    }
     notification.setHasRead(true);
     notificationRepository.save(notification);
     return new GeneralResponse(response, OK);
@@ -138,21 +148,34 @@ public class NotificationController<T extends Group> {
       return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
     }
     Notification notification = notificationRepository.findOne(id);
+    if(notification.getReceiver().getId()!=session.get().getUser().getId()){
+      errors.add(INSUFFICIENT_PRIVELAGES);
+      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+    }
     notification.setDeleted(true);
     notificationRepository.save(notification);
     return new GeneralResponse(response, OK);
   }
 
-  @GetMapping
+  @GetMapping(path = "/{status}")
   @ResponseBody
-  public GeneralResponse getNotifications(HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse getNotifications(@PathVariable(value = "status") String status,HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
     }
-
-    return new GeneralResponse(response, OK, null, notificationRepository.getNotifications(session.get().getUser()));
+    if(status.equals("all")){
+      return new GeneralResponse(response, OK, null, notificationRepository.getNotifications(session.get().getUser()));
+    }
+    else  if(session.equals("read")){
+      return new GeneralResponse(response, OK, null, notificationRepository.getReadNotifications(session.get().getUser()));
+    }
+    else  if(session.equals("unread")){
+      return new GeneralResponse(response, OK, null, notificationRepository.getUnreadNotifications(session.get().getUser()));
+    }
+    errors.add(INVALID_FIELDS);
+    return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
   }
 }
