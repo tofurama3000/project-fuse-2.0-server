@@ -595,7 +595,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
               applicantToSave.getGroup().getGroupType() + "Applicant: declined",applicantToSave.getId());
     }
 
-    if (status.equals("pending")) {
+    if (!status.equals("interview_scheduled")) {
       List<Interview> interviews = interviewRepository.getAllByUserGroupTypeGroup(applicantToSave.getSender(), applicantToSave.getGroup().getGroupType(), applicantToSave.getGroup().getId());
       for(Interview interview : interviews) {
         interview.setCancelled(true);
