@@ -5,7 +5,7 @@ import static server.constants.Availability.AVAILABLE;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
-import server.entities.dto.User;
+import server.entities.dto.user.User;
 import server.entities.dto.group.interview.Interview;
 
 import java.time.LocalDateTime;

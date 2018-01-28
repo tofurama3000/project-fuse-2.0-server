@@ -1,8 +1,9 @@
-package server.entities.dto;
+package server.entities.dto.group;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import server.entities.dto.group.Group;
+import server.entities.dto.user.User;
 
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;

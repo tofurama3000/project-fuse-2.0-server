@@ -8,7 +8,7 @@ import lombok.Data;
 import server.entities.BaseIndexable;
 import server.entities.Interviewable;
 import server.entities.Restriction;
-import server.entities.dto.User;
+import server.entities.dto.user.User;
 
 import javax.persistence.*;
 import java.util.HashMap;

@@ -22,7 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.FuseSession;
-import server.entities.dto.User;
+import server.entities.dto.user.User;
 import server.entities.dto.group.team.Team;
 import server.repositories.UserRepository;
 import server.repositories.group.team.TeamRepository;

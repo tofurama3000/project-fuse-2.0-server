@@ -1,6 +1,7 @@
 package server.entities.dto;
 
 import lombok.Data;
+import server.entities.dto.user.User;
 
 import javax.persistence.*;
 import java.sql.Timestamp;

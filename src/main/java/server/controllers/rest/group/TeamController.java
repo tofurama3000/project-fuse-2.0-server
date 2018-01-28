@@ -6,13 +6,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import server.controllers.FuseSessionController;
-import server.controllers.rest.response.GeneralResponse;
 import server.entities.PossibleError;
-import server.entities.dto.User;
+import server.entities.dto.user.User;
 import server.entities.dto.group.GroupApplicant;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.GroupProfile;
-import server.entities.dto.group.organization.OrganizationApplicant;
 import server.entities.dto.group.team.Team;
 import server.entities.dto.group.team.TeamApplicant;
 import server.entities.dto.group.team.TeamInvitation;
@@ -29,9 +27,6 @@ import server.repositories.group.team.TeamMemberRepository;
 import server.repositories.group.team.TeamProfileRepository;
 import server.repositories.group.team.TeamRepository;
 import springfox.documentation.annotations.ApiIgnore;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 @Controller
 @RequestMapping(value = "/teams")

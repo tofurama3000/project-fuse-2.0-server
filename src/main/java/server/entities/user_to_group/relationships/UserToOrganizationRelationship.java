@@ -1,7 +1,7 @@
 package server.entities.user_to_group.relationships;
 
 import lombok.Setter;
-import server.entities.dto.User;
+import server.entities.dto.user.User;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.organization.OrganizationMember;
 import server.repositories.group.organization.OrganizationMemberRepository;

@@ -6,14 +6,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.GeneralResponse;
-import server.entities.PossibleError;
-import server.entities.dto.Friend;
+import server.entities.dto.user.Friend;
 import server.entities.dto.FuseSession;
-import server.entities.dto.Notification;
-import server.entities.dto.User;
+import server.entities.dto.user.User;
 import server.repositories.FriendRepository;
 import server.repositories.UserRepository;
-import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;

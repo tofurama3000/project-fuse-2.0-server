@@ -1,17 +1,11 @@
 package server.repositories;
 
-import static server.constants.Availability.AVAILABLE;
-
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import server.entities.dto.Notification;
-import server.entities.dto.User;
-import server.entities.dto.group.interview.Interview;
-import server.entities.dto.group.team.Team;
-import server.entities.dto.group.team.TeamApplicant;
+import server.entities.dto.user.User;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 public interface NotificationRepository extends CrudRepository<Notification, Long> {

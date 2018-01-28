@@ -1,7 +1,7 @@
 package server.repositories.group.project;
 
 import org.springframework.data.repository.CrudRepository;
-import server.entities.dto.User;
+import server.entities.dto.user.User;
 import server.entities.dto.group.project.ProjectInvitation;
 
 import java.util.List;

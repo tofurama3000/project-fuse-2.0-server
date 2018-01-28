@@ -2,7 +2,7 @@ package server.entities.dto.group;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-import server.entities.dto.User;
+import server.entities.dto.user.User;
 import server.entities.dto.group.interview.Interview;
 
 import javax.persistence.GeneratedValue;

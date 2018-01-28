@@ -7,7 +7,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.SearchParams;
-import server.entities.dto.User;
+import server.entities.dto.user.User;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
 import server.utility.ElasticsearchClient;
@@ -16,7 +16,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.GeneralResponse.Status.OK;

@@ -1,7 +1,6 @@
 package server.controllers.rest;
 
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -9,12 +8,11 @@ import server.controllers.FuseSessionController;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.FuseSession;
 import server.entities.dto.Notification;
-import server.entities.dto.User;
+import server.entities.dto.user.User;
 import server.entities.dto.group.Group;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
 import server.entities.dto.group.team.Team;
-import server.entities.user_to_group.permissions.UserToGroupPermission;
 import server.repositories.NotificationRepository;
 import server.repositories.group.organization.OrganizationMemberRepository;
 import server.repositories.group.project.ProjectMemberRepository;

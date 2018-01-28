@@ -7,7 +7,7 @@ import static server.constants.RoleValue.OWNER;
 
 import org.hibernate.Session;
 import org.springframework.transaction.annotation.Transactional;
-import server.entities.dto.User;
+import server.entities.dto.user.User;
 import server.entities.dto.group.Group;
 import server.entities.user_to_group.permissions.results.JoinResult;
 

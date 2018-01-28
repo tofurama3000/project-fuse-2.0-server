@@ -17,7 +17,7 @@ import server.controllers.FuseSessionController;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.FuseSession;
 import server.entities.dto.UploadFile;
-import server.entities.dto.User;
+import server.entities.dto.user.User;
 import server.repositories.FileRepository;
 import server.repositories.group.FileDownloadRepository;
 

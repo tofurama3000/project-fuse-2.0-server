@@ -5,16 +5,14 @@ import lombok.Getter;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
 import server.entities.dto.group.team.Team;
-import server.utility.ElasticsearchClient;
+import server.entities.dto.user.User;
 
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-/**
- * Created by tofurama on 12/23/17.
- */
+
 public class SearchParams {
 
   final static String entityIdentifierRegex = "(^(\\s*in:[\\w,]+))|(\\s+in:[\\w,]+)";

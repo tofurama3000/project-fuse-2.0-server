@@ -19,12 +19,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
-import server.constants.RoleValue;
-import server.controllers.rest.response.CannedResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.PossibleError;
 import server.entities.dto.FuseSession;
-import server.entities.dto.User;
+import server.entities.dto.user.User;
 import server.entities.dto.group.GroupApplicant;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.GroupProfile;
@@ -68,7 +66,7 @@ public class OrganizationController extends GroupController<Organization, Organi
   private OrganizationApplicantRepository organizationApplicantRepository;
 
   @Autowired
-  OrganizationProfileRepository organizationProfileRepository;
+  private OrganizationProfileRepository organizationProfileRepository;
 
   @Autowired
   private OrganizationMemberRepository organizationMemberRepository;
