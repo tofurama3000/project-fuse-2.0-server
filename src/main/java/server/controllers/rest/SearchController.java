@@ -78,9 +78,9 @@ public class SearchController {
       @ApiParam(value = "The search query to use", required = true)
       @RequestBody SearchParams params,
       @ApiParam(value="The page of results to pull")
-      @RequestParam(value = "page") Integer page,
+      @RequestParam(value = "page", required=false, defaultValue="0") Integer page,
       @ApiParam(value="The number of results per page")
-      @RequestParam(value = "size") Integer pageSize,
+      @RequestParam(value = "size", required=false, defaultValue="15") Integer pageSize,
       HttpServletResponse response) {
     return doSearch(
             params,
@@ -99,9 +99,9 @@ public class SearchController {
       @ApiParam(value = "The search query to use", required = true)
       @RequestBody SearchParams params,
       @ApiParam(value="The page of results to pull")
-      @RequestParam(value = "page") Integer page,
+      @RequestParam(value = "page", required=false, defaultValue="0") Integer page,
       @ApiParam(value="The number of results per page")
-      @RequestParam(value = "size") Integer pageSize,HttpServletResponse response) {
+      @RequestParam(value = "size", required=false, defaultValue="15") Integer pageSize,HttpServletResponse response) {
     return doSearch(
             params,
             response,
@@ -119,9 +119,9 @@ public class SearchController {
       @ApiParam(value = "The search query to use", required = true)
       @RequestBody SearchParams params,
       @ApiParam(value="The page of results to pull")
-      @RequestParam(value = "page") Integer page,
+      @RequestParam(value = "page", required=false, defaultValue="0") Integer page,
       @ApiParam(value="The number of results per page")
-      @RequestParam(value = "size") Integer pageSize,HttpServletResponse response) {
+      @RequestParam(value = "size", required=false, defaultValue="15") Integer pageSize,HttpServletResponse response) {
     return doSearch(
             params,
             response,

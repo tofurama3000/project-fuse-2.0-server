@@ -3,6 +3,7 @@ package server.controllers.rest.response;
 import lombok.Data;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -31,8 +32,16 @@ public class GeneralResponse {
     this(response, status, errors, null);
   }
 
+  public GeneralResponse(HttpServletResponse response, Status status, String error) {
+    this.status = status;
+    this.errors = new ArrayList<>();
+    errors.add(error);
+    setReturnStatus(response);
+  }
+
   public GeneralResponse(HttpServletResponse response, Status status) {
-    this(response, status, null);
+    this.status = status;
+    setReturnStatus(response);
   }
 
   public GeneralResponse(HttpServletResponse response) {

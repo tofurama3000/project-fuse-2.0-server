@@ -13,19 +13,15 @@ import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVE
 import static server.controllers.rest.response.CannedResponse.INTERVIEW_NOT_AVAILABLE;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS_FOR_CREATE;
-import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS_FOR_DELETE;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
-import static server.controllers.rest.response.CannedResponse.NEED_INVITE_MSG;
 import static server.controllers.rest.response.CannedResponse.NO_GROUP_FOUND;
 import static server.controllers.rest.response.CannedResponse.SERVER_ERROR;
 import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
 import static server.controllers.rest.response.GeneralResponse.Status.ERROR;
 import static server.controllers.rest.response.GeneralResponse.Status.OK;
-import static server.entities.user_to_group.permissions.results.JoinResult.ALREADY_JOINED;
 import static server.utility.RolesUtility.getRoleFromInvitationType;
 
-import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.hibernate.Session;
@@ -38,19 +34,16 @@ import server.controllers.FuseSessionController;
 import server.controllers.rest.NotificationController;
 import server.controllers.rest.response.CannedResponse;
 import server.controllers.rest.response.GeneralResponse;
+import server.entities.PossibleError;
 import server.entities.dto.FuseSession;
 import server.entities.dto.GroupMember;
-import server.entities.dto.Notification;
 import server.entities.dto.User;
 import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupApplicant;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.GroupProfile;
 import server.entities.dto.group.interview.Interview;
-import server.entities.dto.group.team.Team;
-import server.entities.dto.group.team.TeamApplicant;
 import server.entities.user_to_group.permissions.UserToGroupPermission;
-import server.entities.user_to_group.permissions.UserToTeamPermission;
 import server.repositories.UserRepository;
 import server.repositories.group.GroupApplicantRepository;
 import server.repositories.group.GroupMemberRepository;
@@ -71,13 +64,13 @@ import java.util.*;
 public abstract class GroupController<T extends Group, R extends GroupMember<T>> {
 
   @Autowired
-  private FuseSessionController fuseSessionController;
+  protected FuseSessionController fuseSessionController;
+
+  @Autowired
+  protected UserRepository userRepository;
 
   @Autowired
   private NotificationController notificationController;
-
-  @Autowired
-  private UserRepository userRepository;
 
   @Autowired
   private InterviewRepository interviewRepository;
@@ -118,6 +111,13 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     }
 
     User user = session.get().getUser();
+
+    PossibleError possibleError = validateGroup(user, entity);
+
+    if (possibleError.hasError()) {
+      return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
+    }
+
     List<T> entities = getGroupsWith(user, entity);
     entity.setOwner(user);
 
@@ -174,7 +174,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
       return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
     }
 
-    GroupApplicant<T> application = getAppliction();
+    GroupApplicant<T> application = getApplication();
     T group = getGroupRepository().findOne(id);
     application.setGroup(group);
 
@@ -570,6 +570,10 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
 
     GroupApplicantRepository groupApplicantRepository = getGroupApplicantRepository();
     GroupApplicant applicantToSave = (GroupApplicant) groupApplicantRepository.findOne(appId);
+    if (applicantToSave.getStatus().equals(status)) {
+      return new GeneralResponse(response, OK);
+    }
+
     applicantToSave.setStatus(status);
     if (status.equals("accepted")) {
 
@@ -579,13 +583,24 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     }
 
     if (status.equals("declined")) {
-
-      notificationController.sendNotification(applicantToSave.getSender(), applicantToSave.getGroup().getName() + "'s admin rejected your applicant"
-      ,applicantToSave.getGroup().getGroupType() + "Applicant: declined",applicantToSave.getId());
-
+      notificationController.sendNotification(applicantToSave.getSender(), applicantToSave.getGroup().getName() + "'s admin rejected your applicant",
+          applicantToSave.getGroup().getGroupType() + "Applicant: declined",applicantToSave.getId());
     }
+
+    if (status.equals("pending")) {
+      // TODO: Cancel all pending interviews
+    }
+
+    if (status.equals("interview_scheduled")) {
+      // TODO: Schedule interview
+    }
+
+    if (status.equals("invited")) {
+      // TODO: Send invite
+    }
+
     groupApplicantRepository.save(applicantToSave);
-    return new GeneralResponse(response, OK, null);
+    return new GeneralResponse(response, OK);
   }
 
   @GetMapping(path = "/{id}/can_edit")
@@ -684,8 +699,9 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>>
     return true;
   }
 
-  protected abstract GroupApplicant<T> getAppliction();
+  protected abstract GroupApplicant<T> getApplication();
 
   protected abstract GroupInvitation<T> getInvitation();
 
+  protected abstract PossibleError validateGroup(User user, T group);
 }

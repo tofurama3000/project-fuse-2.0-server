@@ -124,7 +124,7 @@ public class NotificationController<T extends Group> {
     }
     notification.setHasRead(true);
     notificationRepository.save(notification);
-    return new GeneralResponse(response, OK, null);
+    return new GeneralResponse(response, OK);
   }
 
   @CrossOrigin
@@ -144,7 +144,7 @@ public class NotificationController<T extends Group> {
     }
     notification.setDeleted(true);
     notificationRepository.save(notification);
-    return new GeneralResponse(response, OK, null);
+    return new GeneralResponse(response, OK);
   }
 
   @GetMapping(path = "/{status}")
