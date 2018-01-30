@@ -14,6 +14,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import server.controllers.FuseSessionController;
+import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.FuseSession;
 import server.entities.dto.UploadFile;
@@ -34,9 +35,9 @@ import java.util.List;
 import java.util.Optional;
 
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
-import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
-import static server.controllers.rest.response.GeneralResponse.Status.ERROR;
-import static server.controllers.rest.response.GeneralResponse.Status.OK;
+import static server.controllers.rest.response.BaseResponse.Status.BAD_DATA;
+import static server.controllers.rest.response.BaseResponse.Status.ERROR;
+import static server.controllers.rest.response.BaseResponse.Status.OK;
 
 @Controller
 @RequestMapping(value = "/files")
@@ -64,7 +65,7 @@ public class FileController {
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     User currentUser = session.get().getUser();
     UploadFile uploadFile;

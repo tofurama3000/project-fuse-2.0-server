@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
+import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.FuseSession;
 import server.entities.dto.Notification;
@@ -39,7 +40,7 @@ public class FeedController {
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     List<Notification> list = notificationRepository.getNotifications(session.get().getUser());
     List<Notification> returnList = new ArrayList<Notification>();
@@ -49,7 +50,7 @@ public class FeedController {
       }
       returnList.add(list.get(i));
     }
-    return new GeneralResponse(response, GeneralResponse.Status.OK, null, returnList);
+    return new GeneralResponse(response, BaseResponse.Status.OK, null, returnList);
   }
 
 }

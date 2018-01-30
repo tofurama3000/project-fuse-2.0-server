@@ -22,8 +22,8 @@ import static junit.framework.TestCase.assertNull;
 import static junit.framework.TestCase.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static server.controllers.rest.response.GeneralResponse.Status.DENIED;
-import static server.controllers.rest.response.GeneralResponse.Status.OK;
+import static server.controllers.rest.response.BaseResponse.Status.DENIED;
+import static server.controllers.rest.response.BaseResponse.Status.OK;
 
 public class UserUpdateTest extends RestTester {
     @Autowired

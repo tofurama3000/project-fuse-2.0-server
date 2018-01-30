@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import server.controllers.FuseSessionController;
+import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.PossibleError;
 import server.entities.dto.Friend;
@@ -24,7 +25,7 @@ import java.util.Optional;
 import static server.controllers.rest.response.CannedResponse.Friend_FOUND;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
-import static server.controllers.rest.response.GeneralResponse.Status.OK;
+import static server.controllers.rest.response.BaseResponse.Status.OK;
 
 @Controller
 @RequestMapping(value = "/friends")
@@ -50,9 +51,9 @@ public class FriendController {
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
-    return new GeneralResponse(response, GeneralResponse.Status.OK, null, friendRepository.getFriends(session.get().getUser()));
+    return new GeneralResponse(response, BaseResponse.Status.OK, null, friendRepository.getFriends(session.get().getUser()));
   }
 
   @GetMapping(path = "/applicants")
@@ -62,9 +63,9 @@ public class FriendController {
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
-    return new GeneralResponse(response, GeneralResponse.Status.OK, null, friendRepository.getFriendApplicant(session.get().getUser()));
+    return new GeneralResponse(response, BaseResponse.Status.OK, null, friendRepository.getFriendApplicant(session.get().getUser()));
   }
 
   @CrossOrigin
@@ -75,20 +76,20 @@ public class FriendController {
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     Friend friend = friendRepository.findOne(id);
     if(friend==null){
       errors.add(INVALID_FIELDS);
-      return new GeneralResponse(response,GeneralResponse.Status.DENIED , errors);
+      return new GeneralResponse(response,BaseResponse.Status.DENIED , errors);
     }
     if(friend.getReceiver().getId()!=session.get().getUser().getId()){
       errors.add(INVALID_FIELDS);
-      return new GeneralResponse(response,GeneralResponse.Status.DENIED , errors);
+      return new GeneralResponse(response,BaseResponse.Status.DENIED , errors);
     }
     if (!friend.getStatus().equals("applied")){
       errors.add(INVALID_FIELDS);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     friend.setStatus("accepted");
     notificationController.sendNotification(friend.getSender(),friend.getReceiver().getName() + " has accepted your friend request","Friend: accepted", friend.getId());
@@ -103,20 +104,20 @@ public class FriendController {
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     Friend friend = friendRepository.findOne(id);
     if(friend==null){
       errors.add(INVALID_FIELDS);
-      return new GeneralResponse(response,GeneralResponse.Status.DENIED , errors);
+      return new GeneralResponse(response,BaseResponse.Status.DENIED , errors);
     }
     if(friend.getReceiver().getId()!=session.get().getUser().getId()){
       errors.add(INVALID_FIELDS);
-      return new GeneralResponse(response,GeneralResponse.Status.DENIED , errors);
+      return new GeneralResponse(response,BaseResponse.Status.DENIED , errors);
     }
     if (!friend.getStatus().equals("applied")){
       errors.add(INVALID_FIELDS);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     friend.setStatus("declined");
     notificationController.sendNotification(friend.getSender(),friend.getReceiver().getName() + " has declined your friend request","Friend: declined", friend.getId());
@@ -131,16 +132,16 @@ public class FriendController {
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     Friend friend = friendRepository.findOne(id);
     if(friend==null){
       errors.add(INVALID_FIELDS);
-      return new GeneralResponse(response,GeneralResponse.Status.DENIED);
+      return new GeneralResponse(response,BaseResponse.Status.DENIED);
     }
     if (!friend.getStatus().equals("accepted")){
       errors.add(INVALID_FIELDS);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     friend.setStatus("deleted");
     friendRepository.save(friend);
@@ -155,16 +156,16 @@ public class FriendController {
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
   User sender =session.get().getUser();
   if(sender.getId()==id){
     errors.add(INVALID_FIELDS);
-    return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+    return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
   }
   if (isFriend(sender,id)){
     errors.add(Friend_FOUND);
-    return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+    return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
   }
     User receiver = userRepository.findOne(id);
     Friend friend = new Friend();

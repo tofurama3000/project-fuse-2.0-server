@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import server.controllers.FuseSessionController;
+import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.FuseSession;
 import server.entities.dto.Notification;
@@ -30,7 +31,7 @@ import static server.constants.RoleValue.OWNER;
 import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
-import static server.controllers.rest.response.GeneralResponse.Status.OK;
+import static server.controllers.rest.response.BaseResponse.Status.OK;
 
 @Controller
 @RequestMapping(value = "/notifications")
@@ -125,12 +126,12 @@ public class NotificationController<T extends Group> {
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     Notification notification = notificationRepository.findOne(id);
     if(notification.getReceiver().getId()!=session.get().getUser().getId()){
       errors.add(INSUFFICIENT_PRIVELAGES);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     notification.setHasRead(true);
     notificationRepository.save(notification);
@@ -145,12 +146,12 @@ public class NotificationController<T extends Group> {
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     Notification notification = notificationRepository.findOne(id);
     if(notification.getReceiver().getId()!=session.get().getUser().getId()){
       errors.add(INSUFFICIENT_PRIVELAGES);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     notification.setDeleted(true);
     notificationRepository.save(notification);
@@ -164,7 +165,7 @@ public class NotificationController<T extends Group> {
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     if(status.equals("all")){
       return new GeneralResponse(response, OK, null, notificationRepository.getNotifications(session.get().getUser()));
@@ -176,6 +177,6 @@ public class NotificationController<T extends Group> {
       return new GeneralResponse(response, OK, null, notificationRepository.getUnreadNotifications(session.get().getUser()));
     }
     errors.add(INVALID_FIELDS);
-    return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+    return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
   }
 }

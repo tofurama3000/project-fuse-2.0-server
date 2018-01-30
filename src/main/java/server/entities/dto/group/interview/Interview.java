@@ -44,6 +44,9 @@ public class Interview {
   @Column(name = "cancelled")
   private boolean cancelled;
 
+  @Column(name = "code")
+  private String code;
+
   @ManyToOne
   @JoinColumn(name = "user_id", referencedColumnName = "id")
   private User user;
@@ -74,5 +77,10 @@ public class Interview {
 
   public String getEnd() {
     return endDateTime.toString() + "+00:00";
+  }
+
+  // Generate a unique, 256 character code
+  public void generateCode() {
+    code = java.util.UUID.randomUUID().toString();
   }
 }

@@ -1,7 +1,7 @@
 package framework;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static server.controllers.rest.response.GeneralResponse.Status.OK;
+import static server.controllers.rest.response.BaseResponse.Status.OK;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;

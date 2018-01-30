@@ -21,6 +21,7 @@ import server.entities.user_to_group.permissions.PermissionFactory;
 import server.entities.user_to_group.permissions.UserToGroupPermission;
 import server.entities.user_to_group.relationships.RelationshipFactory;
 import server.repositories.group.GroupApplicantRepository;
+import server.repositories.group.GroupInvitationRepository;
 import server.repositories.group.GroupMemberRepository;
 import server.repositories.group.GroupRepository;
 import server.repositories.group.team.TeamApplicantRepository;
@@ -39,7 +40,7 @@ import javax.servlet.http.HttpServletResponse;
 @ApiIgnore
 @SuppressWarnings("unused")
 @Deprecated
-public class TeamController extends GroupController<Team, TeamMember> {
+public class TeamController extends GroupController<Team, TeamMember, TeamInvitation> {
 
   @Autowired
   private FuseSessionController fuseSessionController;
@@ -115,8 +116,13 @@ public class TeamController extends GroupController<Team, TeamMember> {
   }
 
   @Override
-  protected GroupInvitation<Team> getInvitation() {
+  protected TeamInvitation getInvitation() {
     return new TeamInvitation();
+  }
+
+  @Override
+  protected GroupInvitationRepository<TeamInvitation> getGroupInvitationRepository() {
+    return teamInvitationRepository;
   }
 
   @Override
@@ -125,8 +131,8 @@ public class TeamController extends GroupController<Team, TeamMember> {
   }
 
   @Override
-  protected void saveInvitation(GroupInvitation<Team> invitation) {
-    teamInvitationRepository.save(((TeamInvitation) invitation));
+  protected void saveInvitation(TeamInvitation invitation) {
+    teamInvitationRepository.save(invitation);
   }
 
 }
