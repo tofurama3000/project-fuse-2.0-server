@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static server.controllers.rest.response.CannedResponse.Friend_FOUND;
@@ -30,6 +31,7 @@ import static server.controllers.rest.response.BaseResponse.Status.OK;
 @Controller
 @RequestMapping(value = "/friends")
 @Api(value = "Friend Endpoints")
+@SuppressWarnings("unused")
 public class FriendController {
   @Autowired
   private FuseSessionController fuseSessionController;
@@ -39,8 +41,7 @@ public class FriendController {
 
   @Autowired
   UserRepository userRepository;
-
-
+  
   @Autowired
   NotificationController notificationController;
 
@@ -159,7 +160,7 @@ public class FriendController {
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
   User sender =session.get().getUser();
-  if(sender.getId()==id){
+  if(Objects.equals(sender.getId(), id)){
     errors.add(INVALID_FIELDS);
     return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
   }

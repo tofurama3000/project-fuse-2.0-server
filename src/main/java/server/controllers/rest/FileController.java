@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.BaseResponse;
-import server.controllers.rest.response.GeneralResponse;
+import server.controllers.rest.response.TypedResponse;
 import server.entities.dto.FuseSession;
 import server.entities.dto.UploadFile;
 import server.entities.dto.User;
@@ -59,13 +59,13 @@ public class FileController {
   @ResponseBody
   @ApiOperation(value = "Uploads a new file",
       notes = "Max file size is 128KB")
-  public GeneralResponse fileUpload(@RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public TypedResponse<UploadFile> fileUpload(@RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
+      return new TypedResponse<>(response, BaseResponse.Status.DENIED, errors);
     }
     User currentUser = session.get().getUser();
     UploadFile uploadFile;
@@ -82,7 +82,7 @@ public class FileController {
         File fileToSave = new File(fileUploadPath, fileName);
         if (!fileToSave.createNewFile()) {
           errors.add("Unable to create file.");
-          return new GeneralResponse(response, ERROR, errors);
+          return new TypedResponse<>(response, ERROR, errors);
         }
         fileToUpload.transferTo(fileToSave);
         uploadFile.setHash(hash);
@@ -91,11 +91,11 @@ public class FileController {
         uploadFile.setFileName(fileToUpload.getOriginalFilename());
         uploadFile.setMime_type(fileToUpload.getContentType());
         uploadFile.setUser(currentUser);
-        return new GeneralResponse(response, OK, null, fileRepository.save(uploadFile));
+        return new TypedResponse<>(response, OK, null, fileRepository.save(uploadFile));
       }
     }
     errors.add("Invalid file, unable to save");
-    return new GeneralResponse(response, BAD_DATA, errors);
+    return new TypedResponse<>(response, BAD_DATA, errors);
   }
 
   @GetMapping(path = "/download/{id}")
