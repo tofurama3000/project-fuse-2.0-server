@@ -41,7 +41,7 @@ public class FriendController {
 
   @Autowired
   UserRepository userRepository;
-  
+
   @Autowired
   NotificationController notificationController;
 
