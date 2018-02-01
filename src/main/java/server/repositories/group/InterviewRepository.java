@@ -21,4 +21,5 @@ public interface InterviewRepository extends CrudRepository<Interview, Long> {
   List<Interview> getAllByUserGroupTypeGroup(@Param("user") User user,
                                              @Param("groupType") String type,
                                              @Param("groupId") Long groupId);
+
 }

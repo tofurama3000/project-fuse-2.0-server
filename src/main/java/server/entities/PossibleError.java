@@ -1,10 +1,10 @@
 package server.entities;
 
-import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
-import static server.controllers.rest.response.GeneralResponse.Status.OK;
+import static server.controllers.rest.response.BaseResponse.Status.BAD_DATA;
+import static server.controllers.rest.response.BaseResponse.Status.OK;
 
 import lombok.Getter;
-import server.controllers.rest.response.GeneralResponse.Status;
+import server.controllers.rest.response.BaseResponse.Status;
 
 import java.util.ArrayList;
 import java.util.List;
