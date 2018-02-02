@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
+import server.controllers.rest.response.TypedResponse;
 import server.entities.dto.FuseSession;
 import server.entities.dto.Notification;
 import server.entities.dto.User;
@@ -158,25 +159,38 @@ public class NotificationController<T extends Group> {
     return new GeneralResponse(response, OK);
   }
 
-  @GetMapping(path = "/{status}")
+  @GetMapping
   @ResponseBody
-  public GeneralResponse getNotifications(@PathVariable(value = "status") String status,HttpServletRequest request, HttpServletResponse response) {
+  public TypedResponse<List<Notification>> getAllNotifications(HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
+      return new TypedResponse<>(response, BaseResponse.Status.DENIED, errors);
     }
-    if(status.equals("all")){
-      return new GeneralResponse(response, OK, null, notificationRepository.getNotifications(session.get().getUser()));
+    return new TypedResponse<>(response, OK, null, notificationRepository.getNotifications(session.get().getUser()));
+  }
+
+  @GetMapping(path = "/{status}")
+  @ResponseBody
+  public TypedResponse<List<Notification>> getNotifications(@PathVariable(value = "status") String status,HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new TypedResponse<>(response, BaseResponse.Status.DENIED, errors);
     }
-    else  if(session.equals("read")){
-      return new GeneralResponse(response, OK, null, notificationRepository.getReadNotifications(session.get().getUser()));
+    FuseSession s = session.get();
+    switch (status) {
+      case "all":
+        return new TypedResponse<>(response, OK, null, notificationRepository.getNotifications(s.getUser()));
+      case "read":
+        return new TypedResponse<>(response, OK, null, notificationRepository.getReadNotifications(s.getUser()));
+      case "unread":
+        return new TypedResponse<>(response, OK, null, notificationRepository.getUnreadNotifications(s.getUser()));
+      default:
+        errors.add(INVALID_FIELDS);
+        return new TypedResponse<>(response, BaseResponse.Status.BAD_DATA, errors);
     }
-    else  if(session.equals("unread")){
-      return new GeneralResponse(response, OK, null, notificationRepository.getUnreadNotifications(session.get().getUser()));
-    }
-    errors.add(INVALID_FIELDS);
-    return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
   }
 }

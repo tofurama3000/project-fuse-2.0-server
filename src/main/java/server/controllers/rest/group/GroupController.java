@@ -277,13 +277,13 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     switch (getUserToGroupPermission(user, group).canJoin()) {
       case OK:
         addRelationship(user, group, DEFAULT_USER);
-        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " joined to " + group.getName(),
+        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " joined " + group.getName(),
             group.getGroupType() + ": joined",group.getId());
         return new GeneralResponse(response);
       case HAS_INVITE:
         addRelationship(user, group, DEFAULT_USER);
         removeRelationship(user, group, INVITED_TO_JOIN);
-        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " joined to " + group.getName(),
+        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " joined " + group.getName(),
             group.getGroupType() + ": joined",group.getId());
         return new GeneralResponse(response);
       case NEED_INVITE:

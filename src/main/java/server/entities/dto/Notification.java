@@ -31,16 +31,16 @@ public class Notification {
   @Column(name = "message")
   private String message;
 
-  @Column(name = "objectType")
+  @Column(name = "object_type")
   private String objectType;
 
-  @Column(name = "objectId")
-  private long objectId;
+  @Column(name = "object_id")
+  private Long objectId;
 
   @Column(name = "time")
   private LocalDateTime time;
 
-  @Column(name = "hasRead")
+  @Column(name = "has_read")
   private boolean hasRead;
 
   @Column(name = "deleted")
