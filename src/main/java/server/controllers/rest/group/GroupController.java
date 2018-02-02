@@ -665,7 +665,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @ResponseBody
   @ApiOperation(value = "Uploads a new thumbnail",
       notes = "Max file size is 128KB")
-  public GeneralResponse uploadThumbnail( @PathVariable(value = "id") Long id, @RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public BaseResponse uploadThumbnail( @PathVariable(value = "id") Long id, @RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -692,7 +692,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @ResponseBody
   @ApiOperation(value = "Uploads a new background",
       notes = "Max file size is 128KB")
-  public GeneralResponse uploadBackground( @PathVariable(value = "id") Long id,@RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public BaseResponse uploadBackground( @PathVariable(value = "id") Long id,@RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -718,39 +718,39 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @GetMapping(path = "/{id}/download/background")
   @ResponseBody
   @ApiOperation(value = "Download a background file")
-  public GeneralResponse downloadBackground(  @PathVariable(value = "id") Long id,HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public TypedResponse<Long> downloadBackground(  @PathVariable(value = "id") Long id,HttpServletRequest request, HttpServletResponse response) throws Exception {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
     }
    T group = getGroupRepository().findOne(id);
     long f_id = group.getProfile().getBackground_Id();
     if(f_id==0){
       errors.add(FILE_NOT_FOUND);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
     }
-    return new GeneralResponse(response, OK,null, f_id);
+    return new TypedResponse<>(response, OK,null, f_id);
   }
 
   @GetMapping(path = "/{id}/download/thumbnail")
   @ResponseBody
   @ApiOperation(value = "Download a background file")
-  public GeneralResponse downloadThumbnail(  @PathVariable(value = "id") Long id,HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public TypedResponse<Long> downloadThumbnail(  @PathVariable(value = "id") Long id,HttpServletRequest request, HttpServletResponse response) throws Exception {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
     }
     T group = getGroupRepository().findOne(id);
     long f_id = group.getProfile().getThumbnail_id();
     if(f_id==0){
       errors.add(FILE_NOT_FOUND);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
     }
-    return new GeneralResponse(response, OK,null, f_id);
+    return new TypedResponse(response, OK,null, f_id);
   }
 
   protected boolean validFieldsForCreate(T entity) {

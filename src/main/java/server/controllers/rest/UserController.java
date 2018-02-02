@@ -707,7 +707,7 @@ public class UserController {
   @ResponseBody
   @ApiOperation(value = "Uploads a new thumbnail",
       notes = "Max file size is 128KB")
-  public GeneralResponse uploadThumbnail(@RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public BaseResponse uploadThumbnail(@RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -740,7 +740,7 @@ public class UserController {
   @ResponseBody
   @ApiOperation(value = "Uploads a new background",
       notes = "Max file size is 128KB")
-  public GeneralResponse uploadBackground(@RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public BaseResponse uploadBackground(@RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -771,42 +771,42 @@ public class UserController {
   @GetMapping(path = "/download/background")
   @ResponseBody
   @ApiOperation(value = "Download a background file")
-  public GeneralResponse downloadBackground( HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public TypedResponse<Long> downloadBackground( HttpServletRequest request, HttpServletResponse response) throws Exception {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
     }
     User user = session.get().getUser();
     long id =user.getProfile().getBackground_Id();
     if(id==0){
     errors.add(FILE_NOT_FOUND);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
     }
 
-    return new GeneralResponse(response, OK,null,  id);
+    return new TypedResponse(response, OK,null,  id);
   }
 
 
   @GetMapping(path = "/download/thumbnail")
   @ResponseBody
   @ApiOperation(value = "Download a background file")
-  public GeneralResponse downloadThumbnail( HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public TypedResponse<Long> downloadThumbnail( HttpServletRequest request, HttpServletResponse response) throws Exception {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
     }
     User user = session.get().getUser();
 
     long id = user.getProfile().getThumbnail_id();
     if(id==0){
       errors.add(FILE_NOT_FOUND);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
     }
-    return new GeneralResponse(response, OK,null, id);
+    return new TypedResponse(response, OK,null, id);
   }
 
   @PostMapping(path = "/accept/invite/organization")
