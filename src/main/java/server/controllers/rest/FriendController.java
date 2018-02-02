@@ -23,7 +23,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static server.controllers.rest.response.CannedResponse.Friend_FOUND;
+
+import static server.controllers.rest.response.CannedResponse.FRIEND_FOUND;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import static server.controllers.rest.response.BaseResponse.Status.OK;
@@ -165,7 +166,7 @@ public class FriendController {
     return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
   }
   if (isFriend(sender,id)){
-    errors.add(Friend_FOUND);
+    errors.add(FRIEND_FOUND);
     return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
   }
     User receiver = userRepository.findOne(id);
