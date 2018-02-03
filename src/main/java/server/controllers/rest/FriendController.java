@@ -51,7 +51,7 @@ public class FriendController {
   @ResponseBody
   public TypedResponse<List<Friend>> getFriends(@ApiParam(value="The page of results to pull")
                                        @RequestParam(value = "page", required=false, defaultValue="0") int page,
-                                  @ApiParam(value="The number of results per page")
+                                                @ApiParam(value="The number of results per page")
                                        @RequestParam(value = "size", required=false, defaultValue="15") int pageSize,
                                   HttpServletRequest request,
                                   HttpServletResponse response) {
@@ -76,14 +76,26 @@ public class FriendController {
 
   @GetMapping(path = "/applicants")
   @ResponseBody
-  public TypedResponse<List<Friend>>  getFriendRequests(HttpServletRequest request, HttpServletResponse response) {
+  public TypedResponse<List<Friend>>  getFriendRequests(@ApiParam(value="The page of results to pull")
+                                                          @RequestParam(value = "page", required=false, defaultValue="0") int page,
+                                                        @ApiParam(value="The number of results per page")
+                                                          @RequestParam(value = "size", required=false, defaultValue="15") int pageSize,
+                                                        HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
       return new TypedResponse(response, BaseResponse.Status.DENIED, errors);
     }
-    return new TypedResponse<>(response, BaseResponse.Status.OK, null, friendRepository.getFriendApplicant(session.get().getUser()));
+    List<Friend> list =  friendRepository.getFriendApplicant(session.get().getUser());
+    List<Friend> returnList = new ArrayList<Friend>();
+    for(int i = page*pageSize; i<(page*pageSize)+pageSize;i++){
+      if(i>=list.size()){
+        break;
+      }
+      returnList.add(list.get(i));
+    }
+    return new TypedResponse<>(response, BaseResponse.Status.OK, null, returnList);
   }
 
   @CrossOrigin

@@ -475,7 +475,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       HttpServletRequest request, HttpServletResponse response) {
 
     List<User> list =  new ArrayList<>(getMembersOf(group));
-    List<User> returnList = new ArrayList<>(list);
+    List<User> returnList = new ArrayList<>();
     for(int i = page*pageSize; i<(page*pageSize)+pageSize;i++){
       if(i>=list.size()){
         break;
