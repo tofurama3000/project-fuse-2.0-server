@@ -1,12 +1,14 @@
 package server.controllers.rest;
 
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
+import server.controllers.rest.response.TypedResponse;
 import server.entities.PossibleError;
 import server.entities.dto.Friend;
 import server.entities.dto.FuseSession;
@@ -47,32 +49,47 @@ public class FriendController {
 
   @GetMapping
   @ResponseBody
-  public GeneralResponse getFriends(HttpServletRequest request, HttpServletResponse response) {
+  public TypedResponse<List<Friend>> getFriends(@ApiParam(value="The page of results to pull")
+                                       @RequestParam(value = "page", required=false, defaultValue="0") int page,
+                                  @ApiParam(value="The number of results per page")
+                                       @RequestParam(value = "size", required=false, defaultValue="15") int pageSize,
+                                  HttpServletRequest request,
+                                  HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
+      return new TypedResponse(response, BaseResponse.Status.DENIED, errors);
     }
-    return new GeneralResponse(response, BaseResponse.Status.OK, null, friendRepository.getFriends(session.get().getUser()));
+
+    List<Friend> list =  friendRepository.getFriends(session.get().getUser());
+    List<Friend> returnList = new ArrayList<Friend>();
+    for(int i = page*pageSize; i<(page*pageSize)+pageSize;i++){
+      if(i>=list.size()){
+        break;
+      }
+      returnList.add(list.get(i));
+    }
+
+    return new TypedResponse<>(response, BaseResponse.Status.OK, null,returnList);
   }
 
   @GetMapping(path = "/applicants")
   @ResponseBody
-  public GeneralResponse getFriendRequests(HttpServletRequest request, HttpServletResponse response) {
+  public TypedResponse<List<Friend>>  getFriendRequests(HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
+      return new TypedResponse(response, BaseResponse.Status.DENIED, errors);
     }
-    return new GeneralResponse(response, BaseResponse.Status.OK, null, friendRepository.getFriendApplicant(session.get().getUser()));
+    return new TypedResponse<>(response, BaseResponse.Status.OK, null, friendRepository.getFriendApplicant(session.get().getUser()));
   }
 
   @CrossOrigin
   @PutMapping(path = "/accept/{id}")
   @ResponseBody
-  public GeneralResponse acceptFriend(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
+  public BaseResponse acceptFriend(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -100,7 +117,7 @@ public class FriendController {
   @CrossOrigin
   @PutMapping(path = "/declined/{id}")
   @ResponseBody
-  public GeneralResponse declineFriend(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
+  public BaseResponse declineFriend(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -128,7 +145,7 @@ public class FriendController {
   @CrossOrigin
   @PutMapping(path = "/delete/{id}")
   @ResponseBody
-  public GeneralResponse deleteFriend(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
+  public BaseResponse deleteFriend(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -152,7 +169,7 @@ public class FriendController {
 
   @PostMapping(path = "/{id}")
   @ResponseBody
-  public GeneralResponse applyFriend(@PathVariable("id") Long id,  HttpServletRequest request, HttpServletResponse response) {
+  public BaseResponse applyFriend(@PathVariable("id") Long id,  HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {

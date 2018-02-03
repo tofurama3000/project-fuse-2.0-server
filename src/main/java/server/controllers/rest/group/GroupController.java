@@ -467,8 +467,23 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @ResponseBody
   public GeneralResponse getMembersOfGroup(
       @ApiParam("The id of the group to get the members for")
-      @PathVariable(value = "id") T group, HttpServletRequest request, HttpServletResponse response) {
-    return new GeneralResponse(response, OK, null, getMembersOf(group));
+      @PathVariable(value = "id") T group,
+      @ApiParam(value="The page of results to pull")
+      @RequestParam(value = "page", required=false, defaultValue="0") int page,
+      @ApiParam(value="The number of results per page")
+      @RequestParam(value = "size", required=false, defaultValue="15") int pageSize,
+      HttpServletRequest request, HttpServletResponse response) {
+
+    List<User> list =  new ArrayList<>(getMembersOf(group));
+    List<User> returnList = new ArrayList<>(list);
+    for(int i = page*pageSize; i<(page*pageSize)+pageSize;i++){
+      if(i>=list.size()){
+        break;
+      }
+      returnList.add(list.get(i));
+    }
+
+    return new GeneralResponse(response, BaseResponse.Status.OK, null,returnList);
   }
 
   @GetMapping
