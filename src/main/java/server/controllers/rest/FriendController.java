@@ -93,7 +93,11 @@ public class FriendController {
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     friend.setStatus("accepted");
-    notificationController.sendNotification(friend.getSender(),friend.getReceiver().getName() + " has accepted your friend request","Friend: accepted", friend.getId());
+    try {
+      notificationController.sendNotification(friend.getSender(),friend.getReceiver().getName() + " has accepted your friend request","Friend:Accepted", friend.getId());
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
     return new GeneralResponse(response, OK);
   }
 
@@ -121,7 +125,11 @@ public class FriendController {
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     friend.setStatus("declined");
-    notificationController.sendNotification(friend.getSender(),friend.getReceiver().getName() + " has declined your friend request","Friend: declined", friend.getId());
+    try {
+      notificationController.sendNotification(friend.getSender(),friend.getReceiver().getName() + " has declined your friend request","Friend:Declined", friend.getId());
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
     return new GeneralResponse(response, OK);
   }
 
@@ -174,7 +182,14 @@ public class FriendController {
     friend.setStatus("applied");
     friend.setReceiver(receiver);
     friend = friendRepository.save(friend);
-    notificationController.sendNotification(receiver,sender.getName() +" wants to be your friend!","Friend",friend.getId());
+    try {
+      notificationController.sendNotification(receiver,sender.getName() +" wants to be your friend!",
+              "Friend:Request",
+              sender.getId()
+      );
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
     return new GeneralResponse(response, OK);
   }
 

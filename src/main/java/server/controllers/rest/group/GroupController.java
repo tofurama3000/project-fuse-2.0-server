@@ -200,8 +200,12 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     getGroupApplicantRepository().save(application);
     Map<String, Object> result = new HashMap<>();
     result.put("applied", true);
-    notificationController.sendGroupNotificationToAdmins(group, session.get().getUser().getName() + " has applied to " + group.getName(),
-        group.getGroupType() + "Applicant",group.getId());
+    try {
+      notificationController.sendGroupNotificationToAdmins(group, session.get().getUser().getName() + " has applied to " + group.getName(),
+          group.getGroupType() + "Applicant",session.get().getUser().getId());
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
     return new GeneralResponse(response, BaseResponse.Status.OK, errors, result);
   }
 
@@ -277,14 +281,22 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     switch (getUserToGroupPermission(user, group).canJoin()) {
       case OK:
         addRelationship(user, group, DEFAULT_USER);
-        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " joined " + group.getName(),
-            group.getGroupType() + ": joined",group.getId());
+        try {
+          notificationController.sendGroupNotificationToAdmins(group, user.getName() + " joined " + group.getName(),
+              group.getGroupType() + ":Joined",group.getId());
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
         return new GeneralResponse(response);
       case HAS_INVITE:
         addRelationship(user, group, DEFAULT_USER);
         removeRelationship(user, group, INVITED_TO_JOIN);
-        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " joined " + group.getName(),
-            group.getGroupType() + ": joined",group.getId());
+        try {
+          notificationController.sendGroupNotificationToAdmins(group, user.getName() + " joined " + group.getName(),
+              group.getGroupType() + ":Joined",group.getId());
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
         return new GeneralResponse(response);
       case NEED_INVITE:
         // Apply if an invite is needed
@@ -364,7 +376,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
         break;
     }
 
-    notificationController.sendNotification(groupInvitation.getReceiver(), "You has invited to " + group.getName(),group.getName()+"Invitation",groupInvitation.getId());
+    try {
+      notificationController.sendNotification(groupInvitation.getReceiver(), "You have been invited to join " + group.getName(),group.getName()+"Invitation",groupInvitation.getId());
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
     return errors;
   }
 
@@ -583,8 +599,12 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     ZonedDateTime now = ZonedDateTime.now();
 
     if (status.equals("declined")) {
-      notificationController.sendNotification(applicantToSave.getSender(), applicantToSave.getGroup().getName() + "'s admin rejected your applicant",
-              applicantToSave.getGroup().getGroupType() + "Applicant: declined",applicantToSave.getId());
+      try {
+        notificationController.sendNotification(applicantToSave.getSender(), applicantToSave.getGroup().getName() + "'s admin rejected your application",
+                applicantToSave.getGroup().getGroupType() + "Applicant:Declined",applicantToSave.getId());
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
 
     if (!status.equals("interview_scheduled")) {
@@ -602,11 +622,15 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       invite.setStatus(PENDING);
       invite = getGroupInvitationRepository().save(invite);
 
-      notificationController.sendNotification(applicantToSave.getSender(),
-              applicantToSave.getGroup().getGroupType() + "Interview:Invite",
-              now.toString(),
-              invite.getId()
-      );
+      try {
+        notificationController.sendNotification(applicantToSave.getSender(),
+                "You have been invited to interview with " + applicantToSave.getGroup().getName() + "!",
+                applicantToSave.getGroup().getGroupType() + "Interview:Invite",
+                invite.getId()
+        );
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
 
     if (status.equals("invited")) {

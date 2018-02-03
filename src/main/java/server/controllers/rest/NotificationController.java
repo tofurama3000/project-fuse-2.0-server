@@ -18,7 +18,10 @@ import server.entities.dto.group.project.Project;
 import server.entities.dto.group.team.Team;
 import server.entities.user_to_group.permissions.UserToGroupPermission;
 import server.repositories.NotificationRepository;
+import server.repositories.UserRepository;
+import server.repositories.group.organization.OrganizationInvitationRepository;
 import server.repositories.group.organization.OrganizationMemberRepository;
+import server.repositories.group.project.ProjectInvitationRepository;
 import server.repositories.group.project.ProjectMemberRepository;
 import server.repositories.group.team.TeamMemberRepository;
 
@@ -26,6 +29,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static server.constants.RoleValue.ADMIN;
 import static server.constants.RoleValue.OWNER;
@@ -54,7 +58,19 @@ public class NotificationController<T extends Group> {
   @Autowired
   private OrganizationMemberRepository organizationMemberRepository;
 
-  public void sendNotification(User user, String message, String type, long id) {
+  @Autowired
+  private UserRepository userRepository;
+
+  @Autowired
+  private OrganizationInvitationRepository organizationInvitationRepository;
+
+  @Autowired
+  private ProjectInvitationRepository projectInvitationRepository;
+
+  public void sendNotification(User user, String message, String type, long id) throws Exception {
+    if (!Notification.isValidType(type)) {
+      throw new Exception("Invalid type '" + type + "'");
+    }
     Notification notification = new Notification();
     notification.setReceiver(user);
     notification.setMessage(message);
@@ -66,17 +82,10 @@ public class NotificationController<T extends Group> {
     notificationRepository.save(notification);
   }
 
-  public void sendNotification(User user, String message, String time, Long id) {
-    Notification notification = new Notification();
-    notification.setReceiver(user);
-    notification.setMessage(message);
-    notification.setHasRead(false);
-    notification.setTime(time);
-    notification.setId(id);
-    notificationRepository.save(notification);
-  }
-
-  public void sendGroupNotificationToAdmins(T group, String message, String objectType, long id) {
+  public void sendGroupNotificationToAdmins(T group, String message, String objectType, long id) throws Exception {
+    if (!Notification.isValidType(objectType)) {
+      throw new Exception("Invalid type '" + objectType + "'");
+    }
     String type = group.getGroupType();
     if (type.equals("Team")) {
       List<User> usersByGroup = teamMemberRepository.getUsersByGroup((Team) group);
@@ -130,7 +139,7 @@ public class NotificationController<T extends Group> {
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     Notification notification = notificationRepository.findOne(id);
-    if(notification.getReceiver().getId()!=session.get().getUser().getId()){
+    if(!Objects.equals(notification.getReceiver().getId(), session.get().getUser().getId())){
       errors.add(INSUFFICIENT_PRIVELAGES);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
@@ -168,7 +177,7 @@ public class NotificationController<T extends Group> {
       errors.add(INVALID_SESSION);
       return new TypedResponse<>(response, BaseResponse.Status.DENIED, errors);
     }
-    return new TypedResponse<>(response, OK, null, notificationRepository.getNotifications(session.get().getUser()));
+    return new TypedResponse<>(response, OK, null, populateNotifications(notificationRepository.getNotifications(session.get().getUser())));
   }
 
   @GetMapping(path = "/{status}")
@@ -183,14 +192,40 @@ public class NotificationController<T extends Group> {
     FuseSession s = session.get();
     switch (status) {
       case "all":
-        return new TypedResponse<>(response, OK, null, notificationRepository.getNotifications(s.getUser()));
+        return new TypedResponse<>(response, OK, null, populateNotifications(notificationRepository.getNotifications(s.getUser())));
       case "read":
-        return new TypedResponse<>(response, OK, null, notificationRepository.getReadNotifications(s.getUser()));
+        return new TypedResponse<>(response, OK, null, populateNotifications(notificationRepository.getReadNotifications(s.getUser())));
       case "unread":
-        return new TypedResponse<>(response, OK, null, notificationRepository.getUnreadNotifications(s.getUser()));
+        return new TypedResponse<>(response, OK, null, populateNotifications(notificationRepository.getUnreadNotifications(s.getUser())));
       default:
         errors.add(INVALID_FIELDS);
         return new TypedResponse<>(response, BaseResponse.Status.BAD_DATA, errors);
     }
+  }
+
+  private List<Notification> populateNotifications(List<Notification> notifications) {
+    return notifications.stream().map(
+        notification -> {
+          switch(notification.getObjectType()) {
+            case "OrganizationApplicant":
+            case "ProjectApplicant":
+              notification.setData(userRepository.findOne(notification.getObjectId()));
+              break;
+            case "ProjectInterview:Invite":
+            case "ProjectInvitation":
+              notification.setData(projectInvitationRepository.findOne(notification.getObjectId()));
+              break;
+            case "OrganizationInterview:Invite":
+            case "OrganizationInvitation":
+              notification.setData(organizationInvitationRepository.findOne(notification.getObjectId()));
+              break;
+            case "Friend:Accepted":
+            case "Friend:Request":
+              notification.setData(userRepository.findOne(notification.getObjectId()));
+              break;
+          }
+          return notification;
+        }
+    ).collect(Collectors.toList());
   }
 }

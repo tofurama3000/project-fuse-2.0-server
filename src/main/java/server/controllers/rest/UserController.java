@@ -655,8 +655,12 @@ public class UserController {
       teamInvitationRepository.save(savedInvitation);
     }
 
-    notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(),
-        "TeamInvitation: accepted",group.getId());
+    try {
+      notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(),
+          "TeamInvitation:Accepted",group.getId());
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
   }
 
@@ -703,8 +707,12 @@ public class UserController {
 
     }
 
-    notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(),
-        "ProjectInvitation: accepted",group.getId());
+    try {
+      notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(),
+          "ProjectInvitation:Accepted",group.getId());
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
   }
 
@@ -747,8 +755,12 @@ public class UserController {
       savedInvitation.setStatus(ACCEPTED);
       organizationInvitationRepository.save(savedInvitation);
     }
-    notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName()
-        ,"OrganizationInvitation: accepted",group.getId());
+    try {
+      notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName()
+          ,"OrganizationInvitation:Accepted",group.getId());
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
   }
 
