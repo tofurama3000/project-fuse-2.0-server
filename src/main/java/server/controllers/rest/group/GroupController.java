@@ -615,10 +615,12 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       }
       interviewRepository.save(interviews);
     } else {
+      T g = getGroupRepository().findOne(applicantToSave.getGroup().getId());
       I invite = getInvitation();
-      invite.setGroup(getGroupRepository().findOne(applicantToSave.getGroup().getId()));
+      invite.setGroup(g);
       invite.setReceiver(applicantToSave.getSender());
       invite.setType("interview");
+      setInviteFields(invite, session.get().getUser(), INVITED_TO_INTERVIEW, applicantToSave.getSender(), g);
       invite.setStatus(PENDING);
       invite = getGroupInvitationRepository().save(invite);
 

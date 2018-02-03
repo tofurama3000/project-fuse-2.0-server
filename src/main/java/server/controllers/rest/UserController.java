@@ -697,6 +697,7 @@ public class UserController {
     if (action.equalsIgnoreCase("decline")){
       savedInvitation.setStatus(DECLINED);
       projectInvitationRepository.save(savedInvitation);
+
       try {
         notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has declined invitation from " + group.getGroupType() + ": " + group.getName(),
                 "ProjectInvitation:Declined",group.getId());
@@ -710,23 +711,24 @@ public class UserController {
 
     UserToProjectRelationship userToTeamRelationship = relationshipFactory.createUserToProjectRelationship(user, group);
 
-    savedInvitation.setInterview(projectInvitation.getInterview());
+    if (projectInvitation.getInterview() != null) {
+      savedInvitation.setInterview(interviewRepository.findOne(projectInvitation.getInterview().getId()));
+    } else {
+      savedInvitation.setInterview(null);
+    }
+
     PossibleError possibleError = addRelationshipsIfNotError(savedInvitation, permission, userToTeamRelationship);
 
     if (!possibleError.hasError()) {
       savedInvitation.setStatus(ACCEPTED);
       projectInvitationRepository.save(savedInvitation);
-      ZonedDateTime now = ZonedDateTime.now();
-      DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-      String formatDateTime = now.format(formatter);
 
-    }
-
-    try {
-      notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(),
-          "ProjectInvitation:Accepted",group.getId());
-    } catch (Exception e) {
-      e.printStackTrace();
+      try {
+        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(),
+                "ProjectInvitation:Accepted",group.getId());
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
   }
@@ -783,12 +785,12 @@ public class UserController {
     if (!possibleError.hasError()) {
       savedInvitation.setStatus(ACCEPTED);
       organizationInvitationRepository.save(savedInvitation);
-    }
-    try {
-      notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName()
-          ,"OrganizationInvitation:Accepted",group.getId());
-    } catch (Exception e) {
-      e.printStackTrace();
+      try {
+        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName()
+                ,"OrganizationInvitation:Accepted",group.getId());
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
   }

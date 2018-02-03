@@ -67,6 +67,7 @@ public class Notification {
           "ProjectApplicant",
           "ProjectInvitation",
           "ProjectInterview:Invite",
+          "ProjectInvitation:Accepted",
           "OrganizationInterview:Invite",
           "OrganizationInvitation",
           "OrganizationApplicant",
