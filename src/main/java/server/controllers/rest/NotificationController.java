@@ -129,7 +129,7 @@ public class NotificationController<T extends Group> {
   }
 
   @CrossOrigin
-  @PutMapping(path = "/read/{id}")
+  @PutMapping(path = "/{id}/read")
   @ResponseBody
   public GeneralResponse readNotification(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
@@ -149,7 +149,7 @@ public class NotificationController<T extends Group> {
   }
 
   @CrossOrigin
-  @PutMapping(path = "/delete/{id}")
+  @PutMapping(path = "/{id}/delete")
   @ResponseBody
   public GeneralResponse deleteNotification(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
@@ -206,6 +206,9 @@ public class NotificationController<T extends Group> {
   private List<Notification> populateNotifications(List<Notification> notifications) {
     return notifications.stream().map(
         notification -> {
+          if (notification == null || notification.getObjectType() == null || notification.getObjectId() == null) {
+            return notification;
+          }
           switch(notification.getObjectType()) {
             case "OrganizationApplicant":
             case "ProjectApplicant":

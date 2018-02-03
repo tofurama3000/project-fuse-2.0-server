@@ -2,6 +2,7 @@ package server.controllers.rest;
 
 import static server.constants.Availability.NOT_AVAILABLE;
 import static server.constants.InvitationStatus.ACCEPTED;
+import static server.constants.InvitationStatus.DECLINED;
 import static server.constants.InvitationStatus.PENDING;
 import static server.constants.RegistrationStatus.REGISTERED;
 import static server.constants.RegistrationStatus.UNREGISTERED;
@@ -664,10 +665,12 @@ public class UserController {
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
   }
 
-  @PostMapping(path = "/accept/invite/project")
+  @PostMapping(path = "/{action}/invite/project")
   @ResponseBody
-  @ApiOperation(value = "Accept project invite")
+  @ApiOperation(value = "Accept or decline project invite")
   public BaseResponse acceptProjectInvite(
+      @ApiParam(value = "The action to perform", example = "accept,decline")
+      @PathVariable(value = "action") String action,
       @ApiParam(value = "The project invitation information to accept")
       @RequestBody ProjectInvitation projectInvitation, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
@@ -689,8 +692,20 @@ public class UserController {
       errors.add(INSUFFICIENT_PRIVELAGES);
       return new GeneralResponse(response, DENIED, errors);
     }
-
     Project group = savedInvitation.getGroup();
+
+    if (action.equalsIgnoreCase("decline")){
+      savedInvitation.setStatus(DECLINED);
+      projectInvitationRepository.save(savedInvitation);
+      try {
+        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has declined invitation from " + group.getGroupType() + ": " + group.getName(),
+                "ProjectInvitation:Declined",group.getId());
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+      return new GeneralResponse(response);
+    }
+
     UserToProjectPermission permission = permissionFactory.createUserToProjectPermission(user, group);
 
     UserToProjectRelationship userToTeamRelationship = relationshipFactory.createUserToProjectRelationship(user, group);
@@ -717,10 +732,12 @@ public class UserController {
   }
 
 
-  @PostMapping(path = "/accept/invite/organization")
+  @PostMapping(path = "/{action}/invite/organization")
   @ResponseBody
-  @ApiOperation(value = "Accept organization invite")
+  @ApiOperation(value = "Accept or decline organization invite")
   public BaseResponse acceptOrganizationInvite(
+        @ApiParam(value = "The action to perform", example = "accept,decline")
+        @PathVariable(value = "action") String action,
       @ApiParam(value = "The organization invitation information to accept")
       @RequestBody OrganizationInvitation organizationInvitation, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
@@ -744,6 +761,18 @@ public class UserController {
     }
 
     Organization group = savedInvitation.getGroup();
+
+    if (action.equalsIgnoreCase("decline")){
+      savedInvitation.setStatus(DECLINED);
+      organizationInvitationRepository.save(savedInvitation);
+      try {
+        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has declined invitation from " + group.getGroupType() + ": " + group.getName(),
+                "ProjectInvitation:Declined",group.getId());
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+      return new GeneralResponse(response);
+    }
     UserToOrganizationPermission permission = permissionFactory.createUserToOrganizationPermission(user, group);
 
     UserToOrganizationRelationship userToTeamRelationship = relationshipFactory.createUserToOrganizationRelationship(user, group);
