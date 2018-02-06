@@ -1,12 +1,10 @@
 package server.controllers.rest;
 
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
@@ -33,9 +31,12 @@ public class FeedController {
   NotificationRepository notificationRepository;
 
 
-  @GetMapping(path = "/{page}/{size}")
+  @GetMapping
   @ResponseBody
-  public GeneralResponse getFeed(@PathVariable(value = "page") int page, @PathVariable(value = "size") int size, HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse getFeed( @ApiParam(value="The page of results to pull")
+                                    @RequestParam(value = "page", required=false, defaultValue="0") int page,
+                                  @ApiParam(value="The number of results per page")
+                                    @RequestParam(value = "size", required=false, defaultValue="15") int pageSize, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -44,7 +45,7 @@ public class FeedController {
     }
     List<Notification> list = notificationRepository.getNotifications(session.get().getUser());
     List<Notification> returnList = new ArrayList<Notification>();
-    for(int i = page*size; i<(page*size)+size;i++){
+    for(int i = page*pageSize; i<(page*pageSize)+pageSize;i++){
       if(i>=list.size()){
         break;
       }

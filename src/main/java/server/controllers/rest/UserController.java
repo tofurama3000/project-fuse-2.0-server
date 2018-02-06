@@ -33,14 +33,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.AlternativeJdkIdGenerator;
 import org.springframework.util.IdGenerator;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import server.Application;
 import server.controllers.FuseSessionController;
 import server.controllers.MembersOfGroupController;
@@ -407,6 +400,10 @@ public class UserController {
   @ApiOperation(value = "Get all organizations for the specified user")
   public TypedResponse<List<Organization>> getAllOrganizationsOfUser(
       @PathVariable Long id,
+      @ApiParam(value="The page of results to pull")
+      @RequestParam(value = "page", required=false, defaultValue="0") int page,
+      @ApiParam(value="The number of results per page")
+      @RequestParam(value = "size", required=false, defaultValue="15") int pageSize,
       HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
@@ -417,7 +414,16 @@ public class UserController {
     }
     User user = userRepository.findOne(id);
 
-    return new TypedResponse<>(response, OK, null, membersOfGroupController.getOrganizationsUserIsPartOf(user));
+    List<Organization> list =  membersOfGroupController.getOrganizationsUserIsPartOf(user);
+    List<Organization> returnList = new ArrayList<Organization>();
+    for(int i = page*pageSize; i<(page*pageSize)+pageSize;i++){
+      if(i>=list.size()){
+        break;
+      }
+      returnList.add(list.get(i));
+    }
+
+    return new TypedResponse<>(response, OK, null,returnList);
   }
 
 
@@ -426,6 +432,10 @@ public class UserController {
   @ApiOperation(value = "Get all projects for the specified user")
   public TypedResponse<List<Project>> getAllProjectsOfUser(
       @PathVariable Long id,
+      @ApiParam(value="The page of results to pull")
+      @RequestParam(value = "page", required=false, defaultValue="0") int page,
+      @ApiParam(value="The number of results per page")
+      @RequestParam(value = "size", required=false, defaultValue="15") int pageSize,
       HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
@@ -442,7 +452,15 @@ public class UserController {
 
     User user = userRepository.findOne(id);
 
-    return new TypedResponse<>(response, OK, null, membersOfGroupController.getProjectsUserIsPartOf(user));
+    List<Project> list =  membersOfGroupController.getProjectsUserIsPartOf(user);
+    List<Project> returnList = new ArrayList<Project>();
+    for(int i = page*pageSize; i<(page*pageSize)+pageSize;i++){
+      if(i>=list.size()){
+        break;
+      }
+      returnList.add(list.get(i));
+    }
+    return new TypedResponse<>(response, OK, null, returnList);
   }
 
   @GetMapping(path = "/{id}/projects/applications")
