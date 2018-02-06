@@ -35,6 +35,7 @@ import server.controllers.rest.NotificationController;
 import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.CannedResponse;
 import server.controllers.rest.response.GeneralResponse;
+import server.controllers.rest.response.TypedResponse;
 import server.entities.PossibleError;
 import server.entities.dto.FuseSession;
 import server.entities.dto.GroupMember;
@@ -199,8 +200,12 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     getGroupApplicantRepository().save(application);
     Map<String, Object> result = new HashMap<>();
     result.put("applied", true);
-    notificationController.sendGroupNotificationToAdmins(group, session.get().getUser().getName() + " has applied to " + group.getName(),
-        group.getGroupType() + "Applicant",group.getId());
+    try {
+      notificationController.sendGroupNotificationToAdmins(group, session.get().getUser().getName() + " has applied to " + group.getName(),
+          group.getGroupType() + "Applicant",session.get().getUser().getId());
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
     return new GeneralResponse(response, BaseResponse.Status.OK, errors, result);
   }
 
@@ -276,14 +281,22 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     switch (getUserToGroupPermission(user, group).canJoin()) {
       case OK:
         addRelationship(user, group, DEFAULT_USER);
-        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " joined to " + group.getName(),
-            group.getGroupType() + ": joined",group.getId());
+        try {
+          notificationController.sendGroupNotificationToAdmins(group, user.getName() + " joined " + group.getName(),
+              group.getGroupType() + ":Joined",group.getId());
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
         return new GeneralResponse(response);
       case HAS_INVITE:
         addRelationship(user, group, DEFAULT_USER);
         removeRelationship(user, group, INVITED_TO_JOIN);
-        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " joined to " + group.getName(),
-            group.getGroupType() + ": joined",group.getId());
+        try {
+          notificationController.sendGroupNotificationToAdmins(group, user.getName() + " joined " + group.getName(),
+              group.getGroupType() + ":Joined",group.getId());
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
         return new GeneralResponse(response);
       case NEED_INVITE:
         // Apply if an invite is needed
@@ -363,7 +376,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
         break;
     }
 
-    notificationController.sendNotification(groupInvitation.getReceiver(), "You has invited to " + group.getName(),group.getName()+"Invitation",groupInvitation.getId());
+    try {
+      notificationController.sendNotification(groupInvitation.getReceiver(), "You have been invited to join " + group.getName(),group.getName()+"Invitation",groupInvitation.getId());
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
     return errors;
   }
 
@@ -381,10 +398,10 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   }
 
 
-  @ApiOperation("Add a new interview slot")
+  @ApiOperation(value="Add a new interview slot",notes="This creates a new interview slot that can be used when scheduling interviews.")
   @PostMapping(path = "/{id}/interview_slots/add")
   @ResponseBody
-  public GeneralResponse addInterviewSlots(
+  public BaseResponse addInterviewSlots(
       @ApiParam("The ID of the group to add the slot to")
       @PathVariable("id") long id,
       @ApiParam("An array of interview slots to add")
@@ -417,7 +434,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @ApiOperation("Returns the available interview slots")
   @GetMapping(path = "/{id}/interview_slots/available")
   @ResponseBody
-  public GeneralResponse getAvailableInterviews(
+  public TypedResponse<List<Interview>> getAvailableInterviews(
       @ApiParam("ID of the group to get the interview slots for")
       @PathVariable("id") long id, HttpServletRequest request, HttpServletResponse response) {
     Group group = getGroupRepository().findOne(id);
@@ -426,13 +443,13 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     List<Interview> availableInterviewsAfterDate =
         interviewRepository.getAvailableInterviewsAfterDate(id, group.getGroupType(), currentDateTime);
 
-    return new GeneralResponse(response, OK, new ArrayList<>(), availableInterviewsAfterDate);
+    return new TypedResponse<>(response, OK, new ArrayList<>(), availableInterviewsAfterDate);
   }
 
   @ApiOperation("Find a group by the name and/or owner email")
   @GetMapping(path = "/find", params = {"name", "email"})
   @ResponseBody
-  public GeneralResponse findByNameAndOwner(
+  public TypedResponse<T> findByNameAndOwner(
       @ApiParam("Name of the group to get")
       @RequestParam(value = "name") String name,
       @ApiParam("Email address of the owner")
@@ -445,7 +462,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     Optional<User> userOptional = userFindHelper.findUserByEmailIfIdNotSet(user);
     if (!userOptional.isPresent() || name == null) {
       errors.add(INVALID_FIELDS);
-      return new GeneralResponse(response, BAD_DATA, errors);
+      return new TypedResponse<>(response, BAD_DATA, errors);
     }
 
     T group = createGroup();
@@ -454,10 +471,10 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     List<T> matching = getGroupsWith(userOptional.get(), group);
     if (matching.size() == 0) {
       errors.add(CannedResponse.NO_GROUP_FOUND);
-      return new GeneralResponse(response, errors);
+      return new TypedResponse<>(response, errors);
     }
 
-    return new GeneralResponse(response, OK, null, matching.get(0));
+    return new TypedResponse<>(response, OK, null, matching.get(0));
   }
 
   protected abstract T createGroup();
@@ -579,38 +596,43 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     applicantToSave.setStatus(status);
     groupApplicantRepository.save(applicantToSave);
 
-    if (status.equals("accepted")) {
-
-      notificationController.sendNotification(applicantToSave.getSender(), applicantToSave.getGroup().getName() + "'s admin accepted your applicant",
-          applicantToSave.getGroup().getGroupType() + "Applicant: accepted",applicantToSave.getId());
-      addRelationship(applicantToSave.getSender(), (T) applicantToSave.getGroup(), DEFAULT_USER);
-    }
     ZonedDateTime now = ZonedDateTime.now();
 
     if (status.equals("declined")) {
-      notificationController.sendNotification(applicantToSave.getSender(), applicantToSave.getGroup().getName() + "'s admin rejected your applicant",
-              applicantToSave.getGroup().getGroupType() + "Applicant: declined",applicantToSave.getId());
+      try {
+        notificationController.sendNotification(applicantToSave.getSender(), applicantToSave.getGroup().getName() + "'s admin rejected your application",
+                applicantToSave.getGroup().getGroupType() + "Applicant:Declined",applicantToSave.getId());
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
 
     if (!status.equals("interview_scheduled")) {
-      List<Interview> interviews = interviewRepository.getAllByUserGroupTypeGroup(applicantToSave.getSender(), applicantToSave.getGroup().getGroupType(), applicantToSave.getGroup().getId());
+      List<Interview> interviews = interviewRepository.getAllByUserAndGroupTypeAndGroup(applicantToSave.getSender(), applicantToSave.getGroup().getGroupType(), applicantToSave.getGroup().getId());
       for(Interview interview : interviews) {
-        interview.setCancelled(true);
+        interview.setUser(null);
+        interview.setAvailability(AVAILABLE);
       }
       interviewRepository.save(interviews);
     } else {
+      T g = getGroupRepository().findOne(applicantToSave.getGroup().getId());
       I invite = getInvitation();
-      invite.setGroup(getGroupRepository().findOne(applicantToSave.getGroup().getId()));
+      invite.setGroup(g);
       invite.setReceiver(applicantToSave.getSender());
       invite.setType("interview");
+      setInviteFields(invite, session.get().getUser(), INVITED_TO_INTERVIEW, applicantToSave.getSender(), g);
       invite.setStatus(PENDING);
       invite = getGroupInvitationRepository().save(invite);
 
-      notificationController.sendNotification(applicantToSave.getSender(),
-              applicantToSave.getGroup().getGroupType() + "Interview:Invite",
-              now.toString(),
-              invite.getId()
-      );
+      try {
+        notificationController.sendNotification(applicantToSave.getSender(),
+                "You have been invited to interview with " + applicantToSave.getGroup().getName() + "!",
+                applicantToSave.getGroup().getGroupType() + "Interview:Invite",
+                invite.getId()
+        );
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
 
     if (status.equals("invited")) {

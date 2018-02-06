@@ -2,19 +2,16 @@ package server.entities.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import server.repositories.UserRepository;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 @Entity
 @Table(name = "notification")
@@ -31,20 +28,23 @@ public class Notification {
   @Column(name = "message")
   private String message;
 
-  @Column(name = "objectType")
+  @Column(name = "object_type")
   private String objectType;
 
-  @Column(name = "objectId")
-  private long objectId;
+  @Column(name = "object_id")
+  private Long objectId;
 
   @Column(name = "time")
   private LocalDateTime time;
 
-  @Column(name = "hasRead")
+  @Column(name = "has_read")
   private boolean hasRead;
 
   @Column(name = "deleted")
   private boolean deleted;
+
+  @Transient
+  private Object data;
 
   public void setTime(String dateTime) {
     ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateTime);
@@ -61,5 +61,21 @@ public class Notification {
       return time.toString() + "+00:00";
     }
     return "";
+  }
+
+  private static List<String> validTypes = Arrays.asList(
+          "ProjectApplicant",
+          "ProjectInvitation",
+          "ProjectInterview:Invite",
+          "ProjectInvitation:Accepted",
+          "OrganizationInterview:Invite",
+          "OrganizationInvitation",
+          "OrganizationApplicant",
+          "Friend:Request",
+          "Friend:Accepted"
+  );
+
+  public static boolean isValidType(String type) {
+    return validTypes.contains(type);
   }
 }

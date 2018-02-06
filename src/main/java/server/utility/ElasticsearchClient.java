@@ -75,7 +75,7 @@ public class ElasticsearchClient {
   }
 
   // Create an index request for an indexable document
-  private IndexRequest getIndexRequst(Indexable doc) {
+  private IndexRequest getIndexRequest(Indexable doc) {
     return new IndexRequest(doc.getEsIndex(), doc.getEsType(), doc.getEsId())
         .source(doc.getEsJson());
   }
@@ -111,13 +111,13 @@ public class ElasticsearchClient {
 
   // Perform a synchronous index of a document
   public DocWriteResponse index(Indexable doc) throws IOException {
-    IndexRequest req = getIndexRequst(doc);
-    return elasticsearch_client.index(getIndexRequst(doc));
+    IndexRequest req = getIndexRequest(doc);
+    return elasticsearch_client.index(getIndexRequest(doc));
   }
 
   // Perform an asynchronous index of a document
   public void indexAsync(Indexable doc) {
-    elasticsearch_client.indexAsync(getIndexRequst(doc), getDefaultAsyncHandler());
+    elasticsearch_client.indexAsync(getIndexRequest(doc), getDefaultAsyncHandler());
   }
 
   private static ElasticsearchClient inst = null;
