@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.BaseResponse;
+import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
 import server.entities.dto.FuseSession;
 import server.entities.dto.UploadFile;
@@ -127,5 +128,18 @@ public class FileController {
         .headers(headers)
         .contentLength(file.length())
         .contentType(MediaType.parseMediaType("application/octet-stream")).body(resource);
+  }
+
+  @GetMapping
+  @ResponseBody
+  public GeneralResponse getFiles(HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+    }
+
+    return new GeneralResponse(response, OK, null, fileRepository.getUploadFiles(session.get().getUser()));
   }
 }

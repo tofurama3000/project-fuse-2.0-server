@@ -7,19 +7,11 @@ import static server.constants.RoleValue.DEFAULT_USER;
 import static server.constants.RoleValue.INVITED_TO_INTERVIEW;
 import static server.constants.RoleValue.INVITED_TO_JOIN;
 import static server.constants.RoleValue.OWNER;
-import static server.controllers.rest.response.CannedResponse.ALREADY_JOINED_MSG;
-import static server.controllers.rest.response.CannedResponse.ALREADY_JOINED_OR_INVITED;
-import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
-import static server.controllers.rest.response.CannedResponse.INTERVIEW_NOT_AVAILABLE;
-import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
-import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS_FOR_CREATE;
-import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
-import static server.controllers.rest.response.CannedResponse.NO_GROUP_FOUND;
-import static server.controllers.rest.response.CannedResponse.SERVER_ERROR;
 import static server.controllers.rest.response.BaseResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.BaseResponse.Status.DENIED;
 import static server.controllers.rest.response.BaseResponse.Status.ERROR;
 import static server.controllers.rest.response.BaseResponse.Status.OK;
+import static server.controllers.rest.response.CannedResponse.*;
 import static server.utility.RolesUtility.getRoleFromInvitationType;
 
 import io.swagger.annotations.ApiOperation;
@@ -30,7 +22,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import server.controllers.FuseSessionController;
+import server.controllers.rest.FileController;
 import server.controllers.rest.NotificationController;
 import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.CannedResponse;
@@ -39,6 +33,7 @@ import server.controllers.rest.response.TypedResponse;
 import server.entities.PossibleError;
 import server.entities.dto.FuseSession;
 import server.entities.dto.GroupMember;
+import server.entities.dto.UploadFile;
 import server.entities.dto.User;
 import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupApplicant;
@@ -66,6 +61,9 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
 
   @Autowired
   protected UserRepository userRepository;
+
+  @Autowired
+  private FileController fileController;
 
   @Autowired
   private NotificationController notificationController;
@@ -698,6 +696,97 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     }
     return new GeneralResponse(response, BaseResponse.Status.OK);
 
+  }
+  @PostMapping(path = "/{id}/upload/thumbnail")
+  @ResponseBody
+  @ApiOperation(value = "Uploads a new thumbnail",
+      notes = "Max file size is 128KB")
+  public BaseResponse uploadThumbnail( @PathVariable(value = "id") Long id, @RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+    }
+
+    String fileType = fileToUpload.getContentType().split("/")[0];
+    if(!fileType.equals("image")){
+      return new GeneralResponse(response, BAD_DATA, errors);
+    }
+    TypedResponse<UploadFile> response1 = fileController.fileUpload(fileToUpload,request,response);
+    if(response1.getStatus()==DENIED){
+      return new GeneralResponse(response, response1.getStatus(), response1.getErrors());
+    }
+    UploadFile uploadFile = (UploadFile) response1.getData();
+    T group = getGroupRepository().findOne(id);
+    group.getProfile().setThumbnail_id(uploadFile.getId());
+    getGroupApplicantRepository().save(group.getProfile());
+    return new GeneralResponse(response, OK, errors);
+  }
+
+  @PostMapping(path = "/{id}/upload/background")
+  @ResponseBody
+  @ApiOperation(value = "Uploads a new background",
+      notes = "Max file size is 128KB")
+  public BaseResponse uploadBackground( @PathVariable(value = "id") Long id,@RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+    }
+
+    String fileType = fileToUpload.getContentType().split("/")[0];
+    if(!fileType.equals("image")){
+      return new GeneralResponse(response, BAD_DATA, errors);
+    }
+    TypedResponse<UploadFile>  response1 = fileController.fileUpload(fileToUpload,request,response);
+    if(response1.getStatus()==DENIED){
+      return new GeneralResponse(response, response1.getStatus(), response1.getErrors());
+    }
+    UploadFile uploadFile = (UploadFile) response1.getData();
+    T group = getGroupRepository().findOne(id);
+    group.getProfile().setBackground_Id(uploadFile.getId());
+    getGroupApplicantRepository().save(group.getProfile());
+    return new GeneralResponse(response, OK, errors);
+  }
+
+  @GetMapping(path = "/{id}/download/background")
+  @ResponseBody
+  @ApiOperation(value = "Download a background file")
+  public TypedResponse<Long> downloadBackground(  @PathVariable(value = "id") Long id,HttpServletRequest request, HttpServletResponse response) throws Exception {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
+    }
+   T group = getGroupRepository().findOne(id);
+    long f_id = group.getProfile().getBackground_Id();
+    if(f_id==0){
+      errors.add(FILE_NOT_FOUND);
+      return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
+    }
+    return new TypedResponse<>(response, OK,null, f_id);
+  }
+
+  @GetMapping(path = "/{id}/download/thumbnail")
+  @ResponseBody
+  @ApiOperation(value = "Download a background file")
+  public TypedResponse<Long> downloadThumbnail(  @PathVariable(value = "id") Long id,HttpServletRequest request, HttpServletResponse response) throws Exception {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
+    }
+    T group = getGroupRepository().findOne(id);
+    long f_id = group.getProfile().getThumbnail_id();
+    if(f_id==0){
+      errors.add(FILE_NOT_FOUND);
+      return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
+    }
+    return new TypedResponse(response, OK,null, f_id);
   }
 
   protected boolean validFieldsForCreate(T entity) {
