@@ -55,7 +55,7 @@ import java.util.Optional;
 
 @Controller
 @RequestMapping(value = "/organizations")
-@Api("Organizations")
+@Api(tags="Organizations")
 @Transactional
 @SuppressWarnings("unused")
 public class OrganizationController extends GroupController<Organization, OrganizationMember, OrganizationInvitation> {
