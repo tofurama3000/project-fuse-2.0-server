@@ -149,6 +149,26 @@ public class NotificationController<T extends Group> {
   }
 
   @CrossOrigin
+  @PutMapping(path = "/{id}/done")
+  @ResponseBody
+  public GeneralResponse actionDone(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
+    }
+    Notification notification = notificationRepository.findOne(id);
+    if(!Objects.equals(notification.getReceiver().getId(), session.get().getUser().getId())){
+      errors.add(INSUFFICIENT_PRIVELAGES);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
+    }
+    notification.setAction_done(true);
+    notificationRepository.save(notification);
+    return new GeneralResponse(response, OK);
+  }
+
+  @CrossOrigin
   @PutMapping(path = "/{id}/delete")
   @ResponseBody
   public GeneralResponse deleteNotification(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {

@@ -40,6 +40,9 @@ public class Notification {
   @Column(name = "has_read")
   private boolean hasRead;
 
+  @Column(name = "action_done")
+  private boolean action_done;
+
   @Column(name = "deleted")
   private boolean deleted;
 
