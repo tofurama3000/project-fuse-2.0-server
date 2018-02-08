@@ -21,8 +21,10 @@ import server.repositories.NotificationRepository;
 import server.repositories.UserRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
 import server.repositories.group.organization.OrganizationMemberRepository;
+import server.repositories.group.organization.OrganizationRepository;
 import server.repositories.group.project.ProjectInvitationRepository;
 import server.repositories.group.project.ProjectMemberRepository;
+import server.repositories.group.project.ProjectRepository;
 import server.repositories.group.team.TeamMemberRepository;
 
 import javax.servlet.http.HttpServletRequest;
@@ -54,6 +56,12 @@ public class NotificationController<T extends Group> {
 
   @Autowired
   private ProjectMemberRepository projectMemberRepository;
+
+  @Autowired
+  private ProjectRepository projectRepository;
+
+  @Autowired
+  private OrganizationRepository organizationRepository;
 
   @Autowired
   private OrganizationMemberRepository organizationMemberRepository;
@@ -209,10 +217,13 @@ public class NotificationController<T extends Group> {
           if (notification == null || notification.getObjectType() == null || notification.getObjectId() == null) {
             return notification;
           }
+          Map<String, Object> d = new HashMap<>();
           switch(notification.getObjectType()) {
             case "OrganizationApplicant":
+              notification.setData(organizationRepository.findOne(notification.getObjectId()));
+              break;
             case "ProjectApplicant":
-              notification.setData(userRepository.findOne(notification.getObjectId()));
+              notification.setData(projectRepository.findOne(notification.getObjectId()));
               break;
             case "ProjectInterview:Invite":
             case "ProjectInvitation":
