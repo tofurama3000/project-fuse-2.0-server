@@ -45,7 +45,7 @@ public class Interview {
   private boolean cancelled;
 
   @Column(name = "code")
-  private String code;
+  private String code = "";
 
   @ManyToOne
   @JoinColumn(name = "user_id", referencedColumnName = "id")
