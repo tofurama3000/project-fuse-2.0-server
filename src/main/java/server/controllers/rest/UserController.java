@@ -679,7 +679,7 @@ public class UserController {
 
     try {
       notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(),
-          "TeamInvitation:Accepted",group.getId());
+          "TeamInvitation","TeamInvitation:Accepted",group.getId());
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -721,7 +721,7 @@ public class UserController {
 
       try {
         notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has declined invitation from " + group.getGroupType() + ": " + group.getName(),
-                "ProjectInvitation:Declined",group.getId());
+            "ProjectInvitation","ProjectInvitation:Declined",group.getId());
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -746,7 +746,7 @@ public class UserController {
 
       try {
         notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(),
-                "ProjectInvitation:Accepted",group.getId());
+            "ProjectInvitation","ProjectInvitation:Accepted",group.getId());
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -895,7 +895,7 @@ public class UserController {
       organizationInvitationRepository.save(savedInvitation);
       try {
         notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has declined invitation from " + group.getGroupType() + ": " + group.getName(),
-                "ProjectInvitation:Declined",group.getId());
+            "OrganizationInvitation",  "OrganizationInvitation:Declined",group.getId());
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -913,7 +913,7 @@ public class UserController {
       organizationInvitationRepository.save(savedInvitation);
       try {
         notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName()
-                ,"OrganizationInvitation:Accepted",group.getId());
+                ,"OrganizationInvitation","OrganizationInvitation:Accepted",group.getId());
       } catch (Exception e) {
         e.printStackTrace();
       }

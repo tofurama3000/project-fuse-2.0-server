@@ -67,9 +67,9 @@ public class NotificationController<T extends Group> {
   @Autowired
   private ProjectInvitationRepository projectInvitationRepository;
 
-  public void sendNotification(User user, String message, String type, long id) throws Exception {
-    if (!Notification.isValidType(type)) {
-      throw new Exception("Invalid type '" + type + "'");
+  public void sendNotification(User user, String message, String notificationType, String dataType, long id) throws Exception {
+    if (!Notification.isValidType(dataType)) {
+      throw new Exception("Invalid type '" + dataType + "'");
     }
     Notification notification = new Notification();
     notification.setReceiver(user);
@@ -77,14 +77,15 @@ public class NotificationController<T extends Group> {
     notification.setHasRead(false);
     ZonedDateTime now = ZonedDateTime.now();
     notification.setTime(now.toString());
-    notification.setObjectType(type);
+    notification.setObjectType(notificationType);
+
     notification.setObjectId(id);
     notificationRepository.save(notification);
   }
 
-  public void sendGroupNotificationToAdmins(T group, String message, String objectType, long id) throws Exception {
-    if (!Notification.isValidType(objectType)) {
-      throw new Exception("Invalid type '" + objectType + "'");
+  public void sendGroupNotificationToAdmins(T group, String message,  String notificationType, String dataType,long id) throws Exception {
+    if (!Notification.isValidType(notificationType)) {
+      throw new Exception("Invalid type '" + notificationType + "'");
     }
     String type = group.getGroupType();
     if (type.equals("Team")) {
@@ -95,7 +96,7 @@ public class NotificationController<T extends Group> {
 
         for (int i : roleList) {
           if (i == ADMIN || i == OWNER) {
-            sendNotification(u, message, objectType,id);
+            sendNotification(u, message, notificationType,dataType,id);
             break;
           }
         }
@@ -108,7 +109,7 @@ public class NotificationController<T extends Group> {
         List<Integer> roleList = projectMemberRepository.getRoles((Project) group, u);
         for (int i : roleList) {
           if (i == ADMIN || i == OWNER) {
-            sendNotification(u, message,objectType,id);
+            sendNotification(u, message,notificationType,dataType,id);
             break;
           }
         }
@@ -120,7 +121,7 @@ public class NotificationController<T extends Group> {
         List<Integer> roleList = organizationMemberRepository.getRoles((Organization) group, u);
         for (int i : roleList) {
           if (i == ADMIN || i == OWNER) {
-            sendNotification(u, message,objectType,id);
+            sendNotification(u, message,notificationType,dataType,id);
             break;
           }
         }

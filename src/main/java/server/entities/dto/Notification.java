@@ -67,13 +67,27 @@ public class Notification {
   }
 
   private static List<String> validTypes = Arrays.asList(
-          "ProjectApplicant",
-          "ProjectInvitation",
           "ProjectInterview:Invite",
+          "ProjectInterview:Accepted",
+          "ProjectInterview:Declined",
+          "ProjectInterview:Cancelled",
+          "ProjectInvitation:Invite",
           "ProjectInvitation:Accepted",
+          "ProjectInvitation:Declined",
+          "ProjectApplicant",
+          "ProjectApplicant:Accepted",
+          "ProjectApplicant:Declined",
+
           "OrganizationInterview:Invite",
-          "OrganizationInvitation",
+          "OrganizationInterview:Accepted",
+          "OrganizationInterview:Declined",
+          "OrganizationInterview:Cancelled",
+          "OrganizationInvitation:Accepted",
+          "OrganizationInvitation:Invite",
+          "OrganizationInvitation:Declined",
           "OrganizationApplicant",
+          "OrganizationApplicant:Accepted",
+          "OrganizationApplicant:Declined",
           "Friend:Request",
           "Friend:Accepted"
   );
