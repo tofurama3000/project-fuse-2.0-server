@@ -5,7 +5,7 @@ import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNull;
 import static junit.framework.TestCase.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static server.controllers.rest.response.GeneralResponse.Status.OK;
+import static server.controllers.rest.response.BaseResponse.Status.OK;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import framework.JsonHelper;
 import framework.RequestHelper;

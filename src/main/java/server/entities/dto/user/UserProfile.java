@@ -34,6 +34,10 @@ public class UserProfile {
 
   private String skills;
 
+  private  long thumbnail_id;
+
+  private  long background_Id;
+
   public UserProfile merge(UserProfile original, UserProfile newUserProfile) {
     if (newUserProfile.getHeadline() != null) {
       original.setHeadline(newUserProfile.getHeadline());

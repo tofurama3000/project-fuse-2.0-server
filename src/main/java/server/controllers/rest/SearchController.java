@@ -5,7 +5,10 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
+import server.controllers.rest.response.TypedResponse;
+import server.entities.dto.PagedResults;
 import server.entities.dto.SearchParams;
 import server.entities.dto.user.User;
 import server.entities.dto.group.organization.Organization;
@@ -17,8 +20,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 
-import static server.controllers.rest.response.GeneralResponse.Status.BAD_DATA;
-import static server.controllers.rest.response.GeneralResponse.Status.OK;
+import static server.controllers.rest.response.BaseResponse.Status.BAD_DATA;
+import static server.controllers.rest.response.BaseResponse.Status.OK;
 
 /**
  * Created by tofurama on 12/23/17.
@@ -32,7 +35,7 @@ public class SearchController {
   @ApiOperation(value = "Searches all searchable entities")
   @PostMapping
   @ResponseBody
-  public GeneralResponse searchAll(
+  public TypedResponse<PagedResults> searchAll(
       @ApiParam(value = "The search query to use", required = true)
       @RequestBody SearchParams params,
       @ApiParam(value="The page of results to pull")
@@ -45,7 +48,7 @@ public class SearchController {
 
     if (params.getSearchString() == null) {
       errors.add("Missing search string");
-      return new GeneralResponse(response, BAD_DATA, errors);
+      return new TypedResponse<>(response, BAD_DATA, errors);
     }
 
     List<String> indices = params.getIndices();
@@ -56,24 +59,19 @@ public class SearchController {
       types = SearchParams.allTypes();
     }
 
-    return new GeneralResponse(
-        response,
-        OK,
-        errors,
-        doSearch(params,
-            response,
-            indices.stream().toArray(String[]::new),
-            types.stream().toArray(String[]::new),
-            page,
-            pageSize
-        )
-    );
+    return doSearch(params,
+          response,
+          indices.stream().toArray(String[]::new),
+          types.stream().toArray(String[]::new),
+          page,
+          pageSize
+      );
   }
 
   @ApiOperation(value = "Searches all users")
   @PostMapping("/users")
   @ResponseBody
-  public GeneralResponse searchUser(
+  public TypedResponse<PagedResults> searchUser(
       @ApiParam(value = "The search query to use", required = true)
       @RequestBody SearchParams params,
       @ApiParam(value="The page of results to pull")
@@ -94,7 +92,7 @@ public class SearchController {
   @ApiOperation(value = "Searches all projects")
   @PostMapping("/projects")
   @ResponseBody
-  public GeneralResponse searchProjects(
+  public TypedResponse<PagedResults> searchProjects(
       @ApiParam(value = "The search query to use", required = true)
       @RequestBody SearchParams params,
       @ApiParam(value="The page of results to pull")
@@ -114,7 +112,7 @@ public class SearchController {
   @ApiOperation(value = "Searches all organizations")
   @PostMapping("/organizations")
   @ResponseBody
-  public GeneralResponse searchOrganizations(
+  public TypedResponse<PagedResults> searchOrganizations(
       @ApiParam(value = "The search query to use", required = true)
       @RequestBody SearchParams params,
       @ApiParam(value="The page of results to pull")
@@ -131,17 +129,17 @@ public class SearchController {
     );
   }
 
-  private static <T> GeneralResponse doSearch(SearchParams params, HttpServletResponse response,
+  private static TypedResponse<PagedResults> doSearch(SearchParams params, HttpServletResponse response,
                                               String[] indices, String[] types, int page, int pageSize) {
     List<String> errors = new ArrayList<>();
 
     if (params.getSearchString() == null) {
       errors.add("Missing search string");
-      return new GeneralResponse(response, BAD_DATA, errors);
+      return new TypedResponse<>(response, BAD_DATA, errors);
     }
 
     try {
-      return new GeneralResponse(response, OK, errors,
+      return new TypedResponse<>(response, OK, errors,
               ElasticsearchClient.instance().searchSimpleQuery(
                       indices,
                       types,
@@ -151,7 +149,7 @@ public class SearchController {
       );
     } catch(NullPointerException e) {
       errors.add("Server error");
-      return new GeneralResponse(response, GeneralResponse.Status.ERROR,errors);
+      return new TypedResponse<>(response, BaseResponse.Status.ERROR,errors);
     }
   }
 }

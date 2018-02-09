@@ -1,12 +1,13 @@
 package server.controllers.rest.group;
 
-import static server.controllers.rest.response.GeneralResponse.Status.OK;
+import static server.controllers.rest.response.BaseResponse.Status.OK;
 import io.swagger.annotations.Api;
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.PossibleError;
 import server.entities.dto.user.User;
@@ -23,6 +24,7 @@ import server.entities.user_to_group.permissions.UserToGroupPermission;
 import server.entities.user_to_group.permissions.UserToOrganizationPermission;
 import server.entities.user_to_group.relationships.RelationshipFactory;
 import server.repositories.group.GroupApplicantRepository;
+import server.repositories.group.GroupInvitationRepository;
 import server.repositories.group.GroupMemberRepository;
 import server.repositories.group.GroupRepository;
 import server.repositories.group.project.ProjectApplicantRepository;
@@ -39,7 +41,7 @@ import java.util.List;
 @Transactional
 @Api("Projects")
 @SuppressWarnings("unused")
-public class ProjectController extends GroupController<Project, ProjectMember> {
+public class ProjectController extends GroupController<Project, ProjectMember, ProjectInvitation> {
 
   @Autowired
   private PermissionFactory permissionFactory;
@@ -111,8 +113,13 @@ public class ProjectController extends GroupController<Project, ProjectMember> {
   }
 
   @Override
-  protected GroupInvitation<Project> getInvitation() {
+  protected ProjectInvitation getInvitation() {
     return new ProjectInvitation();
+  }
+
+  @Override
+  protected GroupInvitationRepository<ProjectInvitation> getGroupInvitationRepository() {
+    return projectInvitationRepository;
   }
 
   @Override
@@ -125,7 +132,7 @@ public class ProjectController extends GroupController<Project, ProjectMember> {
       } else {
         List<String> errors = new ArrayList<>();
         errors.add("Do not have permission to add project to group");
-        return new PossibleError(errors, GeneralResponse.Status.DENIED);
+        return new PossibleError(errors, BaseResponse.Status.DENIED);
       }
     } else {
       return new PossibleError(OK);
@@ -133,7 +140,7 @@ public class ProjectController extends GroupController<Project, ProjectMember> {
   }
 
   @Override
-  protected void saveInvitation(GroupInvitation<Project> invitation) {
-    projectInvitationRepository.save(((ProjectInvitation) invitation));
+  protected void saveInvitation(ProjectInvitation invitation) {
+    projectInvitationRepository.save(invitation);
   }
 }
