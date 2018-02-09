@@ -1,23 +1,26 @@
 package server.controllers.rest;
 
+import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.FuseSession;
 import server.entities.dto.Notification;
 import server.repositories.NotificationRepository;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 
 @Controller
 @RequestMapping(value = "/feeds")

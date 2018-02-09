@@ -1,20 +1,31 @@
 package server.controllers.rest;
 
+import static server.constants.RoleValue.ADMIN;
+import static server.constants.RoleValue.OWNER;
+import static server.controllers.rest.response.BaseResponse.Status.OK;
+import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
+import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
+import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import io.swagger.annotations.Api;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
 import server.entities.dto.FuseSession;
 import server.entities.dto.Notification;
-import server.entities.dto.user.User;
 import server.entities.dto.group.Group;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
 import server.entities.dto.group.team.Team;
+import server.entities.dto.user.User;
 import server.repositories.NotificationRepository;
 import server.repositories.UserRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
@@ -28,15 +39,15 @@ import server.repositories.group.team.TeamMemberRepository;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
-
-import static server.constants.RoleValue.ADMIN;
-import static server.constants.RoleValue.OWNER;
-import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
-import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
-import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
-import static server.controllers.rest.response.BaseResponse.Status.OK;
 
 @Controller
 @RequestMapping(value = "/notifications")

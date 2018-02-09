@@ -1,5 +1,9 @@
 package server.controllers.rest;
 
+import static server.controllers.rest.response.BaseResponse.Status.BAD_DATA;
+import static server.controllers.rest.response.BaseResponse.Status.ERROR;
+import static server.controllers.rest.response.BaseResponse.Status.OK;
+import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import com.google.common.hash.Hashing;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -11,7 +15,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.BaseResponse;
@@ -34,11 +43,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
-import static server.controllers.rest.response.BaseResponse.Status.BAD_DATA;
-import static server.controllers.rest.response.BaseResponse.Status.ERROR;
-import static server.controllers.rest.response.BaseResponse.Status.OK;
 
 @Controller
 @RequestMapping(value = "/files")

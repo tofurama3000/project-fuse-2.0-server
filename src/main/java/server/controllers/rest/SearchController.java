@@ -1,27 +1,28 @@
 package server.controllers.rest;
 
+import static server.controllers.rest.response.BaseResponse.Status.BAD_DATA;
+import static server.controllers.rest.response.BaseResponse.Status.OK;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.rest.response.BaseResponse;
-import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
 import server.entities.dto.PagedResults;
 import server.entities.dto.SearchParams;
-import server.entities.dto.user.User;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
+import server.entities.dto.user.User;
 import server.utility.ElasticsearchClient;
 
 import javax.servlet.http.HttpServletResponse;
-
 import java.util.ArrayList;
 import java.util.List;
-
-import static server.controllers.rest.response.BaseResponse.Status.BAD_DATA;
-import static server.controllers.rest.response.BaseResponse.Status.OK;
 
 /**
  * Created by tofurama on 12/23/17.

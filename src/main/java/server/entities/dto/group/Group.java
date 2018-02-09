@@ -2,7 +2,6 @@ package server.entities.dto.group;
 
 import static server.entities.Restriction.INVITE;
 import static server.entities.Restriction.NONE;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import server.entities.BaseIndexable;
@@ -10,7 +9,14 @@ import server.entities.Interviewable;
 import server.entities.Restriction;
 import server.entities.dto.user.User;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.MappedSuperclass;
+import javax.persistence.Transient;
 import java.util.HashMap;
 import java.util.Map;
 

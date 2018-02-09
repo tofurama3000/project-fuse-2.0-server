@@ -1,7 +1,7 @@
 package server.entities.user_to_group.relationships;
 
-import server.entities.dto.user.User;
 import server.entities.dto.group.Group;
+import server.entities.dto.user.User;
 
 public abstract class UserToGroupRelationship<T extends Group> {
 

@@ -1,18 +1,27 @@
 package server.controllers.rest;
 
+import static server.controllers.rest.response.BaseResponse.Status.OK;
+import static server.controllers.rest.response.CannedResponse.FRIEND_FOUND;
+import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
+import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
-import server.entities.dto.user.Friend;
 import server.controllers.rest.response.TypedResponse;
-import server.entities.PossibleError;
-import server.entities.dto.Friend;
 import server.entities.dto.FuseSession;
+import server.entities.dto.user.Friend;
 import server.entities.dto.user.User;
 import server.repositories.FriendRepository;
 import server.repositories.UserRepository;
@@ -23,12 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-
-
-import static server.controllers.rest.response.CannedResponse.FRIEND_FOUND;
-import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
-import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
-import static server.controllers.rest.response.BaseResponse.Status.OK;
 
 @Controller
 @RequestMapping(value = "/friends")

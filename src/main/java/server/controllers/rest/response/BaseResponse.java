@@ -5,9 +5,6 @@ import lombok.Data;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
-/**
- * Created by TR on 1/30/2018.
- */
 @Data
 public abstract class BaseResponse {
 

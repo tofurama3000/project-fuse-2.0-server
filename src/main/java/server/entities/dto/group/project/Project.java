@@ -1,7 +1,6 @@
 package server.entities.dto.group.project;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -14,8 +13,6 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
-import java.util.HashMap;
-import java.util.Map;
 
 @ToString(exclude = "profile")
 @Entity

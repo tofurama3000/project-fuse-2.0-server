@@ -3,7 +3,6 @@ package server.controllers.rest.response;
 import lombok.Data;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
