@@ -144,6 +144,6 @@ public class FileController {
       return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
     }
 
-    return new GeneralResponse(response, OK, null, fileRepository.getUploadFiles(session.get().getUser()));
+    return new GeneralResponse(response, OK, null, fileRepository.getUploadedFiles(session.get().getUser()));
   }
 }

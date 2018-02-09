@@ -112,7 +112,7 @@ public class NotificationController<T extends Group> {
 
         for (int i : roleList) {
           if (i == ADMIN || i == OWNER) {
-            sendNotification(u, message, objectType,id);
+            sendNotification(u, message, objectType, id);
             break;
           }
         }
@@ -121,11 +121,11 @@ public class NotificationController<T extends Group> {
     } else if (type.equals("Project")) {
       List<User> usersByGroup = projectMemberRepository.getUsersByGroup((Project) group);
       Set<User> s = new HashSet<>(usersByGroup);
-      for (User u : s) {
-        List<Integer> roleList = projectMemberRepository.getRoles((Project) group, u);
+      for (User user : s) {
+        List<Integer> roleList = projectMemberRepository.getRoles((Project) group, user);
         for (int i : roleList) {
           if (i == ADMIN || i == OWNER) {
-            sendNotification(u, message,objectType,id);
+            sendNotification(user, message, objectType, id);
             break;
           }
         }
@@ -133,11 +133,11 @@ public class NotificationController<T extends Group> {
     } else if (type.equals("Organization")) {
       List<User> usersByGroup = organizationMemberRepository.getUsersByGroup((Organization) group);
       Set<User> s = new HashSet<>(usersByGroup);
-      for (User u : s) {
-        List<Integer> roleList = organizationMemberRepository.getRoles((Organization) group, u);
+      for (User user : s) {
+        List<Integer> roleList = organizationMemberRepository.getRoles((Organization) group, user);
         for (int i : roleList) {
           if (i == ADMIN || i == OWNER) {
-            sendNotification(u, message,objectType,id);
+            sendNotification(user, message, objectType, id);
             break;
           }
         }
@@ -156,7 +156,7 @@ public class NotificationController<T extends Group> {
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     Notification notification = notificationRepository.findOne(id);
-    if(!Objects.equals(notification.getReceiver().getId(), session.get().getUser().getId())){
+    if (!Objects.equals(notification.getReceiver().getId(), session.get().getUser().getId())) {
       errors.add(INSUFFICIENT_PRIVELAGES);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
@@ -176,7 +176,7 @@ public class NotificationController<T extends Group> {
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     Notification notification = notificationRepository.findOne(id);
-    if(notification.getReceiver().getId()!=session.get().getUser().getId()){
+    if (notification.getReceiver().getId() != session.get().getUser().getId()) {
       errors.add(INSUFFICIENT_PRIVELAGES);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
@@ -199,7 +199,7 @@ public class NotificationController<T extends Group> {
 
   @GetMapping(path = "/{status}")
   @ResponseBody
-  public TypedResponse<List<Notification>> getNotifications(@PathVariable(value = "status") String status,HttpServletRequest request, HttpServletResponse response) {
+  public TypedResponse<List<Notification>> getNotifications(@PathVariable(value = "status") String status, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -227,7 +227,7 @@ public class NotificationController<T extends Group> {
             return notification;
           }
           Map<String, Object> d = new HashMap<>();
-          switch(notification.getObjectType()) {
+          switch (notification.getObjectType()) {
             case "OrganizationApplicant":
               notification.setData(organizationRepository.findOne(notification.getObjectId()));
               break;

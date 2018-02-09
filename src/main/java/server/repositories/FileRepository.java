@@ -10,5 +10,5 @@ import java.util.List;
 
 public interface FileRepository extends CrudRepository<UploadFile, Long> {
   @Query("FROM UploadFile a where a.user = :user")
-  List<UploadFile> getUploadFiles(@Param("user") User user);
+  List<UploadFile> getUploadedFiles(@Param("user") User user);
 }
