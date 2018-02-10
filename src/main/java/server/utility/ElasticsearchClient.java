@@ -25,9 +25,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-/**
- * Created by tofurama on 12/16/17.
- */
 public class ElasticsearchClient {
   private static String use_elasticsearch = "true";
 

@@ -13,6 +13,7 @@ import javax.persistence.Table;
 @ToString(exclude = "profile")
 @Entity
 @Table(name = "team")
+@Deprecated
 public class Team extends Group<TeamProfile> {
 
   @JoinColumn(name = "id", referencedColumnName = "group_id")

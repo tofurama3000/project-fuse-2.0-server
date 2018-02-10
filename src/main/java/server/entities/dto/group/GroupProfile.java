@@ -1,7 +1,10 @@
 package server.entities.dto.group;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -20,9 +23,9 @@ public abstract class GroupProfile<T extends Group> {
 
   private String summary;
 
-  private  long thumbnail_id;
+  private long thumbnail_id;
 
-  private  long background_Id;
+  private long background_Id;
 
   @JsonIgnore
   public abstract T getGroup();

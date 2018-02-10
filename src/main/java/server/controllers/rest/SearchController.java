@@ -24,9 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by tofurama on 12/23/17.
- */
+
 @Controller
 @RequestMapping(value = "/search")
 @Api(tags = "Search")

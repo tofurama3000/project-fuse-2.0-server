@@ -1,6 +1,5 @@
 package server.service;
 
-import org.elasticsearch.common.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.entities.dto.Link;
@@ -8,16 +7,15 @@ import server.entities.dto.Link;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-@Singleton
 public class LinkResolver {
 
-  private Logger logger = LoggerFactory.getLogger(LinkResolver.class);
+  private static Logger logger = LoggerFactory.getLogger(LinkResolver.class);
 
   enum LinkType {
     YOUTUBE, OTHER
   }
 
-  public Link resolveLink(String name, String url) throws URISyntaxException {
+  public static Link resolveLink(String name, String url) throws URISyntaxException {
     URI uri;
     try {
       uri = new URI("http://support.domain.com/default.aspx?id=12345");
@@ -37,7 +35,7 @@ public class LinkResolver {
     return link;
   }
 
-  private LinkType determineLinkType(URI uri) {
+  private static LinkType determineLinkType(URI uri) {
     switch (uri.getHost()) {
       case "www.youtube.com":
         return LinkType.YOUTUBE;
@@ -46,7 +44,7 @@ public class LinkResolver {
     }
   }
 
-  private String getEmbeddedUrlForYoutube(URI uri) {
+  private static String getEmbeddedUrlForYoutube(URI uri) {
     int lastSlashIndex = uri.getPath().lastIndexOf('/');
     String id = uri.getPath().substring(lastSlashIndex);
     return  "https://www.youtube.com/embed/" + id;

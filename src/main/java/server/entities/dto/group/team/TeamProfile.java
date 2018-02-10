@@ -2,6 +2,7 @@ package server.entities.dto.group.team;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.Data;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import server.entities.dto.group.GroupProfile;
 
 import javax.persistence.Entity;
@@ -13,13 +14,13 @@ import javax.persistence.Transient;
 @Data
 @Entity
 @Table(name = "team_profile")
+@Deprecated
 public class TeamProfile extends GroupProfile<Team> {
 
   @OneToOne
   @JsonBackReference
   @JoinColumn(name = "team_id", referencedColumnName = "id")
   private Team team;
-
 
   @Override
   @Transient
@@ -32,6 +33,4 @@ public class TeamProfile extends GroupProfile<Team> {
   public void setGroup(Team group) {
     team = group;
   }
-
-
 }

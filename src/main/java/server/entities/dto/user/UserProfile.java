@@ -2,16 +2,25 @@ package server.entities.dto.user;
 
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.Setter;
 import lombok.ToString;
+import server.entities.dto.Link;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinColumns;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @ToString(exclude = "user")
 @Entity
@@ -33,6 +42,19 @@ public class UserProfile {
   private String summary;
 
   private String skills;
+
+  @Setter(AccessLevel.NONE)
+  @JsonIgnore
+  @Transient
+  private String profileType = "User";
+
+  @OneToMany
+  @JoinColumn(updatable=false,insertable=false, referencedColumnName="user_id", name="referenced_id")
+  private List<Link> links;
+
+  private List<Link> getLinks() {
+    return links.stream().filter(link -> link.getReferencedType().equals("User")).collect(Collectors.toList());
+  }
 
   private  long thumbnail_id;
 
