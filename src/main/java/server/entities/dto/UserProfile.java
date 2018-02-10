@@ -34,9 +34,9 @@ public class UserProfile {
 
   private String skills;
 
-  private  long thumbnail_id;
+  private  Long thumbnail_id;
 
-  private  long background_Id;
+  private  Long background_Id;
 
   public UserProfile merge(UserProfile original, UserProfile newUserProfile) {
     if (newUserProfile.getHeadline() != null) {
