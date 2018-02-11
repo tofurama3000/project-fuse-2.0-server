@@ -64,8 +64,8 @@ public class LinkController {
 
     Link resolvedLink;
     try {
-      resolvedLink = LinkResolver.resolveLink(link.getName(), link.getLink());
-    } catch (URISyntaxException e) {
+      resolvedLink = LinkResolver.resolveLink(link);
+    } catch (Exception e) {
       return new TypedResponse<>(response, BaseResponse.Status.ERROR, "Malformed Link");
     }
 
@@ -100,12 +100,12 @@ public class LinkController {
             .filter(organization -> permissionFactory.createUserToOrganizationPermission(sessionUser, organization)
                 .canUpdate()).isPresent();
       case "Project":
-        Optional<Project> projectOptional = entityFinder.findEntity(link.getId(), Project.class);
+        Optional<Project> projectOptional = entityFinder.findEntity(link.getReferencedId(), Project.class);
         return projectOptional
             .filter(project -> permissionFactory.createUserToProjectPermission(sessionUser, project)
                 .canUpdate()).isPresent();
       case "User":
-        Optional<User> userOptional = entityFinder.findEntity(link.getId(), User.class);
+        Optional<User> userOptional = entityFinder.findEntity(link.getReferencedId(), User.class);
         return userOptional
             .filter(user -> user.getId().equals(sessionUser.getId())).isPresent();
       default:

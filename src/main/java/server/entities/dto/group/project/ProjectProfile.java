@@ -27,10 +27,13 @@ public class ProjectProfile extends GroupProfile<Project> {
   private Project project;
 
   @OneToMany
-  @JoinColumn(updatable=false,insertable=false, name="referenced_id", referencedColumnName="project_id")
+  @JoinColumn(name="referenced_id", referencedColumnName="id")
   private List<Link> links;
 
   private List<Link> getLinks() {
+    if (links == null) {
+      return links;
+    }
     return links.stream().filter(link -> link.getReferencedType().equals(groupType)).collect(Collectors.toList());
   }
 

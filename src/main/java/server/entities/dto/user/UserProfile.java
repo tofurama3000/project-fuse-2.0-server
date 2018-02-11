@@ -49,10 +49,13 @@ public class UserProfile {
   private String profileType = "User";
 
   @OneToMany
-  @JoinColumn(updatable=false,insertable=false, referencedColumnName="user_id", name="referenced_id")
+  @JoinColumn(name="referenced_id", referencedColumnName="user_id")
   private List<Link> links;
 
   private List<Link> getLinks() {
+    if (links == null) {
+      return links;
+    }
     return links.stream().filter(link -> link.getReferencedType().equals("User")).collect(Collectors.toList());
   }
 

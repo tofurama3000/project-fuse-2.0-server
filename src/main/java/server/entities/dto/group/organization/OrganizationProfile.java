@@ -4,6 +4,7 @@ package server.entities.dto.group.organization;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import org.hibernate.annotations.Filter;
 import server.entities.dto.Link;
 import server.entities.dto.group.GroupProfile;
 
@@ -28,12 +29,20 @@ public class OrganizationProfile extends GroupProfile<Organization> {
   private Organization organization;
 
   @OneToMany
-  @JoinColumn(updatable=false,insertable=false, referencedColumnName="organization_id", name="referenced_id")
+  @JoinColumn(name="referenced_id",  referencedColumnName="id")
   private List<Link> links;
 
-  private List<Link> getLinks() {
+  public List<Link> getLinks() {
+    if (links == null) {
+      return links;
+    }
     return links.stream().filter(link -> link.getReferencedType().equals(groupType)).collect(Collectors.toList());
   }
+
+
+  //public void setLinks(List<Link> links) {
+  //  this.links = links
+  //}
 
   @JsonIgnore
   @Transient
