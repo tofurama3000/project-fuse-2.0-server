@@ -63,7 +63,7 @@ public class LinkResolver {
   private static String getEmbeddedUrlForYoutube(URI uri) {
     int firstVEquals = uri.getQuery().indexOf("v=");
     String id = uri.getQuery().substring(firstVEquals + 2);
-    return  "https://www.youtube.com/embed/" + id;
+    return "https://www.youtube.com/embed/" + id;
   }
 
   private static boolean linkHasValidFieldsSet(Link link) {

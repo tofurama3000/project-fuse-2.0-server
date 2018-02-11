@@ -1,7 +1,6 @@
 package server.entities.dto;
 
 import lombok.Data;
-import server.service.LinkResolver;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

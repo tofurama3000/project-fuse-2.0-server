@@ -414,10 +414,10 @@ public class UserController {
   @ApiOperation(value = "Get all organizations for the specified user")
   public TypedResponse<List<Organization>> getAllOrganizationsOfUser(
       @PathVariable Long id,
-      @ApiParam(value="The page of results to pull")
-      @RequestParam(value = "page", required=false, defaultValue="0") int page,
-      @ApiParam(value="The number of results per page")
-      @RequestParam(value = "size", required=false, defaultValue="15") int pageSize,
+      @ApiParam(value = "The page of results to pull")
+      @RequestParam(value = "page", required = false, defaultValue = "0") int page,
+      @ApiParam(value = "The number of results per page")
+      @RequestParam(value = "size", required = false, defaultValue = "15") int pageSize,
       HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
@@ -428,16 +428,16 @@ public class UserController {
     }
     User user = userRepository.findOne(id);
 
-    List<Organization> list =  membersOfGroupController.getOrganizationsUserIsPartOf(user);
+    List<Organization> list = membersOfGroupController.getOrganizationsUserIsPartOf(user);
     List<Organization> returnList = new ArrayList<Organization>();
-    for(int i = page*pageSize; i<(page*pageSize)+pageSize;i++){
-      if(i>=list.size()){
+    for (int i = page * pageSize; i < (page * pageSize) + pageSize; i++) {
+      if (i >= list.size()) {
         break;
       }
       returnList.add(list.get(i));
     }
 
-    return new TypedResponse<>(response, OK, null,returnList);
+    return new TypedResponse<>(response, OK, null, returnList);
   }
 
 
@@ -446,10 +446,10 @@ public class UserController {
   @ApiOperation(value = "Get all projects for the specified user")
   public TypedResponse<List<Project>> getAllProjectsOfUser(
       @PathVariable Long id,
-      @ApiParam(value="The page of results to pull")
-      @RequestParam(value = "page", required=false, defaultValue="0") int page,
-      @ApiParam(value="The number of results per page")
-      @RequestParam(value = "size", required=false, defaultValue="15") int pageSize,
+      @ApiParam(value = "The page of results to pull")
+      @RequestParam(value = "page", required = false, defaultValue = "0") int page,
+      @ApiParam(value = "The number of results per page")
+      @RequestParam(value = "size", required = false, defaultValue = "15") int pageSize,
       HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
@@ -466,10 +466,10 @@ public class UserController {
 
     User user = userRepository.findOne(id);
 
-    List<Project> list =  membersOfGroupController.getProjectsUserIsPartOf(user);
+    List<Project> list = membersOfGroupController.getProjectsUserIsPartOf(user);
     List<Project> returnList = new ArrayList<Project>();
-    for(int i = page*pageSize; i<(page*pageSize)+pageSize;i++){
-      if(i>=list.size()){
+    for (int i = page * pageSize; i < (page * pageSize) + pageSize; i++) {
+      if (i >= list.size()) {
         break;
       }
       returnList.add(list.get(i));
@@ -690,7 +690,7 @@ public class UserController {
 
     try {
       notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(),
-          "TeamInvitation:Accepted",group.getId());
+          "TeamInvitation:Accepted", group.getId());
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -726,13 +726,13 @@ public class UserController {
     }
     Project group = savedInvitation.getGroup();
 
-    if (action.equalsIgnoreCase("decline")){
+    if (action.equalsIgnoreCase("decline")) {
       savedInvitation.setStatus(DECLINED);
       projectInvitationRepository.save(savedInvitation);
 
       try {
         notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has declined invitation from " + group.getGroupType() + ": " + group.getName(),
-                "ProjectInvitation:Declined",group.getId());
+            "ProjectInvitation:Declined", group.getId());
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -757,7 +757,7 @@ public class UserController {
 
       try {
         notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(),
-                "ProjectInvitation:Accepted",group.getId());
+            "ProjectInvitation:Accepted", group.getId());
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -778,17 +778,17 @@ public class UserController {
     }
 
     String fileType = fileToUpload.getContentType().split("/")[0];
-    if(!fileType.equals("image")){
+    if (!fileType.equals("image")) {
       return new GeneralResponse(response, BAD_DATA, errors);
     }
-    TypedResponse<UploadFile> response1 = fileController.fileUpload(fileToUpload,request,response);
-    if(response1.getStatus()==DENIED){
+    TypedResponse<UploadFile> response1 = fileController.fileUpload(fileToUpload, request, response);
+    if (response1.getStatus() == DENIED) {
       return new GeneralResponse(response, response1.getStatus(), response1.getErrors());
     }
     UploadFile uploadFile = (UploadFile) response1.getData();
     User user = session.get().getUser();
-    UserProfile profile =  user.getProfile();
-    if(profile==null){
+    UserProfile profile = user.getProfile();
+    if (profile == null) {
       profile = new UserProfile();
       user.setProfile(profile);
     }
@@ -811,17 +811,17 @@ public class UserController {
     }
 
     String fileType = fileToUpload.getContentType().split("/")[0];
-    if(!fileType.equals("image")){
+    if (!fileType.equals("image")) {
       return new GeneralResponse(response, BAD_DATA, errors);
     }
-    TypedResponse<UploadFile> response1 = fileController.fileUpload(fileToUpload,request,response);
-    if(response1.getStatus()==DENIED){
+    TypedResponse<UploadFile> response1 = fileController.fileUpload(fileToUpload, request, response);
+    if (response1.getStatus() == DENIED) {
       return new GeneralResponse(response, response1.getStatus(), response1.getErrors());
     }
     UploadFile uploadFile = (UploadFile) response1.getData();
     User user = session.get().getUser();
-    UserProfile profile =  user.getProfile();
-    if(profile==null){
+    UserProfile profile = user.getProfile();
+    if (profile == null) {
       profile = new UserProfile();
       user.setProfile(profile);
     }
@@ -833,7 +833,7 @@ public class UserController {
   @GetMapping(path = "/download/background")
   @ResponseBody
   @ApiOperation(value = "Download a background file")
-  public TypedResponse<Long> downloadBackground( HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public TypedResponse<Long> downloadBackground(HttpServletRequest request, HttpServletResponse response) throws Exception {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -841,20 +841,20 @@ public class UserController {
       return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
     }
     User user = session.get().getUser();
-    long id =user.getProfile().getBackground_Id();
-    if(id==0){
-    errors.add(FILE_NOT_FOUND);
+    long id = user.getProfile().getBackground_Id();
+    if (id == 0) {
+      errors.add(FILE_NOT_FOUND);
       return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
     }
 
-    return new TypedResponse(response, OK,null,  id);
+    return new TypedResponse(response, OK, null, id);
   }
 
 
   @GetMapping(path = "/download/thumbnail")
   @ResponseBody
   @ApiOperation(value = "Download a background file")
-  public TypedResponse<Long> downloadThumbnail( HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public TypedResponse<Long> downloadThumbnail(HttpServletRequest request, HttpServletResponse response) throws Exception {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -864,19 +864,19 @@ public class UserController {
     User user = session.get().getUser();
 
     long id = user.getProfile().getThumbnail_id();
-    if(id==0){
+    if (id == 0) {
       errors.add(FILE_NOT_FOUND);
       return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
     }
-    return new TypedResponse(response, OK,null, id);
+    return new TypedResponse(response, OK, null, id);
   }
 
   @PostMapping(path = "/{action}/invite/organization")
   @ResponseBody
   @ApiOperation(value = "Accept or decline organization invite")
   public BaseResponse acceptOrganizationInvite(
-        @ApiParam(value = "The action to perform", example = "accept,decline")
-        @PathVariable(value = "action") String action,
+      @ApiParam(value = "The action to perform", example = "accept,decline")
+      @PathVariable(value = "action") String action,
       @ApiParam(value = "The organization invitation information to accept")
       @RequestBody OrganizationInvitation organizationInvitation, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
@@ -901,12 +901,12 @@ public class UserController {
 
     Organization group = savedInvitation.getGroup();
 
-    if (action.equalsIgnoreCase("decline")){
+    if (action.equalsIgnoreCase("decline")) {
       savedInvitation.setStatus(DECLINED);
       organizationInvitationRepository.save(savedInvitation);
       try {
         notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has declined invitation from " + group.getGroupType() + ": " + group.getName(),
-                "ProjectInvitation:Declined",group.getId());
+            "ProjectInvitation:Declined", group.getId());
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -924,7 +924,7 @@ public class UserController {
       organizationInvitationRepository.save(savedInvitation);
       try {
         notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName()
-                ,"OrganizationInvitation:Accepted",group.getId());
+            , "OrganizationInvitation:Accepted", group.getId());
       } catch (Exception e) {
         e.printStackTrace();
       }

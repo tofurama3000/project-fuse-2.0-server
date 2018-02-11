@@ -37,10 +37,10 @@ public class SearchController {
   public TypedResponse<PagedResults> searchAll(
       @ApiParam(value = "The search query to use", required = true)
       @RequestBody SearchParams params,
-      @ApiParam(value="The page of results to pull")
-      @RequestParam(value = "page", required=false, defaultValue="0") int page,
-      @ApiParam(value="The number of results per page")
-      @RequestParam(value = "size", required=false, defaultValue="15") int pageSize,
+      @ApiParam(value = "The page of results to pull")
+      @RequestParam(value = "page", required = false, defaultValue = "0") int page,
+      @ApiParam(value = "The number of results per page")
+      @RequestParam(value = "size", required = false, defaultValue = "15") int pageSize,
       HttpServletResponse response) {
 
     List<String> errors = new ArrayList<>();
@@ -59,12 +59,12 @@ public class SearchController {
     }
 
     return doSearch(params,
-          response,
-          indices.stream().toArray(String[]::new),
-          types.stream().toArray(String[]::new),
-          page,
-          pageSize
-      );
+        response,
+        indices.stream().toArray(String[]::new),
+        types.stream().toArray(String[]::new),
+        page,
+        pageSize
+    );
   }
 
   @ApiOperation(value = "Searches all users")
@@ -73,18 +73,18 @@ public class SearchController {
   public TypedResponse<PagedResults> searchUser(
       @ApiParam(value = "The search query to use", required = true)
       @RequestBody SearchParams params,
-      @ApiParam(value="The page of results to pull")
-      @RequestParam(value = "page", required=false, defaultValue="0") Integer page,
-      @ApiParam(value="The number of results per page")
-      @RequestParam(value = "size", required=false, defaultValue="15") Integer pageSize,
+      @ApiParam(value = "The page of results to pull")
+      @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+      @ApiParam(value = "The number of results per page")
+      @RequestParam(value = "size", required = false, defaultValue = "15") Integer pageSize,
       HttpServletResponse response) {
     return doSearch(
-            params,
-            response,
-            new String[]{User.esIndex()},
-            new String[]{User.esType()},
-            page,
-            pageSize
+        params,
+        response,
+        new String[]{User.esIndex()},
+        new String[]{User.esType()},
+        page,
+        pageSize
     );
   }
 
@@ -94,17 +94,17 @@ public class SearchController {
   public TypedResponse<PagedResults> searchProjects(
       @ApiParam(value = "The search query to use", required = true)
       @RequestBody SearchParams params,
-      @ApiParam(value="The page of results to pull")
-      @RequestParam(value = "page", required=false, defaultValue="0") Integer page,
-      @ApiParam(value="The number of results per page")
-      @RequestParam(value = "size", required=false, defaultValue="15") Integer pageSize,HttpServletResponse response) {
+      @ApiParam(value = "The page of results to pull")
+      @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+      @ApiParam(value = "The number of results per page")
+      @RequestParam(value = "size", required = false, defaultValue = "15") Integer pageSize, HttpServletResponse response) {
     return doSearch(
-            params,
-            response,
-            new String[]{Project.esIndex()},
-            new String[]{Project.esType()},
-            page,
-            pageSize
+        params,
+        response,
+        new String[]{Project.esIndex()},
+        new String[]{Project.esType()},
+        page,
+        pageSize
     );
   }
 
@@ -114,22 +114,22 @@ public class SearchController {
   public TypedResponse<PagedResults> searchOrganizations(
       @ApiParam(value = "The search query to use", required = true)
       @RequestBody SearchParams params,
-      @ApiParam(value="The page of results to pull")
-      @RequestParam(value = "page", required=false, defaultValue="0") Integer page,
-      @ApiParam(value="The number of results per page")
-      @RequestParam(value = "size", required=false, defaultValue="15") Integer pageSize,HttpServletResponse response) {
+      @ApiParam(value = "The page of results to pull")
+      @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+      @ApiParam(value = "The number of results per page")
+      @RequestParam(value = "size", required = false, defaultValue = "15") Integer pageSize, HttpServletResponse response) {
     return doSearch(
-            params,
-            response,
-            new String[]{Organization.esIndex()},
-            new String[]{Organization.esType()},
-            page,
-            pageSize
+        params,
+        response,
+        new String[]{Organization.esIndex()},
+        new String[]{Organization.esType()},
+        page,
+        pageSize
     );
   }
 
   private static TypedResponse<PagedResults> doSearch(SearchParams params, HttpServletResponse response,
-                                              String[] indices, String[] types, int page, int pageSize) {
+                                                      String[] indices, String[] types, int page, int pageSize) {
     List<String> errors = new ArrayList<>();
 
     if (params.getSearchString() == null) {
@@ -139,16 +139,16 @@ public class SearchController {
 
     try {
       return new TypedResponse<>(response, OK, errors,
-              ElasticsearchClient.instance().searchSimpleQuery(
-                      indices,
-                      types,
-                      params.getSearchString(),
-                      page,
-                      pageSize)
+          ElasticsearchClient.instance().searchSimpleQuery(
+              indices,
+              types,
+              params.getSearchString(),
+              page,
+              pageSize)
       );
-    } catch(NullPointerException e) {
+    } catch (NullPointerException e) {
       errors.add("Server error");
-      return new TypedResponse<>(response, BaseResponse.Status.ERROR,errors);
+      return new TypedResponse<>(response, BaseResponse.Status.ERROR, errors);
     }
   }
 }

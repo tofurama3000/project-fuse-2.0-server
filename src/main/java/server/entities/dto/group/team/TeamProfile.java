@@ -2,7 +2,6 @@ package server.entities.dto.group.team;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.Data;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import server.entities.dto.group.GroupProfile;
 
 import javax.persistence.Entity;

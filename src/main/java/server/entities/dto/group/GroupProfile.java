@@ -1,10 +1,7 @@
 package server.entities.dto.group;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AccessLevel;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;

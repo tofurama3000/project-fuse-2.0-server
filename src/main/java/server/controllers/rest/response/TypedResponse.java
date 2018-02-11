@@ -40,5 +40,6 @@ public class TypedResponse<T> extends BaseResponse {
     this(response, statusFromError(errors), errors, null);
   }
 
-  public TypedResponse() {}
+  public TypedResponse() {
+  }
 }

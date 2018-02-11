@@ -26,7 +26,6 @@ import server.service.LinkResolver;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.net.URISyntaxException;
 import java.util.Optional;
 
 @Controller
@@ -49,9 +48,9 @@ public class LinkController {
   @PostMapping
   @ResponseBody
   public TypedResponse<Link> addLink(@ApiParam(value = "The user information to create with", required = true)
-                                             @RequestBody Link link,
-                                             HttpServletRequest request,
-                                             HttpServletResponse response) {
+                                     @RequestBody Link link,
+                                     HttpServletRequest request,
+                                     HttpServletResponse response) {
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -75,9 +74,9 @@ public class LinkController {
   @DeleteMapping
   @ResponseBody
   public TypedResponse<Link> removeLink(@ApiParam(value = "The user information to create with", required = true)
-                                     @RequestBody Link link,
-                                     HttpServletRequest request,
-                                     HttpServletResponse response) {
+                                        @RequestBody Link link,
+                                        HttpServletRequest request,
+                                        HttpServletResponse response) {
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {

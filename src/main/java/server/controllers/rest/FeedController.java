@@ -36,10 +36,10 @@ public class FeedController {
 
   @GetMapping
   @ResponseBody
-  public GeneralResponse getFeed( @ApiParam(value="The page of results to pull")
-                                    @RequestParam(value = "page", required=false, defaultValue="0") int page,
-                                  @ApiParam(value="The number of results per page")
-                                    @RequestParam(value = "size", required=false, defaultValue="15") int pageSize, HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse getFeed(@ApiParam(value = "The page of results to pull")
+                                 @RequestParam(value = "page", required = false, defaultValue = "0") int page,
+                                 @ApiParam(value = "The number of results per page")
+                                 @RequestParam(value = "size", required = false, defaultValue = "15") int pageSize, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -48,8 +48,8 @@ public class FeedController {
     }
     List<Notification> list = notificationRepository.getNotifications(session.get().getUser());
     List<Notification> returnList = new ArrayList<Notification>();
-    for(int i = page*pageSize; i<(page*pageSize)+pageSize;i++){
-      if(i>=list.size()){
+    for (int i = page * pageSize; i < (page * pageSize) + pageSize; i++) {
+      if (i >= list.size()) {
         break;
       }
       returnList.add(list.get(i));

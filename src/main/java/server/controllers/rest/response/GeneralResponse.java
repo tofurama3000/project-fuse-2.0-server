@@ -37,5 +37,6 @@ public class GeneralResponse extends BaseResponse {
     this(response, statusFromError(errors), errors, null);
   }
 
-  public GeneralResponse() {}
+  public GeneralResponse() {
+  }
 }

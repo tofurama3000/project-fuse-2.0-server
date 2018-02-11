@@ -14,7 +14,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinColumns;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
@@ -49,7 +48,7 @@ public class UserProfile {
   private String profileType = "User";
 
   @OneToMany
-  @JoinColumn(name="referenced_id", referencedColumnName="user_id")
+  @JoinColumn(name = "referenced_id", referencedColumnName = "user_id")
   private List<Link> links;
 
   private List<Link> getLinks() {
@@ -59,9 +58,9 @@ public class UserProfile {
     return links.stream().filter(link -> link.getReferencedType().equals("User")).collect(Collectors.toList());
   }
 
-  private  long thumbnail_id;
+  private long thumbnail_id;
 
-  private  long background_Id;
+  private long background_Id;
 
   public UserProfile merge(UserProfile original, UserProfile newUserProfile) {
     if (newUserProfile.getHeadline() != null) {

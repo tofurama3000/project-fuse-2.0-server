@@ -132,22 +132,22 @@ public class ElasticsearchClient {
     req.types(types);
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
     searchSourceBuilder.query(QueryBuilders
-            .simpleQueryStringQuery(searchString)
-            .analyzeWildcard(true)).from(page * pageSize).size(pageSize);
+        .simpleQueryStringQuery(searchString)
+        .analyzeWildcard(true)).from(page * pageSize).size(pageSize);
     req.source(searchSourceBuilder);
     try {
       SearchResponse resp = elasticsearch_client.search(req);
       PagedResults results = new PagedResults();
-      results.setStart(page*pageSize);
+      results.setStart(page * pageSize);
       List<Object> resultItems = Arrays.stream(resp.getHits().getHits())
-              .sorted((res1, res2) -> Float.compare(res2.getScore(), res1.getScore()))
-              .map(res -> {
-                Map<String, Object> map = res.getSourceAsMap();
-                map.put("score", res.getScore());
-                return map;
-              })
-              .collect(Collectors.toList());
-      results.setEnd(page*pageSize + resultItems.size() - 1);
+          .sorted((res1, res2) -> Float.compare(res2.getScore(), res1.getScore()))
+          .map(res -> {
+            Map<String, Object> map = res.getSourceAsMap();
+            map.put("score", res.getScore());
+            return map;
+          })
+          .collect(Collectors.toList());
+      results.setEnd(page * pageSize + resultItems.size() - 1);
       results.setItems(resultItems);
       results.setTotalItems(resp.getHits().getTotalHits());
       results.setPageSize(pageSize);

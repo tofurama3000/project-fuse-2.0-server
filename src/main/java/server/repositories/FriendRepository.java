@@ -9,7 +9,7 @@ import server.entities.dto.user.User;
 import java.util.List;
 
 public interface FriendRepository extends CrudRepository<Friend, Long> {
-  @Query("FROM Friend a where (a.receiver = :user or a.sender = :user) and (a.status= " + "'" +"accepted" + "')")
+  @Query("FROM Friend a where (a.receiver = :user or a.sender = :user) and (a.status= " + "'" + "accepted" + "')")
   List<Friend> getFriends(@Param("user") User user);
 
   @Query("FROM Friend a where a.receiver = :user and a.status= " + "'" + "applied" + "'")

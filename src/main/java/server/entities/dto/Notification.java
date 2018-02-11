@@ -70,15 +70,15 @@ public class Notification {
   }
 
   private static List<String> validTypes = Arrays.asList(
-          "ProjectApplicant",
-          "ProjectInvitation",
-          "ProjectInterview:Invite",
-          "ProjectInvitation:Accepted",
-          "OrganizationInterview:Invite",
-          "OrganizationInvitation",
-          "OrganizationApplicant",
-          "Friend:Request",
-          "Friend:Accepted"
+      "ProjectApplicant",
+      "ProjectInvitation",
+      "ProjectInterview:Invite",
+      "ProjectInvitation:Accepted",
+      "OrganizationInterview:Invite",
+      "OrganizationInvitation",
+      "OrganizationApplicant",
+      "Friend:Request",
+      "Friend:Accepted"
   );
 
   public static boolean isValidType(String type) {

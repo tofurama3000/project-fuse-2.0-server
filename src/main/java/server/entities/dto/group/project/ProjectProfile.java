@@ -8,7 +8,6 @@ import server.entities.dto.group.GroupProfile;
 
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinColumns;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
@@ -27,7 +26,7 @@ public class ProjectProfile extends GroupProfile<Project> {
   private Project project;
 
   @OneToMany
-  @JoinColumn(name="referenced_id", referencedColumnName="id")
+  @JoinColumn(name = "referenced_id", referencedColumnName = "id")
   private List<Link> links;
 
   private List<Link> getLinks() {
