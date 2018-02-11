@@ -28,8 +28,11 @@ public class Notification {
   @Column(name = "message")
   private String message;
 
-  @Column(name = "object_type")
-  private String objectType;
+  @Column(name = "notification_type")
+  private String notification_type;
+
+  @Column(name = "data_type")
+  private String data_type;
 
   @Column(name = "object_id")
   private Long objectId;
@@ -65,12 +68,13 @@ public class Notification {
     }
     return "";
   }
+  private  static List<String> validAction = Arrays.asList(
+      "done",
+      "undone"
+  );
 
-  private static List<String> validTypes = Arrays.asList(
-          "ProjectInterview:Invite",
-          "ProjectInterview:Accepted",
-          "ProjectInterview:Declined",
-          "ProjectInterview:Cancelled",
+  private static List<String> validNotificationTypes = Arrays.asList(
+
           "ProjectInvitation:Invite",
           "ProjectInvitation:Accepted",
           "ProjectInvitation:Declined",
@@ -78,10 +82,7 @@ public class Notification {
           "ProjectApplicant:Accepted",
           "ProjectApplicant:Declined",
 
-          "OrganizationInterview:Invite",
-          "OrganizationInterview:Accepted",
-          "OrganizationInterview:Declined",
-          "OrganizationInterview:Cancelled",
+
           "OrganizationInvitation:Accepted",
           "OrganizationInvitation:Invite",
           "OrganizationInvitation:Declined",
@@ -92,7 +93,24 @@ public class Notification {
           "Friend:Accepted"
   );
 
-  public static boolean isValidType(String type) {
-    return validTypes.contains(type);
+  private static List<String> validDataTypes = Arrays.asList(
+      "ProjectInvitation",
+      "ProjectApplicant",
+
+      "OrganizationInvitation",
+      "OrganizationApplicant",
+
+      "Friend"
+  );
+
+  public static boolean isValidAction(String action) {
+    return validAction.contains(action);
   }
+  public static boolean isValidNotificationType (String type) {
+    return validNotificationTypes.contains(type);
+  }
+  public static boolean isValidDataType (String type) {
+    return validDataTypes.contains(type);
+  }
+
 }

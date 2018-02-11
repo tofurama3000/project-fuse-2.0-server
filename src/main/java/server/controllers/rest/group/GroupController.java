@@ -382,15 +382,19 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     return errors;
   }
 
-  @PostMapping(path = "/{id}/invite/{user_id}/{type}")
+  @PostMapping(path = "/{id}/invite/{applicant_id}/{type}")
   @ResponseBody
   public GeneralResponse invite(@PathVariable("id") Long id,
-                                @PathVariable("user_id") Long userId,
+                                @PathVariable("applicant_id") Long applicantId,
                                 @PathVariable("type") String inviteType,
                                 HttpServletRequest request, HttpServletResponse response) {
     I invite = getInvitation();
     invite.setGroup(getGroupRepository().findOne(id));
-    invite.setReceiver(userRepository.findOne(userId));
+    GroupApplicantRepository applicantRespo = getGroupApplicantRepository();
+    GroupApplicant<T> applicant = (GroupApplicant) applicantRespo.findOne(applicantId);
+    invite.setApplicant(applicant);
+    invite.setReceiver(applicant.getSender());
+
     invite.setType(inviteType);
     return generalInvite(invite, request, response);
   }
