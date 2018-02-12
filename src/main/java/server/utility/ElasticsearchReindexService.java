@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import server.entities.BaseIndexable;
-import server.entities.dto.User;
 import server.repositories.UserRepository;
 import server.repositories.group.organization.OrganizationRepository;
 import server.repositories.group.project.ProjectRepository;

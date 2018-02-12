@@ -2,8 +2,8 @@ package server.entities.user_to_group.permissions;
 
 import lombok.Setter;
 import org.hibernate.Session;
-import server.entities.dto.User;
 import server.entities.dto.group.project.Project;
+import server.entities.dto.user.User;
 import server.repositories.group.project.ProjectMemberRepository;
 
 public class UserToProjectPermission extends UserToGroupPermission<Project> {

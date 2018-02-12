@@ -1,4 +1,4 @@
-package server.entities.dto;
+package server.entities.dto.user;
 
 import lombok.Data;
 

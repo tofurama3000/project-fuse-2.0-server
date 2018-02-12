@@ -5,14 +5,13 @@ import framework.JsonHelper;
 import framework.RequestHelper;
 import framework.RestTester;
 import framework.SessionHelper;
-import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.FuseSession;
-import server.entities.dto.User;
+import server.entities.dto.user.User;
 import server.repositories.UserRepository;
 
 import java.util.Optional;

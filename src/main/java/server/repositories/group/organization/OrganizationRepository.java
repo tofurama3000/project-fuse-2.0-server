@@ -3,8 +3,8 @@ package server.repositories.group.organization;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
-import server.entities.dto.User;
 import server.entities.dto.group.organization.Organization;
+import server.entities.dto.user.User;
 import server.repositories.group.GroupRepository;
 
 import java.util.List;

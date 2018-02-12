@@ -3,7 +3,6 @@ package server.controllers.rest;
 import static server.constants.Availability.NOT_AVAILABLE;
 import static server.constants.InvitationStatus.ACCEPTED;
 import static server.constants.InvitationStatus.DECLINED;
-import static server.constants.InvitationStatus.PENDING;
 import static server.constants.RegistrationStatus.REGISTERED;
 import static server.constants.RegistrationStatus.UNREGISTERED;
 import static server.constants.RoleValue.DEFAULT_USER;
@@ -12,10 +11,15 @@ import static server.constants.RoleValue.INVITED_TO_JOIN;
 import static server.constants.RoleValue.TO_INTERVIEW;
 import static server.controllers.rest.response.BaseResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.BaseResponse.Status.DENIED;
-import static server.controllers.rest.response.BaseResponse.Status.ERROR;
 import static server.controllers.rest.response.BaseResponse.Status.OK;
-import static server.controllers.rest.response.CannedResponse.*;
-
+import static server.controllers.rest.response.CannedResponse.FILE_NOT_FOUND;
+import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
+import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
+import static server.controllers.rest.response.CannedResponse.INVALID_REGISTRATION_KEY;
+import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
+import static server.controllers.rest.response.CannedResponse.NO_INTERVIEW_FOUND;
+import static server.controllers.rest.response.CannedResponse.NO_INVITATION_FOUND;
+import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
 import com.google.common.collect.Lists;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -25,18 +29,26 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.AlternativeJdkIdGenerator;
 import org.springframework.util.IdGenerator;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
-import server.Application;
 import server.controllers.FuseSessionController;
 import server.controllers.MembersOfGroupController;
 import server.controllers.rest.response.BaseResponse;
-import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.BaseResponse.Status;
+import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
 import server.email.StandardEmailSender;
 import server.entities.PossibleError;
-import server.entities.dto.*;
+import server.entities.dto.FuseSession;
+import server.entities.dto.UploadFile;
 import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupApplicant;
 import server.entities.dto.group.GroupInvitation;
@@ -48,8 +60,10 @@ import server.entities.dto.group.project.Project;
 import server.entities.dto.group.project.ProjectApplicant;
 import server.entities.dto.group.project.ProjectInvitation;
 import server.entities.dto.group.team.Team;
-import server.entities.dto.group.team.TeamApplicant;
 import server.entities.dto.group.team.TeamInvitation;
+import server.entities.dto.user.UnregisteredUser;
+import server.entities.dto.user.User;
+import server.entities.dto.user.UserProfile;
 import server.entities.user_to_group.permissions.PermissionFactory;
 import server.entities.user_to_group.permissions.UserPermission;
 import server.entities.user_to_group.permissions.UserToGroupPermission;
@@ -62,11 +76,9 @@ import server.entities.user_to_group.relationships.UserToGroupRelationship;
 import server.entities.user_to_group.relationships.UserToOrganizationRelationship;
 import server.entities.user_to_group.relationships.UserToProjectRelationship;
 import server.entities.user_to_group.relationships.UserToTeamRelationship;
-import server.repositories.FileRepository;
 import server.repositories.UnregisteredUserRepository;
 import server.repositories.UserProfileRepository;
 import server.repositories.UserRepository;
-import server.repositories.group.GroupApplicantRepository;
 import server.repositories.group.InterviewRepository;
 import server.repositories.group.organization.OrganizationApplicantRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
@@ -84,14 +96,13 @@ import springfox.documentation.annotations.ApiIgnore;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.websocket.server.PathParam;
-import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Controller
@@ -403,10 +414,10 @@ public class UserController {
   @ApiOperation(value = "Get all organizations for the specified user")
   public TypedResponse<List<Organization>> getAllOrganizationsOfUser(
       @PathVariable Long id,
-      @ApiParam(value="The page of results to pull")
-      @RequestParam(value = "page", required=false, defaultValue="0") int page,
-      @ApiParam(value="The number of results per page")
-      @RequestParam(value = "size", required=false, defaultValue="15") int pageSize,
+      @ApiParam(value = "The page of results to pull")
+      @RequestParam(value = "page", required = false, defaultValue = "0") int page,
+      @ApiParam(value = "The number of results per page")
+      @RequestParam(value = "size", required = false, defaultValue = "15") int pageSize,
       HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
@@ -417,16 +428,16 @@ public class UserController {
     }
     User user = userRepository.findOne(id);
 
-    List<Organization> list =  membersOfGroupController.getOrganizationsUserIsPartOf(user);
+    List<Organization> list = membersOfGroupController.getOrganizationsUserIsPartOf(user);
     List<Organization> returnList = new ArrayList<Organization>();
-    for(int i = page*pageSize; i<(page*pageSize)+pageSize;i++){
-      if(i>=list.size()){
+    for (int i = page * pageSize; i < (page * pageSize) + pageSize; i++) {
+      if (i >= list.size()) {
         break;
       }
       returnList.add(list.get(i));
     }
 
-    return new TypedResponse<>(response, OK, null,returnList);
+    return new TypedResponse<>(response, OK, null, returnList);
   }
 
 
@@ -435,10 +446,10 @@ public class UserController {
   @ApiOperation(value = "Get all projects for the specified user")
   public TypedResponse<List<Project>> getAllProjectsOfUser(
       @PathVariable Long id,
-      @ApiParam(value="The page of results to pull")
-      @RequestParam(value = "page", required=false, defaultValue="0") int page,
-      @ApiParam(value="The number of results per page")
-      @RequestParam(value = "size", required=false, defaultValue="15") int pageSize,
+      @ApiParam(value = "The page of results to pull")
+      @RequestParam(value = "page", required = false, defaultValue = "0") int page,
+      @ApiParam(value = "The number of results per page")
+      @RequestParam(value = "size", required = false, defaultValue = "15") int pageSize,
       HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
@@ -455,10 +466,10 @@ public class UserController {
 
     User user = userRepository.findOne(id);
 
-    List<Project> list =  membersOfGroupController.getProjectsUserIsPartOf(user);
+    List<Project> list = membersOfGroupController.getProjectsUserIsPartOf(user);
     List<Project> returnList = new ArrayList<Project>();
-    for(int i = page*pageSize; i<(page*pageSize)+pageSize;i++){
-      if(i>=list.size()){
+    for (int i = page * pageSize; i < (page * pageSize) + pageSize; i++) {
+      if (i >= list.size()) {
         break;
       }
       returnList.add(list.get(i));
@@ -679,7 +690,7 @@ public class UserController {
 
     try {
       notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(),
-          "TeamInvitation:Accepted",group.getId());
+          "TeamInvitation:Accepted", group.getId());
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -715,13 +726,13 @@ public class UserController {
     }
     Project group = savedInvitation.getGroup();
 
-    if (action.equalsIgnoreCase("decline")){
+    if (action.equalsIgnoreCase("decline")) {
       savedInvitation.setStatus(DECLINED);
       projectInvitationRepository.save(savedInvitation);
 
       try {
         notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has declined invitation from " + group.getGroupType() + ": " + group.getName(),
-                "ProjectInvitation:Declined",group.getId());
+            "ProjectInvitation:Declined", group.getId());
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -746,7 +757,7 @@ public class UserController {
 
       try {
         notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(),
-                "ProjectInvitation:Accepted",group.getId());
+            "ProjectInvitation:Accepted", group.getId());
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -767,17 +778,17 @@ public class UserController {
     }
 
     String fileType = fileToUpload.getContentType().split("/")[0];
-    if(!fileType.equals("image")){
+    if (!fileType.equals("image")) {
       return new GeneralResponse(response, BAD_DATA, errors);
     }
-    TypedResponse<UploadFile> response1 = fileController.fileUpload(fileToUpload,request,response);
-    if(response1.getStatus()==DENIED){
+    TypedResponse<UploadFile> response1 = fileController.fileUpload(fileToUpload, request, response);
+    if (response1.getStatus() == DENIED) {
       return new GeneralResponse(response, response1.getStatus(), response1.getErrors());
     }
     UploadFile uploadFile = (UploadFile) response1.getData();
     User user = session.get().getUser();
-    UserProfile profile =  user.getProfile();
-    if(profile==null){
+    UserProfile profile = user.getProfile();
+    if (profile == null) {
       profile = new UserProfile();
       user.setProfile(profile);
     }
@@ -800,17 +811,17 @@ public class UserController {
     }
 
     String fileType = fileToUpload.getContentType().split("/")[0];
-    if(!fileType.equals("image")){
+    if (!fileType.equals("image")) {
       return new GeneralResponse(response, BAD_DATA, errors);
     }
-    TypedResponse<UploadFile> response1 = fileController.fileUpload(fileToUpload,request,response);
-    if(response1.getStatus()==DENIED){
+    TypedResponse<UploadFile> response1 = fileController.fileUpload(fileToUpload, request, response);
+    if (response1.getStatus() == DENIED) {
       return new GeneralResponse(response, response1.getStatus(), response1.getErrors());
     }
     UploadFile uploadFile = (UploadFile) response1.getData();
     User user = session.get().getUser();
-    UserProfile profile =  user.getProfile();
-    if(profile==null){
+    UserProfile profile = user.getProfile();
+    if (profile == null) {
       profile = new UserProfile();
       user.setProfile(profile);
     }
@@ -822,7 +833,7 @@ public class UserController {
   @GetMapping(path = "/download/background")
   @ResponseBody
   @ApiOperation(value = "Download a background file")
-  public TypedResponse<Long> downloadBackground( HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public TypedResponse<Long> downloadBackground(HttpServletRequest request, HttpServletResponse response) throws Exception {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -830,20 +841,20 @@ public class UserController {
       return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
     }
     User user = session.get().getUser();
-    long id =user.getProfile().getBackground_Id();
-    if(id==0){
-    errors.add(FILE_NOT_FOUND);
+    long id = user.getProfile().getBackground_Id();
+    if (id == 0) {
+      errors.add(FILE_NOT_FOUND);
       return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
     }
 
-    return new TypedResponse(response, OK,null,  id);
+    return new TypedResponse(response, OK, null, id);
   }
 
 
   @GetMapping(path = "/download/thumbnail")
   @ResponseBody
   @ApiOperation(value = "Download a background file")
-  public TypedResponse<Long> downloadThumbnail( HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public TypedResponse<Long> downloadThumbnail(HttpServletRequest request, HttpServletResponse response) throws Exception {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -853,19 +864,19 @@ public class UserController {
     User user = session.get().getUser();
 
     long id = user.getProfile().getThumbnail_id();
-    if(id==0){
+    if (id == 0) {
       errors.add(FILE_NOT_FOUND);
       return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
     }
-    return new TypedResponse(response, OK,null, id);
+    return new TypedResponse(response, OK, null, id);
   }
 
   @PostMapping(path = "/{action}/invite/organization")
   @ResponseBody
   @ApiOperation(value = "Accept or decline organization invite")
   public BaseResponse acceptOrganizationInvite(
-        @ApiParam(value = "The action to perform", example = "accept,decline")
-        @PathVariable(value = "action") String action,
+      @ApiParam(value = "The action to perform", example = "accept,decline")
+      @PathVariable(value = "action") String action,
       @ApiParam(value = "The organization invitation information to accept")
       @RequestBody OrganizationInvitation organizationInvitation, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
@@ -890,12 +901,12 @@ public class UserController {
 
     Organization group = savedInvitation.getGroup();
 
-    if (action.equalsIgnoreCase("decline")){
+    if (action.equalsIgnoreCase("decline")) {
       savedInvitation.setStatus(DECLINED);
       organizationInvitationRepository.save(savedInvitation);
       try {
         notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has declined invitation from " + group.getGroupType() + ": " + group.getName(),
-                "ProjectInvitation:Declined",group.getId());
+            "ProjectInvitation:Declined", group.getId());
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -913,7 +924,7 @@ public class UserController {
       organizationInvitationRepository.save(savedInvitation);
       try {
         notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName()
-                ,"OrganizationInvitation:Accepted",group.getId());
+            , "OrganizationInvitation:Accepted", group.getId());
       } catch (Exception e) {
         e.printStackTrace();
       }

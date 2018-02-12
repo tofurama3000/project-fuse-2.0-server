@@ -9,10 +9,10 @@ import java.util.List;
  */
 @Data
 public class PagedResults {
-    List<Object> items;
+  List<Object> items;
 
-    long totalItems;
-    long start;
-    long end;
-    long pageSize;
+  long totalItems;
+  long start;
+  long end;
+  long pageSize;
 }

@@ -3,9 +3,9 @@ package server.repositories.group;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.repository.query.Param;
-import server.entities.dto.User;
 import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupApplicant;
+import server.entities.dto.user.User;
 
 import java.util.List;
 

@@ -1,7 +1,6 @@
 package server.entities;
 
 import org.elasticsearch.action.DocWriteResponse;
-import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.rest.RestStatus;
 import server.utility.ElasticsearchClient;
 

@@ -2,7 +2,7 @@ package server.entities.dto.group.interview;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-import server.entities.dto.User;
+import server.entities.dto.user.User;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
