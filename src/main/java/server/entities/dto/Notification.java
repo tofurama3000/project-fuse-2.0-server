@@ -89,6 +89,7 @@ public class Notification {
           "OrganizationApplicant",
           "OrganizationApplicant:Accepted",
           "OrganizationApplicant:Declined",
+
           "Friend:Request",
           "Friend:Accepted"
   );

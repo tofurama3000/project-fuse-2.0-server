@@ -81,7 +81,7 @@ public class NotificationController<T extends Group> {
 
 
   public void sendNotification(User user, String message,  String dataType, String notificationType,long id) throws Exception {
-    if (!Notification.isValidNotificationType (dataType)) {
+    if (!Notification.isValidNotificationType (notificationType)) {
       throw new Exception("Invalid notification type '" + notificationType + "'");
     }
     if (!Notification.isValidDataType (dataType)) {
@@ -170,7 +170,7 @@ public class NotificationController<T extends Group> {
   }
 
   @CrossOrigin
-  @PutMapping(path = "/{id}/action/{action}")
+  @PutMapping(path = "/{id}/{action}")
   @ResponseBody
   public GeneralResponse actionDone(@PathVariable(value = "id") Long id, @PathVariable(value = "action") String action,HttpServletRequest request, HttpServletResponse response) throws Exception  {
     List<String> errors = new ArrayList<>();
@@ -263,6 +263,7 @@ public class NotificationController<T extends Group> {
 
             case "ProjectApplicant":
               notification.setData(projectApplicantRepository.findOne(notification.getObjectId()));
+              break;
             case "ProjectInvitation":
               notification.setData(projectInvitationRepository.findOne(notification.getObjectId()));
               break;

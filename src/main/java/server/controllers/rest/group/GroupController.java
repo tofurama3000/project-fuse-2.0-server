@@ -389,12 +389,16 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
                                 @PathVariable("type") String inviteType,
                                 HttpServletRequest request, HttpServletResponse response) {
     I invite = getInvitation();
+    List<String> errors = new ArrayList<>();
     invite.setGroup(getGroupRepository().findOne(id));
     GroupApplicantRepository applicantRespo = getGroupApplicantRepository();
     GroupApplicant<T> applicant = (GroupApplicant) applicantRespo.findOne(applicantId);
+    if(applicant==null){
+      errors.add("Applicant not found");
+      return new GeneralResponse(response, errors);
+    }
     invite.setApplicant(applicant);
     invite.setReceiver(applicant.getSender());
-
     invite.setType(inviteType);
     return generalInvite(invite, request, response);
   }
