@@ -448,11 +448,6 @@ public class UserController {
       return new TypedResponse<>(response, Status.DENIED, errors);
     }
 
-    if (!Objects.equals(session.get().getUser().getId(), id)) {
-      errors.add("Access Denied");
-      return new TypedResponse<>(response, Status.DENIED, errors);
-    }
-
     User user = userRepository.findOne(id);
 
     List<Project> list =  membersOfGroupController.getProjectsUserIsPartOf(user);
