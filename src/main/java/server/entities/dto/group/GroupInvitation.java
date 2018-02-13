@@ -5,12 +5,7 @@ import lombok.Data;
 import server.entities.dto.User;
 import server.entities.dto.group.interview.Interview;
 
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.MappedSuperclass;
+import javax.persistence.*;
 
 @Data
 @MappedSuperclass
@@ -36,8 +31,16 @@ public abstract class GroupInvitation<T extends Group> {
   @JoinColumn(name = "interview_id", referencedColumnName = "id")
   private Interview interview;
 
+
+
   @JsonIgnore
   public abstract T getGroup();
+
+  @JsonIgnore
+  public abstract GroupApplicant getApplicant();
+
+  @JsonIgnore
+  public abstract void setApplicant(GroupApplicant applicant);
 
   public abstract void setGroup(T group);
 }

@@ -679,7 +679,7 @@ public class UserController {
 
     try {
       notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(),
-          "TeamInvitation:Accepted",group.getId());
+          "TeamInvitation","TeamInvitation:Accepted",group.getId());
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -717,11 +717,14 @@ public class UserController {
 
     if (action.equalsIgnoreCase("decline")){
       savedInvitation.setStatus(DECLINED);
+      ProjectApplicant applicant = projectApplicantRepository.findOne(savedInvitation.getApplicant().getId());
+      applicant.setStatus("declined");
+      projectApplicantRepository.save(applicant);
       projectInvitationRepository.save(savedInvitation);
 
       try {
         notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has declined invitation from " + group.getGroupType() + ": " + group.getName(),
-                "ProjectInvitation:Declined",group.getId());
+            "ProjectInvitation","ProjectInvitation:Declined",group.getId());
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -742,11 +745,14 @@ public class UserController {
 
     if (!possibleError.hasError()) {
       savedInvitation.setStatus(ACCEPTED);
+      ProjectApplicant applicant = projectApplicantRepository.findOne(savedInvitation.getApplicant().getId());
+      applicant.setStatus("accepted");
+      projectApplicantRepository.save(applicant);
       projectInvitationRepository.save(savedInvitation);
 
       try {
         notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(),
-                "ProjectInvitation:Accepted",group.getId());
+            "ProjectInvitation","ProjectInvitation:Accepted",group.getId());
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -892,10 +898,13 @@ public class UserController {
 
     if (action.equalsIgnoreCase("decline")){
       savedInvitation.setStatus(DECLINED);
+      OrganizationApplicant applicant = organizationApplicantRepository.findOne(savedInvitation.getApplicant().getId());
+      applicant.setStatus("declined");
+      organizationApplicantRepository.save(applicant);
       organizationInvitationRepository.save(savedInvitation);
       try {
         notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has declined invitation from " + group.getGroupType() + ": " + group.getName(),
-                "ProjectInvitation:Declined",group.getId());
+            "OrganizationInvitation",  "OrganizationInvitation:Declined",group.getId());
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -910,10 +919,13 @@ public class UserController {
 
     if (!possibleError.hasError()) {
       savedInvitation.setStatus(ACCEPTED);
+      OrganizationApplicant applicant = organizationApplicantRepository.findOne(savedInvitation.getApplicant().getId());
+      applicant.setStatus("accepted");
+      organizationApplicantRepository.save(applicant);
       organizationInvitationRepository.save(savedInvitation);
       try {
         notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName()
-                ,"OrganizationInvitation:Accepted",group.getId());
+                ,"OrganizationInvitation","OrganizationInvitation:Accepted",group.getId());
       } catch (Exception e) {
         e.printStackTrace();
       }

@@ -17,10 +17,13 @@ import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
 import server.entities.dto.group.team.Team;
 import server.entities.user_to_group.permissions.UserToGroupPermission;
+import server.repositories.FriendRepository;
 import server.repositories.NotificationRepository;
 import server.repositories.UserRepository;
+import server.repositories.group.organization.OrganizationApplicantRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
 import server.repositories.group.organization.OrganizationMemberRepository;
+import server.repositories.group.project.ProjectApplicantRepository;
 import server.repositories.group.project.ProjectInvitationRepository;
 import server.repositories.group.project.ProjectMemberRepository;
 import server.repositories.group.team.TeamMemberRepository;
@@ -67,9 +70,22 @@ public class NotificationController<T extends Group> {
   @Autowired
   private ProjectInvitationRepository projectInvitationRepository;
 
-  public void sendNotification(User user, String message, String type, long id) throws Exception {
-    if (!Notification.isValidType(type)) {
-      throw new Exception("Invalid type '" + type + "'");
+  @Autowired
+  private ProjectApplicantRepository projectApplicantRepository;
+
+  @Autowired
+  private OrganizationApplicantRepository organizationApplicantRepository;
+
+
+
+
+
+  public void sendNotification(User user, String message,  String dataType, String notificationType,long id) throws Exception {
+    if (!Notification.isValidNotificationType (notificationType)) {
+      throw new Exception("Invalid notification type '" + notificationType + "'");
+    }
+    if (!Notification.isValidDataType (dataType)) {
+      throw new Exception("Invalid data type '" + dataType + "'");
     }
     Notification notification = new Notification();
     notification.setReceiver(user);
@@ -77,14 +93,19 @@ public class NotificationController<T extends Group> {
     notification.setHasRead(false);
     ZonedDateTime now = ZonedDateTime.now();
     notification.setTime(now.toString());
-    notification.setObjectType(type);
+    notification.setNotification_type(notificationType);
+    notification.setData_type(dataType);
+
     notification.setObjectId(id);
     notificationRepository.save(notification);
   }
 
-  public void sendGroupNotificationToAdmins(T group, String message, String objectType, long id) throws Exception {
-    if (!Notification.isValidType(objectType)) {
-      throw new Exception("Invalid type '" + objectType + "'");
+  public void sendGroupNotificationToAdmins(T group, String message,String dataType,  String notificationType, long id) throws Exception {
+    if (!Notification.isValidNotificationType (notificationType)) {
+      throw new Exception("Invalid notification type '" + notificationType + "'");
+    }
+    if (!Notification.isValidDataType (dataType)) {
+      throw new Exception("Invalid data type '" + dataType + "'");
     }
     String type = group.getGroupType();
     if (type.equals("Team")) {
@@ -95,7 +116,7 @@ public class NotificationController<T extends Group> {
 
         for (int i : roleList) {
           if (i == ADMIN || i == OWNER) {
-            sendNotification(u, message, objectType,id);
+            sendNotification(u, message,dataType,notificationType,id);
             break;
           }
         }
@@ -108,7 +129,7 @@ public class NotificationController<T extends Group> {
         List<Integer> roleList = projectMemberRepository.getRoles((Project) group, u);
         for (int i : roleList) {
           if (i == ADMIN || i == OWNER) {
-            sendNotification(u, message,objectType,id);
+            sendNotification(u, message,dataType,notificationType,id);
             break;
           }
         }
@@ -120,7 +141,7 @@ public class NotificationController<T extends Group> {
         List<Integer> roleList = organizationMemberRepository.getRoles((Organization) group, u);
         for (int i : roleList) {
           if (i == ADMIN || i == OWNER) {
-            sendNotification(u, message,objectType,id);
+            sendNotification(u, message,dataType,notificationType,id);
             break;
           }
         }
@@ -149,10 +170,13 @@ public class NotificationController<T extends Group> {
   }
 
   @CrossOrigin
-  @PutMapping(path = "/{id}/done")
+  @PutMapping(path = "/{id}/{action}")
   @ResponseBody
-  public GeneralResponse actionDone(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
+  public GeneralResponse actionDone(@PathVariable(value = "id") Long id, @PathVariable(value = "action") String action,HttpServletRequest request, HttpServletResponse response) throws Exception  {
     List<String> errors = new ArrayList<>();
+    if (!Notification.isValidAction (action)) {
+      throw new Exception("Invalid action type '" + action + "'");
+    }
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
@@ -163,7 +187,13 @@ public class NotificationController<T extends Group> {
       errors.add(INSUFFICIENT_PRIVELAGES);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
-    notification.setAction_done(true);
+    boolean b;
+    if(action.equals("done")){
+      b=true;
+    }
+    else
+      b=false;
+    notification.setAction_done(b);
     notificationRepository.save(notification);
     return new GeneralResponse(response, OK);
   }
@@ -179,7 +209,7 @@ public class NotificationController<T extends Group> {
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     Notification notification = notificationRepository.findOne(id);
-    if(notification.getReceiver().getId()!=session.get().getUser().getId()){
+    if(notification.getReceiver().getId().equals(session.get().getUser().getId())){
       errors.add(INSUFFICIENT_PRIVELAGES);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
@@ -226,25 +256,26 @@ public class NotificationController<T extends Group> {
   private List<Notification> populateNotifications(List<Notification> notifications) {
     return notifications.stream().map(
         notification -> {
-          if (notification == null || notification.getObjectType() == null || notification.getObjectId() == null) {
+          if (notification == null || notification.getData_type() == null || notification.getObjectId() == null) {
             return notification;
           }
-          switch(notification.getObjectType()) {
-            case "OrganizationApplicant":
+          switch(notification.getData_type()) {
+
             case "ProjectApplicant":
-              notification.setData(userRepository.findOne(notification.getObjectId()));
+              notification.setData(projectApplicantRepository.findOne(notification.getObjectId()));
               break;
-            case "ProjectInterview:Invite":
             case "ProjectInvitation":
               notification.setData(projectInvitationRepository.findOne(notification.getObjectId()));
               break;
-            case "OrganizationInterview:Invite":
+
+            case "OrganizationApplicant":
+              notification.setData(organizationApplicantRepository.findOne(notification.getObjectId()));
+              break;
             case "OrganizationInvitation":
               notification.setData(organizationInvitationRepository.findOne(notification.getObjectId()));
               break;
-            case "Friend:Accepted":
-            case "Friend:Request":
-              notification.setData(userRepository.findOne(notification.getObjectId()));
+            case "Friend":
+              notification.setData(userRepository.findOne(notification.getObjectId()));  //return the sender info
               break;
           }
           return notification;

@@ -1,13 +1,11 @@
 package server.entities.dto.group.team;
 
 import lombok.Data;
+import server.entities.dto.group.GroupApplicant;
 import server.entities.dto.group.GroupInvitation;
+import server.entities.dto.group.project.ProjectApplicant;
 
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-import javax.persistence.Transient;
+import javax.persistence.*;
 
 @Data
 @Entity
@@ -17,11 +15,30 @@ public class TeamInvitation extends GroupInvitation<Team> {
   @JoinColumn(name = "team_id", referencedColumnName = "id")
   private Team team;
 
+  @OneToOne
+  @JoinColumn(name = "applicant_id", referencedColumnName = "id")
+  private TeamApplicant applicant;
+
   @Override
   @Transient
   public Team getGroup() {
     return team;
   }
+
+  @Override
+  public TeamApplicant getApplicant(){ return applicant; }
+
+  @Override
+  public void setApplicant(GroupApplicant applicant) {
+    this.applicant.setId(applicant.getId());
+    this.applicant.setGroup(team);
+    this.applicant.setTeam(team);
+    this.applicant.setSender(applicant.getSender());
+    this.applicant.setStatus(applicant.getStatus());
+    this.applicant.setTime(applicant.getTime());
+  }
+
+
 
   @Override
   @Transient

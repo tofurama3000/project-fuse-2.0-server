@@ -28,8 +28,11 @@ public class Notification {
   @Column(name = "message")
   private String message;
 
-  @Column(name = "object_type")
-  private String objectType;
+  @Column(name = "notification_type")
+  private String notification_type;
+
+  @Column(name = "data_type")
+  private String data_type;
 
   @Column(name = "object_id")
   private Long objectId;
@@ -65,20 +68,50 @@ public class Notification {
     }
     return "";
   }
+  private  static List<String> validAction = Arrays.asList(
+      "done",
+      "undone"
+  );
 
-  private static List<String> validTypes = Arrays.asList(
-          "ProjectApplicant",
-          "ProjectInvitation",
-          "ProjectInterview:Invite",
+  private static List<String> validNotificationTypes = Arrays.asList(
+
+          "ProjectInvitation:Invite",
           "ProjectInvitation:Accepted",
-          "OrganizationInterview:Invite",
-          "OrganizationInvitation",
+          "ProjectInvitation:Declined",
+          "ProjectApplicant",
+          "ProjectApplicant:Accepted",
+          "ProjectApplicant:Declined",
+
+
+          "OrganizationInvitation:Accepted",
+          "OrganizationInvitation:Invite",
+          "OrganizationInvitation:Declined",
           "OrganizationApplicant",
+          "OrganizationApplicant:Accepted",
+          "OrganizationApplicant:Declined",
+
           "Friend:Request",
           "Friend:Accepted"
   );
 
-  public static boolean isValidType(String type) {
-    return validTypes.contains(type);
+  private static List<String> validDataTypes = Arrays.asList(
+      "ProjectInvitation",
+      "ProjectApplicant",
+
+      "OrganizationInvitation",
+      "OrganizationApplicant",
+
+      "Friend"
+  );
+
+  public static boolean isValidAction(String action) {
+    return validAction.contains(action);
   }
+  public static boolean isValidNotificationType (String type) {
+    return validNotificationTypes.contains(type);
+  }
+  public static boolean isValidDataType (String type) {
+    return validDataTypes.contains(type);
+  }
+
 }
