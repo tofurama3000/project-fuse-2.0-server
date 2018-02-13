@@ -52,7 +52,7 @@ public class UserProfile {
   private String profileType = "User";
 
   /*@OneToMany
-  @JoinColumn(name = "referenced_id", referencedColumnName = "user_id")
+  @JoinColumn(name = "referenced_id", referencedColumnName = "id")
   private List<Link> links;
 
   public List<Link> getLinks() {
