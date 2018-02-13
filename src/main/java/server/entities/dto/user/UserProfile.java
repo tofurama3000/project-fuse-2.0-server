@@ -51,7 +51,7 @@ public class UserProfile {
   @Transient
   private String profileType = "User";
 
-  /*@OneToMany
+  @OneToMany
   @JoinColumn(name = "referenced_id", referencedColumnName = "id")
   private List<Link> links;
 
@@ -60,7 +60,7 @@ public class UserProfile {
       return links;
     }
     return links.stream().filter(link -> link.getReferencedType().equals("User")).collect(Collectors.toList());
-  }*/
+  }
 
   public UserProfile merge(UserProfile original, UserProfile newUserProfile) {
     if (newUserProfile.getHeadline() != null) {
