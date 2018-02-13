@@ -35,6 +35,7 @@ import server.repositories.group.FileDownloadRepository;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -63,7 +64,7 @@ public class FileController {
   @PostMapping(path = "/upload")
   @ResponseBody
   @ApiOperation(value = "Uploads a new file",
-      notes = "Max file size is 128KB")
+      notes = "Max file size is 5MB")
   public TypedResponse<UploadFile> fileUpload(@RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
     List<String> errors = new ArrayList<>();
 
@@ -73,30 +74,13 @@ public class FileController {
       return new TypedResponse<>(response, BaseResponse.Status.DENIED, errors);
     }
     User currentUser = session.get().getUser();
-    UploadFile uploadFile;
     if (fileToUpload != null) {
       if (fileToUpload.getSize() > 0 && fileToUpload.getName().equals("file")) {
-        uploadFile = new UploadFile();
-
-        String hash = Hashing.sha256()
-            .hashString(fileToUpload.getOriginalFilename(), StandardCharsets.UTF_8)
-            .toString();
-        Timestamp ts = new Timestamp(System.currentTimeMillis());
-        long timestamp = ((ts.getTime()) / 1000) * 1000;
-        String fileName = hash + "." + timestamp + "." + currentUser.getId().toString();
-        File fileToSave = new File(fileUploadPath, fileName);
-        if (!fileToSave.createNewFile()) {
-          errors.add("Unable to create file.");
+        UploadFile savedResult = saveFile(fileToUpload, errors, currentUser);
+        if (savedResult == null) {
           return new TypedResponse<>(response, ERROR, errors);
         }
-        fileToUpload.transferTo(fileToSave);
-        uploadFile.setHash(hash);
-        uploadFile.setUpload_time(new Timestamp(timestamp));
-        uploadFile.setFile_size(fileToUpload.getSize());
-        uploadFile.setFileName(fileToUpload.getOriginalFilename());
-        uploadFile.setMime_type(fileToUpload.getContentType());
-        uploadFile.setUser(currentUser);
-        return new TypedResponse<>(response, OK, null, fileRepository.save(uploadFile));
+        return new TypedResponse<>(response, OK, null, savedResult);
       }
     }
     errors.add("Invalid file, unable to save");
@@ -109,11 +93,6 @@ public class FileController {
       notes = "Will download as an attachment")
   public ResponseEntity<Resource> fileDownload(@PathVariable(value = "id") Long id, HttpServletResponse response, HttpServletRequest request) throws Exception {
 
-    Optional<FuseSession> session = fuseSessionController.getSession(request);
-    if (!session.isPresent()) {
-      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-      return null;
-    }
     UploadFile fileToFind = fileDownloadRepository.findOne(id);
     if (fileToFind == null) {
       response.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -145,5 +124,29 @@ public class FileController {
     }
 
     return new GeneralResponse(response, OK, null, fileRepository.getUploadedFiles(session.get().getUser()));
+  }
+
+  public UploadFile saveFile(MultipartFile fileToUpload, List<String> errors, User currentUser) throws IOException {
+    UploadFile uploadFile = new UploadFile();
+
+    String hash = Hashing.sha256()
+            .hashString(fileToUpload.getOriginalFilename(), StandardCharsets.UTF_8)
+            .toString();
+    Timestamp ts = new Timestamp(System.currentTimeMillis());
+    long timestamp = ((ts.getTime()) / 1000) * 1000;
+    String fileName = hash + "." + timestamp + "." + currentUser.getId().toString();
+    File fileToSave = new File(fileUploadPath, fileName);
+    if (!fileToSave.createNewFile()) {
+      errors.add("Unable to create file.");
+      return null;
+    }
+    fileToUpload.transferTo(fileToSave);
+    uploadFile.setHash(hash);
+    uploadFile.setUpload_time(new Timestamp(timestamp));
+    uploadFile.setFile_size(fileToUpload.getSize());
+    uploadFile.setFileName(fileToUpload.getOriginalFilename());
+    uploadFile.setMime_type(fileToUpload.getContentType());
+    uploadFile.setUser(currentUser);
+    return fileRepository.save(uploadFile);
   }
 }

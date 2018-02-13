@@ -9,9 +9,7 @@ import static server.constants.RoleValue.DEFAULT_USER;
 import static server.constants.RoleValue.INVITED_TO_INTERVIEW;
 import static server.constants.RoleValue.INVITED_TO_JOIN;
 import static server.constants.RoleValue.TO_INTERVIEW;
-import static server.controllers.rest.response.BaseResponse.Status.BAD_DATA;
-import static server.controllers.rest.response.BaseResponse.Status.DENIED;
-import static server.controllers.rest.response.BaseResponse.Status.OK;
+import static server.controllers.rest.response.BaseResponse.Status.*;
 import static server.controllers.rest.response.CannedResponse.FILE_NOT_FOUND;
 import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
@@ -272,7 +270,7 @@ public class UserController {
     } else {
       List<String> errors = new ArrayList<>();
       errors.add("No active session");
-      return new GeneralResponse(response, Status.ERROR, errors);
+      return new GeneralResponse(response, ERROR, errors);
     }
   }
 
@@ -456,11 +454,6 @@ public class UserController {
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new TypedResponse<>(response, Status.DENIED, errors);
-    }
-
-    if (!Objects.equals(session.get().getUser().getId(), id)) {
-      errors.add("Access Denied");
       return new TypedResponse<>(response, Status.DENIED, errors);
     }
 
@@ -768,24 +761,25 @@ public class UserController {
   @PostMapping(path = "/upload/thumbnail")
   @ResponseBody
   @ApiOperation(value = "Uploads a new thumbnail",
-      notes = "Max file size is 128KB")
-  public BaseResponse uploadThumbnail(@RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
+      notes = "Max file size is 5MB")
+  public TypedResponse<UploadFile> uploadThumbnail(@RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new TypedResponse<>(response, GeneralResponse.Status.DENIED, errors);
     }
 
     String fileType = fileToUpload.getContentType().split("/")[0];
-    if (!fileType.equals("image")) {
-      return new GeneralResponse(response, BAD_DATA, errors);
+    if(!fileType.equals("image")){
+      return new TypedResponse<>(response, BAD_DATA, errors);
     }
-    TypedResponse<UploadFile> response1 = fileController.fileUpload(fileToUpload, request, response);
-    if (response1.getStatus() == DENIED) {
-      return new GeneralResponse(response, response1.getStatus(), response1.getErrors());
+
+    UploadFile uploadFile = fileController.saveFile(fileToUpload, errors, session.get().getUser());
+    if (uploadFile == null) {
+      return new TypedResponse<>(response, ERROR, errors);
     }
-    UploadFile uploadFile = (UploadFile) response1.getData();
+
     User user = session.get().getUser();
     UserProfile profile = user.getProfile();
     if (profile == null) {
@@ -794,31 +788,32 @@ public class UserController {
     }
     profile.setThumbnail_id(uploadFile.getId());
     userProfileRepository.save(user.getProfile());
-    return new GeneralResponse(response, OK, errors);
+    return new TypedResponse<>(response, OK, null, uploadFile);
   }
 
 
   @PostMapping(path = "/upload/background")
   @ResponseBody
   @ApiOperation(value = "Uploads a new background",
-      notes = "Max file size is 128KB")
-  public BaseResponse uploadBackground(@RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
+      notes = "Max file size is 5MB")
+  public TypedResponse<UploadFile> uploadBackground(@RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new TypedResponse<>(response, GeneralResponse.Status.DENIED, errors);
     }
 
     String fileType = fileToUpload.getContentType().split("/")[0];
-    if (!fileType.equals("image")) {
-      return new GeneralResponse(response, BAD_DATA, errors);
+    if(!fileType.equals("image")){
+      return new TypedResponse<>(response, BAD_DATA, errors);
     }
-    TypedResponse<UploadFile> response1 = fileController.fileUpload(fileToUpload, request, response);
-    if (response1.getStatus() == DENIED) {
-      return new GeneralResponse(response, response1.getStatus(), response1.getErrors());
+
+    UploadFile uploadFile = fileController.saveFile(fileToUpload, errors, session.get().getUser());
+    if (uploadFile == null) {
+      return new TypedResponse<>(response, ERROR, errors);
     }
-    UploadFile uploadFile = (UploadFile) response1.getData();
+
     User user = session.get().getUser();
     UserProfile profile = user.getProfile();
     if (profile == null) {
@@ -827,48 +822,7 @@ public class UserController {
     }
     profile.setBackground_Id(uploadFile.getId());
     userProfileRepository.save(user.getProfile());
-    return new GeneralResponse(response, OK, errors);
-  }
-
-  @GetMapping(path = "/download/background")
-  @ResponseBody
-  @ApiOperation(value = "Download a background file")
-  public TypedResponse<Long> downloadBackground(HttpServletRequest request, HttpServletResponse response) throws Exception {
-    List<String> errors = new ArrayList<>();
-    Optional<FuseSession> session = fuseSessionController.getSession(request);
-    if (!session.isPresent()) {
-      errors.add(INVALID_SESSION);
-      return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
-    }
-    User user = session.get().getUser();
-    long id = user.getProfile().getBackground_Id();
-    if (id == 0) {
-      errors.add(FILE_NOT_FOUND);
-      return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
-    }
-
-    return new TypedResponse(response, OK, null, id);
-  }
-
-
-  @GetMapping(path = "/download/thumbnail")
-  @ResponseBody
-  @ApiOperation(value = "Download a background file")
-  public TypedResponse<Long> downloadThumbnail(HttpServletRequest request, HttpServletResponse response) throws Exception {
-    List<String> errors = new ArrayList<>();
-    Optional<FuseSession> session = fuseSessionController.getSession(request);
-    if (!session.isPresent()) {
-      errors.add(INVALID_SESSION);
-      return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
-    }
-    User user = session.get().getUser();
-
-    long id = user.getProfile().getThumbnail_id();
-    if (id == 0) {
-      errors.add(FILE_NOT_FOUND);
-      return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
-    }
-    return new TypedResponse(response, OK, null, id);
+    return new TypedResponse<>(response, OK, null, uploadFile);
   }
 
   @PostMapping(path = "/{action}/invite/organization")

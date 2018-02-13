@@ -42,25 +42,25 @@ public class UserProfile {
 
   private String skills;
 
+  private  Long thumbnail_id;
+
+  private  Long background_Id;
+
   @Setter(AccessLevel.NONE)
   @JsonIgnore
   @Transient
   private String profileType = "User";
 
-  @OneToMany
+  /*@OneToMany
   @JoinColumn(name = "referenced_id", referencedColumnName = "user_id")
   private List<Link> links;
 
-  private List<Link> getLinks() {
+  public List<Link> getLinks() {
     if (links == null) {
       return links;
     }
     return links.stream().filter(link -> link.getReferencedType().equals("User")).collect(Collectors.toList());
-  }
-
-  private long thumbnail_id;
-
-  private long background_Id;
+  }*/
 
   public UserProfile merge(UserProfile original, UserProfile newUserProfile) {
     if (newUserProfile.getHeadline() != null) {
