@@ -45,7 +45,7 @@ public class ElasticsearchReindexService {
     };
   }
 
-  @Scheduled(fixedDelay = 60L * 60L * 12L * 1000L) // runs once every 12 hours
+  @Scheduled(fixedDelay = 12L * 60L * 60L * 1000L) // runs once every 12 hours; in milliseconds
   public void Reindex() throws InterruptedException {
     logger.info("Starting to re-index");
 

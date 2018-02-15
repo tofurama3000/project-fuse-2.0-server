@@ -5,6 +5,7 @@ import static server.controllers.rest.response.CannedResponse.FRIEND_FOUND;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,6 +82,21 @@ public class FriendController {
     return new TypedResponse<>(response, BaseResponse.Status.OK, null, returnList);
   }
 
+  @GetMapping("/all")
+  @ResponseBody
+  public TypedResponse<List<Friend>> getFriendIds(HttpServletRequest request,
+                                                HttpServletResponse response)
+  {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new TypedResponse<>(response, BaseResponse.Status.DENIED, errors);
+    }
+    List<Friend> list = friendRepository.getAllFriends(session.get().getUser());
+    return new TypedResponse<>(response, BaseResponse.Status.OK, null, list);
+  }
+
   @GetMapping(path = "/applicants")
   @ResponseBody
   public TypedResponse<List<Friend>> getFriendRequests(@ApiParam(value = "The page of results to pull")
@@ -106,9 +122,10 @@ public class FriendController {
   }
 
   @CrossOrigin
+  @ApiOperation("Accept a friend invite")
   @PutMapping(path = "/accept/{id}")
   @ResponseBody
-  public BaseResponse acceptFriend(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
+  public BaseResponse acceptFriend(@ApiParam(name="ID of pending friendship to accept") @PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -138,9 +155,10 @@ public class FriendController {
   }
 
   @CrossOrigin
+  @ApiOperation("Decline a pending friend invite")
   @PutMapping(path = "/declined/{id}")
   @ResponseBody
-  public BaseResponse declineFriend(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
+  public BaseResponse declineFriend(@ApiParam("ID of pending friendship to decline") @PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -161,11 +179,6 @@ public class FriendController {
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     friend.setStatus("declined");
-    try {
-      notificationController.sendNotification(friend.getSender(), friend.getReceiver().getName() + " has declined your friend request", "Friend:Declined", friend.getId());
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
     return new GeneralResponse(response, OK);
   }
 
@@ -194,9 +207,10 @@ public class FriendController {
   }
 
 
+  @ApiOperation("Send a friend invite")
   @PostMapping(path = "/{id}")
   @ResponseBody
-  public BaseResponse applyFriend(@PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response) {
+  public BaseResponse applyFriend(@ApiParam(name="ID of user to send a request to") @PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -217,6 +231,7 @@ public class FriendController {
     friend.setSender(sender);
     friend.setStatus("applied");
     friend.setReceiver(receiver);
+    friendRepository.save(friend);
     try {
       notificationController.sendNotification(receiver, sender.getName() + " wants to be your friend!",
           "Friend:Request",

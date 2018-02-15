@@ -14,5 +14,8 @@ public interface FriendRepository extends CrudRepository<Friend, Long> {
 
   @Query("FROM Friend a where a.receiver = :user and a.status= " + "'" + "applied" + "'")
   List<Friend> getFriendApplicant(@Param("user") User user);
+
+  @Query("FROM Friend a where a.receiver = :user or a.sender = :user")
+  List<Friend> getAllFriends(@Param("user") User user);
 }
 

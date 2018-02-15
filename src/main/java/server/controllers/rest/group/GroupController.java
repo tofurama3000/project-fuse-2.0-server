@@ -656,6 +656,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       }
       interviewRepository.save(interviews);
     } else {
+      // Runs if status set to interview_scheduled
       T g = getGroupRepository().findOne(applicantToSave.getGroup().getId());
       I invite = getInvitation();
       invite.setGroup(g);

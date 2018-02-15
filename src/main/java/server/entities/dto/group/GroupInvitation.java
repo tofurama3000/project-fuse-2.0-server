@@ -1,9 +1,11 @@
 package server.entities.dto.group;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.base.Optional;
 import lombok.Data;
 import server.entities.dto.group.interview.Interview;
 import server.entities.dto.user.User;
+import server.utility.RolesUtility;
 
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -40,7 +42,9 @@ public abstract class GroupInvitation<T extends Group> {
 
   private String status;
 
-  // TODO: Add type validation in this class
+  public static boolean isValidInterviewType(String type) {
+    return RolesUtility.getRoleFromInvitationType(type).isPresent();
+  }
 
   private String type;
 
