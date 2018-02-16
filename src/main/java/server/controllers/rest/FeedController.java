@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
+import server.controllers.rest.response.TypedResponse;
 import server.entities.dto.FuseSession;
 import server.entities.dto.Notification;
 import server.repositories.NotificationRepository;
@@ -36,15 +37,15 @@ public class FeedController {
 
   @GetMapping
   @ResponseBody
-  public GeneralResponse getFeed(@ApiParam(value = "The page of results to pull")
+  public TypedResponse<List<Notification>> getFeed(@ApiParam(value = "The page of results to pull")
                                  @RequestParam(value = "page", required = false, defaultValue = "0") int page,
-                                 @ApiParam(value = "The number of results per page")
+                               @ApiParam(value = "The number of results per page")
                                  @RequestParam(value = "size", required = false, defaultValue = "15") int pageSize, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
+      return new TypedResponse<>(response, BaseResponse.Status.DENIED, errors);
     }
     List<Notification> list = notificationRepository.getNotifications(session.get().getUser());
     List<Notification> returnList = new ArrayList<Notification>();
@@ -54,7 +55,7 @@ public class FeedController {
       }
       returnList.add(list.get(i));
     }
-    return new GeneralResponse(response, BaseResponse.Status.OK, null, returnList);
+    return new TypedResponse<>(response, BaseResponse.Status.OK, null, returnList);
   }
 
 }

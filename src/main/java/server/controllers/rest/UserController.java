@@ -181,7 +181,7 @@ public class UserController {
       notes = "Must provide a name, password, and email")
   @PostMapping
   @ResponseBody
-  public GeneralResponse addNewUser(
+  public TypedResponse<User> addNewUser(
       @ApiParam(value = "The user information to create with", required = true)
       @RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
 
@@ -201,7 +201,7 @@ public class UserController {
     }
 
     if (errors.size() != 0) {
-      return new GeneralResponse(response, errors);
+      return new TypedResponse<>(response, errors);
     }
 
     assert user != null;
@@ -228,13 +228,13 @@ public class UserController {
       emailSender.sendRegistrationEmail(user.getEmail(), registrationKey);
     }
 
-    return new GeneralResponse(response, OK, errors, savedUser);
+    return new TypedResponse<>(response, OK, errors, savedUser);
   }
 
   @ApiIgnore
   @PostMapping(path = "/login")
   @ResponseBody
-  public GeneralResponse login(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
+  public TypedResponse<FuseSession> login(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
 
     logoutIfLoggedIn(user, request);
 
@@ -250,19 +250,19 @@ public class UserController {
         user.setEncoded_password(dbUser.getEncoded_password());
 
         if (user.checkPassword()) {
-          return new GeneralResponse(response, OK, null, fuseSessionController.createSession(dbUser));
+          return new TypedResponse<>(response, OK, null, fuseSessionController.createSession(dbUser));
         }
         errors.add("Invalid Credentials");
       }
     }
 
-    return new GeneralResponse(response, Status.DENIED, errors);
+    return new TypedResponse<>(response, Status.DENIED, errors);
   }
 
   @ApiIgnore
   @PostMapping(path = "/logout")
   @ResponseBody
-  public GeneralResponse logout(HttpServletRequest request, HttpServletResponse response) {
+  public BaseResponse logout(HttpServletRequest request, HttpServletResponse response) {
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (session.isPresent()) {
       fuseSessionController.deleteSession(session.get());

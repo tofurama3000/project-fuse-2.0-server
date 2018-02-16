@@ -84,7 +84,7 @@ public class OrganizationController extends GroupController<Organization, Organi
   @PostMapping("/{id}/grantProjectCreatePermission/{user_id}")
   @ResponseBody
   @ApiOperation("Grants specified user to be able to create projects with in organization")
-  public GeneralResponse grantUserPermissionToCreateProjectsInOrganization(@ApiParam("ID of the organization")
+  public BaseResponse grantUserPermissionToCreateProjectsInOrganization(@ApiParam("ID of the organization")
                                                                            @PathVariable(value = "id") Long id,
                                                                            @ApiParam("Id of user to be granted permission")
                                                                            @PathVariable(value = "user_id") Long userId,
