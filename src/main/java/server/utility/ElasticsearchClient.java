@@ -2,6 +2,7 @@ package server.utility;
 
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.index.IndexRequest;
@@ -76,8 +77,13 @@ public class ElasticsearchClient {
 
   // Create an index request for an indexable document
   private IndexRequest getIndexRequest(Indexable doc) {
+    Map<String, Object> json = doc.getEsJson();
+
+    if (json != null)
+      return new IndexRequest(doc.getEsIndex(), doc.getEsType(), doc.getEsId())
+          .source(json);
     return new IndexRequest(doc.getEsIndex(), doc.getEsType(), doc.getEsId())
-        .source(doc.getEsJson());
+            .opType(DocWriteRequest.OpType.DELETE);
   }
 
   // Create an index request for an indexable document
