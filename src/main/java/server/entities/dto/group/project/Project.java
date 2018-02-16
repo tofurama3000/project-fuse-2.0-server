@@ -13,6 +13,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import java.util.HashMap;
+import java.util.Map;
 
 @ToString(exclude = "profile")
 @Entity
@@ -56,6 +58,14 @@ public class Project extends Group<ProjectProfile> {
   @Override
   public String getEsIndex() {
     return esIndex();
+  }
+
+  @Override
+  public Map<String, Object> getEsJson() {
+    if(this.getOrganization() != null)
+      return null;
+
+    return super.getEsJson();
   }
 
 }
