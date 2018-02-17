@@ -2,7 +2,9 @@ package server.utility;
 
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.DocWriteResponse;
+import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
@@ -76,8 +78,12 @@ public class ElasticsearchClient {
 
   // Create an index request for an indexable document
   private IndexRequest getIndexRequest(Indexable doc) {
-    return new IndexRequest(doc.getEsIndex(), doc.getEsType(), doc.getEsId())
-        .source(doc.getEsJson());
+    Map<String, Object> json = doc.getEsJson();
+
+    if (json != null)
+      return new IndexRequest(doc.getEsIndex(), doc.getEsType(), doc.getEsId())
+          .source(json);
+    return null;
   }
 
   // Create an index request for an indexable document
@@ -89,6 +95,10 @@ public class ElasticsearchClient {
   private UpdateRequest getUpdateRequest(Indexable doc) {
     return new UpdateRequest(doc.getEsIndex(), doc.getEsType(), doc.getEsId())
         .doc(doc.getEsJson());
+  }
+
+  private DeleteRequest getDeleteRequest(Indexable doc) {
+    return new DeleteRequest(doc.getEsIndex(), doc.getEsType(), doc.getEsId());
   }
 
   // This is the default async handler, currently it just prints to the console the result
@@ -112,12 +122,18 @@ public class ElasticsearchClient {
   // Perform a synchronous index of a document
   public DocWriteResponse index(Indexable doc) throws IOException {
     IndexRequest req = getIndexRequest(doc);
-    return elasticsearch_client.index(getIndexRequest(doc));
+    if(req != null)
+      return elasticsearch_client.index(req);
+    return elasticsearch_client.delete(getDeleteRequest(doc));
   }
 
   // Perform an asynchronous index of a document
   public void indexAsync(Indexable doc) {
-    elasticsearch_client.indexAsync(getIndexRequest(doc), getDefaultAsyncHandler());
+    IndexRequest req = getIndexRequest(doc);
+    if(req != null)
+      elasticsearch_client.indexAsync(req, getDefaultAsyncHandler());
+    else
+      elasticsearch_client.deleteAsync(getDeleteRequest(doc), getDefaultAsyncHandler());
   }
 
   private static ElasticsearchClient inst = null;

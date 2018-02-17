@@ -115,15 +115,15 @@ public class FileController {
 
   @GetMapping
   @ResponseBody
-  public GeneralResponse getFiles(HttpServletRequest request, HttpServletResponse response) {
+  public TypedResponse<Iterable<UploadFile>> getFiles(HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new TypedResponse<>(response, GeneralResponse.Status.DENIED, errors);
     }
 
-    return new GeneralResponse(response, OK, null, fileRepository.getUploadedFiles(session.get().getUser()));
+    return new TypedResponse<>(response, OK, null, fileRepository.getUploadedFiles(session.get().getUser()));
   }
 
   public UploadFile saveFile(MultipartFile fileToUpload, List<String> errors, User currentUser) throws IOException {
