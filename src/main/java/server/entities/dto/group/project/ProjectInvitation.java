@@ -29,12 +29,7 @@ public class ProjectInvitation extends GroupInvitation<Project> {
 
   @Override
   public void setApplicant(GroupApplicant applicant) {
-    this.applicant.setId(applicant.getId());
-    this.applicant.setGroup(project);
-    this.applicant.setProject(project);
-    this.applicant.setSender(applicant.getSender());
-    this.applicant.setStatus(applicant.getStatus());
-    this.applicant.setTime(applicant.getTime());
+    this.applicant=(ProjectApplicant) applicant;
   }
 
   @Override

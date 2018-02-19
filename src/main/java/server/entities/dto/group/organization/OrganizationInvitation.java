@@ -30,12 +30,7 @@ public class OrganizationInvitation extends GroupInvitation<Organization> {
 
   @Override
   public void setApplicant(GroupApplicant applicant) {
-    this.applicant.setId(applicant.getId());
-    this.applicant.setGroup(organization);
-    this.applicant.setOrganization(organization);
-    this.applicant.setSender(applicant.getSender());
-    this.applicant.setStatus(applicant.getStatus());
-    this.applicant.setTime(applicant.getTime());
+    this.applicant=(OrganizationApplicant) applicant;
   }
 
 

@@ -375,7 +375,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     }
 
     try {
-      notificationController.sendNotification(groupInvitation.getReceiver(), "You have been invited to join " + group.getName(),group.getName()+"Invitation",group.getName()+"Invitation:Invite",groupInvitation.getId());
+      notificationController.sendNotification(groupInvitation.getReceiver(), "You have been invited to join " + group.getName(),group.getGroupType()+"Invitation",group.getGroupType()+"Invitation:Invite",groupInvitation.getId());
     } catch (Exception e) {
       e.printStackTrace();
     }
