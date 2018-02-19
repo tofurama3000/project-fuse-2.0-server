@@ -481,6 +481,65 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     return new TypedResponse<>(response, OK, new ArrayList<>(), availableInterviewsAfterDate);
   }
 
+  @CrossOrigin
+  @ApiOperation(value = "Delete a interview slot", notes = "This endpoint is used to delete interview slot.")
+  @PutMapping(path = "/{id}/interview_slots/delete")
+  @ResponseBody
+  public BaseResponse deleteInterviewSlots(
+      @ApiParam("The ID of the interview to delete")
+      @PathVariable("id") long id,
+      HttpServletRequest request,
+      HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+    Interview interview = interviewRepository.findOne(id);
+    if(interview==null){
+      errors.add(INVALID_FIELDS);
+      return new GeneralResponse(response, BAD_DATA, errors);
+    }
+    interview.setDeleted(true);
+    interviewRepository.save(interview);
+    return new GeneralResponse(response, OK);
+  }
+
+  @CrossOrigin
+  @ApiOperation(value = "Edit a interview slot", notes = "This endpoint is used to edit interview slot, user can only edit time.")
+  @PutMapping(path = "/{id}/interview_slots/edit")
+  @ResponseBody
+  public BaseResponse editInterviewSlots(
+      @ApiParam("The ID of the interview to delete")
+      @PathVariable("id") long id,
+      @ApiParam("Interview object")
+      @RequestBody Interview interview,
+      HttpServletRequest request,
+      HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+    Interview interviewTosave = interviewRepository.findOne(id);
+    if(interviewTosave==null){
+      errors.add(INVALID_FIELDS);
+      return new GeneralResponse(response, BAD_DATA, errors);
+    }
+    if(interview.getEnd()!=null){
+      interview.setEnd(interview.getEnd());
+    }
+    if(interview.getStart()!=null){
+      interview.setStart(interview.getStart());
+    }
+    interviewRepository.save(interviewTosave);
+    return new GeneralResponse(response, OK);
+  }
+
   @ApiOperation("Find a group by the name and/or owner email")
   @GetMapping(path = "/find", params = {"name", "email"})
   @ResponseBody

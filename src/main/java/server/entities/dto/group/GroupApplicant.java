@@ -2,6 +2,7 @@ package server.entities.dto.group;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import server.entities.dto.group.interview.Interview;
 import server.entities.dto.user.User;
 
 import javax.persistence.Column;
@@ -26,6 +27,10 @@ public abstract class GroupApplicant<T extends Group> {
   @ManyToOne
   @JoinColumn(name = "sender_id", referencedColumnName = "id")
   private User sender;
+
+  @ManyToOne
+  @JoinColumn(name = "interview_id", referencedColumnName = "id")
+  private Interview interview;
 
   @Column(name = "status")
   private String status;

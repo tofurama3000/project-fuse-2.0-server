@@ -734,7 +734,7 @@ public class UserController {
 
       projectInvitationRepository.save(savedInvitation);
       try {
-        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has declined" +savedInvitation.getType() +"invitation from " + group.getGroupType() + ": " + group.getName(),
+        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has declined" +savedInvitation.getType() +" invitation from " + group.getGroupType() + ": " + group.getName(),
             "ProjectInvitation", "ProjectInvitation:Declined", group.getId());
       } catch (Exception e) {
         e.printStackTrace();
@@ -756,17 +756,19 @@ public class UserController {
 
     if (!possibleError.hasError()) {
       savedInvitation.setStatus(ACCEPTED);
-
-      if(savedInvitation.getType().equals("join")){
-        ProjectApplicant applicant = projectApplicantRepository.findOne(savedInvitation.getApplicant().getId());
-        applicant.setStatus("declined");
-        projectApplicantRepository.save(applicant);
+      ProjectApplicant applicant = projectApplicantRepository.findOne(savedInvitation.getApplicant().getId());
+      if(savedInvitation.getType().equals("join")) {
+        applicant.setStatus("accepted");
       }
-
+      else{
+        applicant.setStatus("interview_scheduled");
+        applicant.setInterview(interviewRepository.findOne(savedInvitation.getInterview().getId()));
+      }
+      projectApplicantRepository.save(applicant);
       projectInvitationRepository.save(savedInvitation);
 
       try {
-        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(),
+        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted" + savedInvitation.getType()+" invitation from " + group.getGroupType() + ": " + group.getName(),
             "ProjectInvitation", "ProjectInvitation:Accepted", group.getId());
       } catch (Exception e) {
         e.printStackTrace();
@@ -881,7 +883,7 @@ public class UserController {
       }
       organizationInvitationRepository.save(savedInvitation);
       try {
-        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has declined " + savedInvitation.getType()+"invitation from " + group.getGroupType() + ": " + group.getName(),
+        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has declined " + savedInvitation.getType()+" invitation from " + group.getGroupType() + ": " + group.getName(),
             "OrganizationInvitation", "OrganizationInvitation:Declined", group.getId());
       } catch (Exception e) {
         e.printStackTrace();
@@ -897,14 +899,18 @@ public class UserController {
 
     if (!possibleError.hasError()) {
       savedInvitation.setStatus(ACCEPTED);
+      OrganizationApplicant applicant = organizationApplicantRepository.findOne(savedInvitation.getApplicant().getId());
       if(savedInvitation.getType().equals("join")) {
-        OrganizationApplicant applicant = organizationApplicantRepository.findOne(savedInvitation.getApplicant().getId());
         applicant.setStatus("accepted");
-        organizationApplicantRepository.save(applicant);
       }
+      else{
+        applicant.setStatus("interview_scheduled");
+        applicant.setInterview(interviewRepository.findOne(savedInvitation.getInterview().getId()));
+      }
+      organizationApplicantRepository.save(applicant);
       organizationInvitationRepository.save(savedInvitation);
       try {
-        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted "+ savedInvitation.getType()+"invitation from " + group.getGroupType() + ": " + group.getName()
+        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted "+ savedInvitation.getType()+" invitation from " + group.getGroupType() + ": " + group.getName()
             , "OrganizationInvitation", "OrganizationInvitation:Accepted", group.getId());
       } catch (Exception e) {
         e.printStackTrace();
