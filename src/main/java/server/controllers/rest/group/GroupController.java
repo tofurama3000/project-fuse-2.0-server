@@ -530,11 +530,39 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       errors.add(INVALID_FIELDS);
       return new GeneralResponse(response, BAD_DATA, errors);
     }
-    if(interview.getEnd()!=null){
+    if(interview.getStart()!=null&&interview.getEnd()!=null){
+      ZonedDateTime zonedDateTime = ZonedDateTime.parse(interview.getStart());
+      LocalDateTime startDateTime = zonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+      ZonedDateTime zonedDateTime1 = ZonedDateTime.parse(interview.getEnd());
+      LocalDateTime endDateTime = zonedDateTime1.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+      if(endDateTime.isBefore(startDateTime)){
+        errors.add("Invalid time");
+        return new GeneralResponse(response, DENIED, errors);
+      }
+      interview.setStart(interview.getStart());
       interview.setEnd(interview.getEnd());
     }
-    if(interview.getStart()!=null){
-      interview.setStart(interview.getStart());
+
+  else {
+      if (interview.getStart() != null) {
+        ZonedDateTime zonedDateTime = ZonedDateTime.parse(interview.getStart());
+        LocalDateTime startDateTime = zonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+        if (startDateTime.isAfter(interview.getEndDateTime())) {
+          errors.add("Invalid time");
+          return new GeneralResponse(response, DENIED, errors);
+        }
+        interview.setStart(interview.getStart());
+      }
+
+      if (interview.getEnd() != null) {
+        ZonedDateTime zonedDateTime = ZonedDateTime.parse(interview.getEnd());
+        LocalDateTime endDateTime = zonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+        if (endDateTime.isBefore(interview.getStartDateTime())) {
+          errors.add("Invalid time");
+          return new GeneralResponse(response, DENIED, errors);
+        }
+        interview.setEnd(interview.getEnd());
+      }
     }
     interviewRepository.save(interviewTosave);
     return new GeneralResponse(response, OK);
