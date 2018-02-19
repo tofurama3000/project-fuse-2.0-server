@@ -1,32 +1,31 @@
 package server.controllers.rest;
 
+import static server.controllers.rest.response.BaseResponse.Status.BAD_DATA;
+import static server.controllers.rest.response.BaseResponse.Status.OK;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.rest.response.BaseResponse;
-import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
 import server.entities.dto.PagedResults;
 import server.entities.dto.SearchParams;
-import server.entities.dto.User;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
+import server.entities.dto.user.User;
 import server.utility.ElasticsearchClient;
 
 import javax.servlet.http.HttpServletResponse;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
-import static server.controllers.rest.response.BaseResponse.Status.BAD_DATA;
-import static server.controllers.rest.response.BaseResponse.Status.OK;
 
-/**
- * Created by tofurama on 12/23/17.
- */
 @Controller
 @RequestMapping(value = "/search")
 @Api(tags = "Search")
@@ -39,10 +38,10 @@ public class SearchController {
   public TypedResponse<PagedResults> searchAll(
       @ApiParam(value = "The search query to use", required = true)
       @RequestBody SearchParams params,
-      @ApiParam(value="The page of results to pull")
-      @RequestParam(value = "page", required=false, defaultValue="0") int page,
-      @ApiParam(value="The number of results per page")
-      @RequestParam(value = "size", required=false, defaultValue="15") int pageSize,
+      @ApiParam(value = "The page of results to pull")
+      @RequestParam(value = "page", required = false, defaultValue = "0") int page,
+      @ApiParam(value = "The number of results per page")
+      @RequestParam(value = "size", required = false, defaultValue = "15") int pageSize,
       HttpServletResponse response) {
 
     List<String> errors = new ArrayList<>();
@@ -61,12 +60,12 @@ public class SearchController {
     }
 
     return doSearch(params,
-          response,
-          indices.stream().toArray(String[]::new),
-          types.stream().toArray(String[]::new),
-          page,
-          pageSize
-      );
+        response,
+        indices.stream().toArray(String[]::new),
+        types.stream().toArray(String[]::new),
+        page,
+        pageSize
+    );
   }
 
   @ApiOperation(value = "Searches all users")
@@ -75,18 +74,18 @@ public class SearchController {
   public TypedResponse<PagedResults> searchUser(
       @ApiParam(value = "The search query to use", required = true)
       @RequestBody SearchParams params,
-      @ApiParam(value="The page of results to pull")
-      @RequestParam(value = "page", required=false, defaultValue="0") Integer page,
-      @ApiParam(value="The number of results per page")
-      @RequestParam(value = "size", required=false, defaultValue="15") Integer pageSize,
+      @ApiParam(value = "The page of results to pull")
+      @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+      @ApiParam(value = "The number of results per page")
+      @RequestParam(value = "size", required = false, defaultValue = "15") Integer pageSize,
       HttpServletResponse response) {
     return doSearch(
-            params,
-            response,
-            new String[]{User.esIndex()},
-            new String[]{User.esType()},
-            page,
-            pageSize
+        params,
+        response,
+        new String[]{User.esIndex()},
+        new String[]{User.esType()},
+        page,
+        pageSize
     );
   }
 
@@ -96,17 +95,17 @@ public class SearchController {
   public TypedResponse<PagedResults> searchProjects(
       @ApiParam(value = "The search query to use", required = true)
       @RequestBody SearchParams params,
-      @ApiParam(value="The page of results to pull")
-      @RequestParam(value = "page", required=false, defaultValue="0") Integer page,
-      @ApiParam(value="The number of results per page")
-      @RequestParam(value = "size", required=false, defaultValue="15") Integer pageSize,HttpServletResponse response) {
+      @ApiParam(value = "The page of results to pull")
+      @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+      @ApiParam(value = "The number of results per page")
+      @RequestParam(value = "size", required = false, defaultValue = "15") Integer pageSize, HttpServletResponse response) {
     return doSearch(
-            params,
-            response,
-            new String[]{Project.esIndex()},
-            new String[]{Project.esType()},
-            page,
-            pageSize
+        params,
+        response,
+        new String[]{Project.esIndex()},
+        new String[]{Project.esType()},
+        page,
+        pageSize
     );
   }
 
@@ -116,22 +115,22 @@ public class SearchController {
   public TypedResponse<PagedResults> searchOrganizations(
       @ApiParam(value = "The search query to use", required = true)
       @RequestBody SearchParams params,
-      @ApiParam(value="The page of results to pull")
-      @RequestParam(value = "page", required=false, defaultValue="0") Integer page,
-      @ApiParam(value="The number of results per page")
-      @RequestParam(value = "size", required=false, defaultValue="15") Integer pageSize,HttpServletResponse response) {
+      @ApiParam(value = "The page of results to pull")
+      @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+      @ApiParam(value = "The number of results per page")
+      @RequestParam(value = "size", required = false, defaultValue = "15") Integer pageSize, HttpServletResponse response) {
     return doSearch(
-            params,
-            response,
-            new String[]{Organization.esIndex()},
-            new String[]{Organization.esType()},
-            page,
-            pageSize
+        params,
+        response,
+        new String[]{Organization.esIndex()},
+        new String[]{Organization.esType()},
+        page,
+        pageSize
     );
   }
 
   private static TypedResponse<PagedResults> doSearch(SearchParams params, HttpServletResponse response,
-                                              String[] indices, String[] types, int page, int pageSize) {
+                                                      String[] indices, String[] types, int page, int pageSize) {
     List<String> errors = new ArrayList<>();
 
     if (params.getSearchString() == null) {
@@ -141,16 +140,16 @@ public class SearchController {
 
     try {
       return new TypedResponse<>(response, OK, errors,
-              ElasticsearchClient.instance().searchSimpleQuery(
-                      indices,
-                      types,
-                      params.getSearchString(),
-                      page,
-                      pageSize)
+          ElasticsearchClient.instance().searchSimpleQuery(
+              indices,
+              types,
+              params.getSearchString(),
+              page,
+              pageSize)
       );
-    } catch(NullPointerException e) {
+    } catch (NullPointerException e) {
       errors.add("Server error");
-      return new TypedResponse<>(response, BaseResponse.Status.ERROR,errors);
+      return new TypedResponse<>(response, BaseResponse.Status.ERROR, errors);
     }
   }
 }

@@ -25,11 +25,13 @@ public class ProjectInvitation extends GroupInvitation<Project> {
   }
 
   @Override
-  public  ProjectApplicant getApplicant(){ return applicant; }
+  public ProjectApplicant getApplicant() {
+    return applicant;
+  }
 
   @Override
   public void setApplicant(GroupApplicant applicant) {
-    this.applicant=(ProjectApplicant) applicant;
+    this.applicant = (ProjectApplicant) applicant;
   }
 
   @Override

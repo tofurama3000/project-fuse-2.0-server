@@ -1,9 +1,9 @@
 package server.entities.user_to_group.relationships;
 
 import lombok.Setter;
-import server.entities.dto.User;
 import server.entities.dto.group.team.Team;
 import server.entities.dto.group.team.TeamMember;
+import server.entities.dto.user.User;
 import server.repositories.group.team.TeamMemberRepository;
 
 import java.util.HashSet;

@@ -26,7 +26,9 @@ public class TeamInvitation extends GroupInvitation<Team> {
   }
 
   @Override
-  public TeamApplicant getApplicant(){ return applicant; }
+  public TeamApplicant getApplicant() {
+    return applicant;
+  }
 
   @Override
   public void setApplicant(GroupApplicant applicant) {
@@ -37,7 +39,6 @@ public class TeamInvitation extends GroupInvitation<Team> {
     this.applicant.setStatus(applicant.getStatus());
     this.applicant.setTime(applicant.getTime());
   }
-
 
 
   @Override

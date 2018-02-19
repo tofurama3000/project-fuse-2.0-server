@@ -2,7 +2,7 @@ package server.entities.dto.group.team;
 
 
 import lombok.Data;
-import server.entities.dto.GroupMember;
+import server.entities.dto.group.GroupMember;
 
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;

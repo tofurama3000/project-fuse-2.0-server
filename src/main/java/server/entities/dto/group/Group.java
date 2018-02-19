@@ -8,9 +8,16 @@ import lombok.Data;
 import server.entities.BaseIndexable;
 import server.entities.Interviewable;
 import server.entities.Restriction;
-import server.entities.dto.User;
+import server.entities.dto.user.User;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.MappedSuperclass;
+import javax.persistence.Transient;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -67,6 +74,7 @@ public abstract class Group<Profile extends GroupProfile> extends BaseIndexable 
     map.put("join_restriction", this.getRestrictionString());
     map.put("summary", this.getProfile().getSummary());
     map.put("headline", this.getProfile().getHeadline());
+    map.put("img", this.getProfile().getThumbnail_id());
     map.put("index", this.getEsIndex());
 
     return map;

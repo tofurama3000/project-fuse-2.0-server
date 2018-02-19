@@ -1,7 +1,6 @@
 package server.entities.dto.group.project;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -59,6 +58,14 @@ public class Project extends Group<ProjectProfile> {
   @Override
   public String getEsIndex() {
     return esIndex();
+  }
+
+  @Override
+  public Map<String, Object> getEsJson() {
+    if (this.getOrganization() != null)
+      return null;
+
+    return super.getEsJson();
   }
 
 }

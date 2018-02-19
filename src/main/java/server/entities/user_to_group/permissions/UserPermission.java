@@ -3,7 +3,7 @@ package server.entities.user_to_group.permissions;
 import lombok.Setter;
 import server.controllers.FuseSessionController;
 import server.entities.dto.FuseSession;
-import server.entities.dto.User;
+import server.entities.dto.user.User;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Optional;

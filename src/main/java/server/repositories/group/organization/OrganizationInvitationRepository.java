@@ -1,8 +1,7 @@
 package server.repositories.group.organization;
 
-import org.springframework.data.repository.CrudRepository;
-import server.entities.dto.User;
 import server.entities.dto.group.organization.OrganizationInvitation;
+import server.entities.dto.user.User;
 import server.repositories.group.GroupInvitationRepository;
 
 import java.util.List;

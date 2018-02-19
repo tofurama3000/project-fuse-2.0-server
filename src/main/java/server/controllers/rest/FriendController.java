@@ -1,22 +1,34 @@
 package server.controllers.rest;
 
+import static server.controllers.rest.response.BaseResponse.Status.OK;
+import static server.controllers.rest.response.CannedResponse.FRIEND_FOUND;
+import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
+import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
+
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
-import server.entities.PossibleError;
-import server.entities.dto.Friend;
 import server.entities.dto.FuseSession;
-import server.entities.dto.Notification;
-import server.entities.dto.User;
+import server.entities.dto.user.Friend;
+import server.entities.dto.user.User;
 import server.repositories.FriendRepository;
 import server.repositories.UserRepository;
-import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -24,12 +36,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-
-
-import static server.controllers.rest.response.CannedResponse.FRIEND_FOUND;
-import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
-import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
-import static server.controllers.rest.response.BaseResponse.Status.OK;
 
 @Controller
 @RequestMapping(value = "/friends")
@@ -40,58 +46,74 @@ public class FriendController {
   private FuseSessionController fuseSessionController;
 
   @Autowired
-  FriendRepository friendRepository;
+  private FriendRepository friendRepository;
 
   @Autowired
-  UserRepository userRepository;
+  private UserRepository userRepository;
+
+  private Logger logger = LoggerFactory.getLogger(FriendController.class);
 
   @Autowired
-  NotificationController notificationController;
+  private NotificationController notificationController;
 
   @GetMapping
   @ResponseBody
-  public TypedResponse<List<Friend>> getFriends(@ApiParam(value="The page of results to pull")
-                                       @RequestParam(value = "page", required=false, defaultValue="0") int page,
-                                                @ApiParam(value="The number of results per page")
-                                       @RequestParam(value = "size", required=false, defaultValue="15") int pageSize,
-                                  HttpServletRequest request,
-                                  HttpServletResponse response) {
+  public TypedResponse<List<Friend>> getFriends(@ApiParam(value = "The page of results to pull")
+                                                @RequestParam(value = "page", required = false, defaultValue = "0") int page,
+                                                @ApiParam(value = "The number of results per page")
+                                                @RequestParam(value = "size", required = false, defaultValue = "15") int pageSize,
+                                                HttpServletRequest request,
+                                                HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new TypedResponse(response, BaseResponse.Status.DENIED, errors);
+      return new TypedResponse<>(response, BaseResponse.Status.DENIED, errors);
     }
 
-    List<Friend> list =  friendRepository.getFriends(session.get().getUser());
-    List<Friend> returnList = new ArrayList<Friend>();
-    for(int i = page*pageSize; i<(page*pageSize)+pageSize;i++){
-      if(i>=list.size()){
+    List<Friend> list = friendRepository.getFriends(session.get().getUser());
+    List<Friend> returnList = new ArrayList<>();
+    for (int i = page * pageSize; i < (page * pageSize) + pageSize; i++) {
+      if (i >= list.size()) {
         break;
       }
       returnList.add(list.get(i));
     }
 
-    return new TypedResponse<>(response, BaseResponse.Status.OK, null,returnList);
+    return new TypedResponse<>(response, BaseResponse.Status.OK, null, returnList);
   }
 
-  @GetMapping(path = "/applicants")
+  @GetMapping("/all")
   @ResponseBody
-  public TypedResponse<List<Friend>>  getFriendRequests(@ApiParam(value="The page of results to pull")
-                                                          @RequestParam(value = "page", required=false, defaultValue="0") int page,
-                                                        @ApiParam(value="The number of results per page")
-                                                          @RequestParam(value = "size", required=false, defaultValue="15") int pageSize,
-                                                        HttpServletRequest request, HttpServletResponse response) {
+  public TypedResponse<List<Friend>> getFriendIds(HttpServletRequest request,
+                                                  HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new TypedResponse(response, BaseResponse.Status.DENIED, errors);
+      return new TypedResponse<>(response, BaseResponse.Status.DENIED, errors);
     }
-    List<Friend> list =  friendRepository.getFriendApplicant(session.get().getUser());
-    List<Friend> returnList = new ArrayList<Friend>();
-    for(int i = page*pageSize; i<(page*pageSize)+pageSize;i++){
-      if(i>=list.size()){
+    List<Friend> list = friendRepository.getAllFriends(session.get().getUser());
+    return new TypedResponse<>(response, BaseResponse.Status.OK, null, list);
+  }
+
+  @GetMapping(path = "/applicants")
+  @ResponseBody
+  public TypedResponse<List<Friend>> getFriendRequests(@ApiParam(value = "The page of results to pull")
+                                                       @RequestParam(value = "page", required = false, defaultValue = "0") int page,
+                                                       @ApiParam(value = "The number of results per page")
+                                                       @RequestParam(value = "size", required = false, defaultValue = "15") int pageSize,
+                                                       HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new TypedResponse<>(response, BaseResponse.Status.DENIED, errors);
+    }
+    List<Friend> list = friendRepository.getFriendApplicant(session.get().getUser());
+    List<Friend> returnList = new ArrayList<>();
+    for (int i = page * pageSize; i < (page * pageSize) + pageSize; i++) {
+      if (i >= list.size()) {
         break;
       }
       returnList.add(list.get(i));
@@ -100,9 +122,10 @@ public class FriendController {
   }
 
   @CrossOrigin
+  @ApiOperation("Accept a friend invite")
   @PutMapping(path = "/accept/{id}")
   @ResponseBody
-  public BaseResponse acceptFriend(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
+  public BaseResponse acceptFriend(@ApiParam(name = "ID of pending friendship to accept") @PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -110,31 +133,32 @@ public class FriendController {
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     Friend friend = friendRepository.findOne(id);
-    if(friend==null){
+    if (friend == null) {
       errors.add(INVALID_FIELDS);
-      return new GeneralResponse(response,BaseResponse.Status.DENIED , errors);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
-    if(friend.getReceiver().getId()!=session.get().getUser().getId()){
+    if (!friend.getReceiver().getId().equals(session.get().getUser().getId())) {
       errors.add(INVALID_FIELDS);
-      return new GeneralResponse(response,BaseResponse.Status.DENIED , errors);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
-    if (!friend.getStatus().equals("applied")){
+    if (!friend.getStatus().equals("applied")) {
       errors.add(INVALID_FIELDS);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     friend.setStatus("accepted");
     try {
-      notificationController.sendNotification(friend.getSender(),friend.getReceiver().getName() + " has accepted your friend request","Friend","Friend:Accepted", friend.getId());
+      notificationController.sendNotification(friend.getSender(), friend.getReceiver().getName() + " has accepted your friend request", "Friend", "Friend:Accepted", friend.getId());
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
     }
     return new GeneralResponse(response, OK);
   }
 
   @CrossOrigin
+  @ApiOperation("Decline a pending friend invite")
   @PutMapping(path = "/declined/{id}")
   @ResponseBody
-  public BaseResponse declineFriend(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
+  public BaseResponse declineFriend(@ApiParam("ID of pending friendship to decline") @PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -142,21 +166,21 @@ public class FriendController {
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     Friend friend = friendRepository.findOne(id);
-    if(friend==null){
+    if (friend == null) {
       errors.add(INVALID_FIELDS);
-      return new GeneralResponse(response,BaseResponse.Status.DENIED , errors);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
-    if(friend.getReceiver().getId()!=session.get().getUser().getId()){
+    if (!friend.getReceiver().getId().equals(session.get().getUser().getId())) {
       errors.add(INVALID_FIELDS);
-      return new GeneralResponse(response,BaseResponse.Status.DENIED , errors);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
-    if (!friend.getStatus().equals("applied")){
+    if (!friend.getStatus().equals("applied")) {
       errors.add(INVALID_FIELDS);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     friend.setStatus("declined");
     try {
-    //  notificationController.sendNotification(friend.getSender(),friend.getReceiver().getName() + " DO NOT WANT TO BE YOUR FRIEND","Friend:Declined", friend.getId());
+      //  notificationController.sendNotification(friend.getSender(),friend.getReceiver().getName() + " DO NOT WANT TO BE YOUR FRIEND","Friend:Declined", friend.getId());
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -174,11 +198,11 @@ public class FriendController {
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     Friend friend = friendRepository.findOne(id);
-    if(friend==null){
+    if (friend == null) {
       errors.add(INVALID_FIELDS);
-      return new GeneralResponse(response,BaseResponse.Status.DENIED);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED);
     }
-    if (!friend.getStatus().equals("accepted")){
+    if (!friend.getStatus().equals("accepted")) {
       errors.add(INVALID_FIELDS);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
@@ -188,34 +212,35 @@ public class FriendController {
   }
 
 
+  @ApiOperation("Send a friend invite")
   @PostMapping(path = "/{id}")
   @ResponseBody
-  public BaseResponse applyFriend(@PathVariable("id") Long id,  HttpServletRequest request, HttpServletResponse response) {
+  public BaseResponse applyFriend(@ApiParam(name = "ID of user to send a request to") @PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
-  User sender =session.get().getUser();
-  if(Objects.equals(sender.getId(), id)){
-    errors.add(INVALID_FIELDS);
-    return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
-  }
-  if (isFriend(sender,id)){
-    errors.add(FRIEND_FOUND);
-    return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
-  }
+    User sender = session.get().getUser();
+    if (Objects.equals(sender.getId(), id)) {
+      errors.add(INVALID_FIELDS);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
+    }
+    if (isFriend(sender, id)) {
+      errors.add(FRIEND_FOUND);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
+    }
     User receiver = userRepository.findOne(id);
     Friend friend = new Friend();
     friend.setSender(sender);
     friend.setStatus("applied");
     friend.setReceiver(receiver);
-    friend = friendRepository.save(friend);
+    friendRepository.save(friend);
     try {
-      notificationController.sendNotification(receiver,sender.getName() +" wants to be your friend!",
-          "Friend","Friend:Request",
-              sender.getId()
+      notificationController.sendNotification(receiver, sender.getName() + " wants to be your friend!",
+          "Friend", "Friend:Request",
+          sender.getId()
       );
     } catch (Exception e) {
       e.printStackTrace();
@@ -223,11 +248,11 @@ public class FriendController {
     return new GeneralResponse(response, OK);
   }
 
-  private boolean isFriend(User user, long id){
+  private boolean isFriend(User user, long id) {
     List<Friend> list = friendRepository.getFriends(user);
-    for(Friend f : list){
-      if(f.getReceiver().getId()==id||f.getSender().getId()==id){
-        if(f.getStatus().equals("accepted")) {
+    for (Friend f : list) {
+      if (f.getReceiver().getId() == id || f.getSender().getId() == id) {
+        if (f.getStatus().equals("accepted")) {
           return true;
         }
       }

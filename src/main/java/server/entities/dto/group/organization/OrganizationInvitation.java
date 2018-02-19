@@ -26,11 +26,13 @@ public class OrganizationInvitation extends GroupInvitation<Organization> {
   }
 
   @Override
-  public OrganizationApplicant getApplicant(){ return applicant; }
+  public OrganizationApplicant getApplicant() {
+    return applicant;
+  }
 
   @Override
   public void setApplicant(GroupApplicant applicant) {
-    this.applicant=(OrganizationApplicant) applicant;
+    this.applicant = (OrganizationApplicant) applicant;
   }
 
 

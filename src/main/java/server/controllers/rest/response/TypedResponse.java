@@ -3,7 +3,6 @@ package server.controllers.rest.response;
 import lombok.Data;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -41,5 +40,6 @@ public class TypedResponse<T> extends BaseResponse {
     this(response, statusFromError(errors), errors, null);
   }
 
-  public TypedResponse() {}
+  public TypedResponse() {
+  }
 }
