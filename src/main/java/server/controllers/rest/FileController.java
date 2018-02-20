@@ -1,5 +1,7 @@
 package server.controllers.rest;
 
+import static server.constants.ImageSize.BACKGROUND_HEIGHT;
+import static server.constants.ImageSize.BACKGROUND_WIDTH;
 import static server.constants.ImageSize.THUMBNAIL_DIM;
 import static server.controllers.rest.response.BaseResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.BaseResponse.Status.ERROR;
@@ -145,22 +147,38 @@ public class FileController {
       return null;
     }
     fileToUpload.transferTo(fileToSave);
-    String path = fileUploadPath+ "\\" + fileName;
-    try {
-      BufferedImage originalImage = ImageIO.read(new File(path));
-      BufferedImage resizedImage = new BufferedImage(THUMBNAIL_DIM, THUMBNAIL_DIM, originalImage.getType());
-      Graphics2D g = resizedImage.createGraphics();
-      g.drawImage(originalImage, 0, 0, THUMBNAIL_DIM, THUMBNAIL_DIM, null);
-      g.setComposite(AlphaComposite.Src);
-      g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-      g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      ImageIO.write(resizedImage, "jpg", new File(path));
-    }
-    catch(IOException e)
-    {
-      System.out.println(e.getMessage());
+    String path = fileUploadPath+ "/" + fileName;
+    if(type.equals("avatar")) {
+        try {
+            BufferedImage originalImage = ImageIO.read(new File(path));
+            BufferedImage resizedImage = new BufferedImage(THUMBNAIL_DIM, THUMBNAIL_DIM, originalImage.getType());
+            Graphics2D g = resizedImage.createGraphics();
+            g.drawImage(originalImage, 0, 0, THUMBNAIL_DIM, THUMBNAIL_DIM, null);
+            g.setComposite(AlphaComposite.Src);
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            ImageIO.write(resizedImage, "jpg", new File(path));
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
 
+        }
+    }
+    else if(type.equals("background")){
+        try {
+            BufferedImage originalImage = ImageIO.read(new File(path));
+            BufferedImage resizedImage = new BufferedImage(BACKGROUND_WIDTH, BACKGROUND_HEIGHT, originalImage.getType());
+            Graphics2D g = resizedImage.createGraphics();
+            g.drawImage(originalImage, 0, 0, BACKGROUND_WIDTH, BACKGROUND_HEIGHT, null);
+            g.setComposite(AlphaComposite.Src);
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            ImageIO.write(resizedImage, "jpg", new File(path));
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+
+        }
     }
     Long size = (Long)new File(path).length();
     uploadFile.setHash(hash);

@@ -785,28 +785,11 @@ public class UserController {
       return new TypedResponse<>(response, BAD_DATA, errors);
     }
 
-
     UploadFile uploadFile = fileController.saveFile(fileToUpload, "avatar", errors, session.get().getUser());
     if (uploadFile == null) {
       return new TypedResponse<>(response, ERROR, errors);
     }
 
-//    String path = fileUploadPath+ "\\" + uploadFile.getFileName();
-//    try {
-//      BufferedImage originalImage = ImageIO.read(new File("G:\\5.jpg"));
-//      BufferedImage resizedImage = new BufferedImage(THUMBNAIL_DIM, THUMBNAIL_DIM, originalImage.getType());
-//      Graphics2D g = resizedImage.createGraphics();
-//      g.drawImage(originalImage, 0, 0, THUMBNAIL_DIM, THUMBNAIL_DIM, null);
-//      g.setComposite(AlphaComposite.Src);
-//      g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-//      g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-//      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-//      ImageIO.write(resizedImage, "jpg", new File(path));
-//    }
-//    catch(IOException e)
-//    {
-//
-//    }
     User user = session.get().getUser();
     UserProfile profile = user.getProfile();
     if (profile == null) {
