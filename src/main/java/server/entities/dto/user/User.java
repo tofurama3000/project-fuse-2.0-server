@@ -20,7 +20,11 @@ import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @ToString(exclude = "user")
@@ -89,7 +93,7 @@ public class User extends BaseIndexable {
     map.put("email", this.email);
     map.put("index", this.getEsIndex());
     if (this.profile != null) {
-      if (this.profile.getSkills() == null){
+      if (this.profile.getSkills() == null) {
         map.put("skills", null);
       } else {
         List<String> skills = Arrays.asList(this.profile.getSkills().split(","));

@@ -2,11 +2,12 @@ package server.controllers.rest.group;
 
 import static server.constants.RoleValue.ADMIN;
 import static server.constants.RoleValue.CREATE_PROJECT_IN_ORGANIZATION;
-import static server.constants.RoleValue.OWNER;
-import static server.controllers.rest.response.BaseResponse.Status.DENIED;
 import static server.controllers.rest.response.BaseResponse.Status.OK;
-import static server.controllers.rest.response.CannedResponse.*;
-
+import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
+import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
+import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
+import static server.controllers.rest.response.CannedResponse.NO_GROUP_FOUND;
+import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -14,7 +15,11 @@ import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
@@ -48,7 +53,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping(value = "/organizations")
@@ -88,9 +92,9 @@ public class OrganizationController extends GroupController<Organization, Organi
   @ResponseBody
   @ApiOperation("Checks whether or not a user can create a project in the organization")
   public TypedResponse<Boolean> canUserCreateProjectForOrganization(
-          @ApiParam("ID of the organization")
-          @PathVariable(value = "id") Long id,
-          HttpServletRequest request, HttpServletResponse response
+      @ApiParam("ID of the organization")
+      @PathVariable(value = "id") Long id,
+      HttpServletRequest request, HttpServletResponse response
   ) {
     List<String> errors = new ArrayList<>();
 
@@ -121,9 +125,9 @@ public class OrganizationController extends GroupController<Organization, Organi
   @ResponseBody
   @ApiOperation("Returns all projects associated with an organization")
   public TypedResponse<List<Project>> getOrganizationProjects(
-          @ApiParam("Id of the organization")
-          @PathVariable(value = "id") Long id,
-          HttpServletRequest request, HttpServletResponse response
+      @ApiParam("Id of the organization")
+      @PathVariable(value = "id") Long id,
+      HttpServletRequest request, HttpServletResponse response
   ) {
     List<String> errors = new ArrayList<>();
 
@@ -153,10 +157,10 @@ public class OrganizationController extends GroupController<Organization, Organi
   @ResponseBody
   @ApiOperation("Grants specified user to be able to create projects with in organization")
   public BaseResponse grantUserPermissionToCreateProjectsInOrganization(@ApiParam("ID of the organization")
-                                                                           @PathVariable(value = "id") Long id,
-                                                                           @ApiParam("Id of user to be granted permission")
-                                                                           @PathVariable(value = "user_id") Long userId,
-                                                                           HttpServletRequest request, HttpServletResponse response) {
+                                                                        @PathVariable(value = "id") Long id,
+                                                                        @ApiParam("Id of user to be granted permission")
+                                                                        @PathVariable(value = "user_id") Long userId,
+                                                                        HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);

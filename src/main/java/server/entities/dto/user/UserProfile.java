@@ -42,9 +42,9 @@ public class UserProfile {
 
   private String skills;
 
-  private  Long thumbnail_id;
+  private Long thumbnail_id;
 
-  private  Long background_Id;
+  private Long background_Id;
 
   @Setter(AccessLevel.NONE)
   @JsonIgnore
