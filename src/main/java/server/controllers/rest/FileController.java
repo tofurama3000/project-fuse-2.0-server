@@ -156,10 +156,10 @@ public class FileController {
       g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       ImageIO.write(resizedImage, "jpg", new File(path));
-    //fff
     }
     catch(IOException e)
     {
+      System.out.println(e.getMessage());
 
     }
     Long size = (Long)new File(path).length();
