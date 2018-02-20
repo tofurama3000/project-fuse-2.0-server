@@ -51,6 +51,16 @@ openssl req \
 cat /tmp/project-fuse.com.cert /tmp/project-fuse.com.key > /tmp/project-fuse.com.pem
 sudo mv /tmp/project-fuse.com.pem /etc/haproxy/certs/project-fuse.com.pem
 
+# Setup
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+sudo apt-get install -y apt-transport-https
+echo "deb https://artifacts.elastic.co/packages/6.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-6.x.list
+sudo apt-get update && sudo apt-get install -y elasticsearch
+
+sudo /bin/systemctl daemon-reload
+sudo /bin/systemctl enable elasticsearch.service
+sudo systemctl start elasticsearch.service
+
 #Setup user accounts
 sudo groupadd project_fuse
 sudo useradd project_fuse
