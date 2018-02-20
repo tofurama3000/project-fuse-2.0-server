@@ -146,6 +146,7 @@ public class FileController {
       errors.add("Unable to create file.");
       return null;
     }
+    String[] fileType = fileToUpload.getContentType().split("/");
     fileToUpload.transferTo(fileToSave);
     String path = fileUploadPath+ "/" + fileName;
     if(type.equals("avatar")) {
@@ -158,7 +159,7 @@ public class FileController {
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
             g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            ImageIO.write(resizedImage, "jpg", new File(path));
+            ImageIO.write(resizedImage, fileType[1], new File(path));
         } catch (IOException e) {
             System.out.println(e.getMessage());
 
@@ -174,7 +175,7 @@ public class FileController {
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
             g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            ImageIO.write(resizedImage, "jpg", new File(path));
+            ImageIO.write(resizedImage, fileType[1], new File(path));
         } catch (IOException e) {
             System.out.println(e.getMessage());
 
@@ -187,8 +188,6 @@ public class FileController {
     uploadFile.setFileName(fileToUpload.getOriginalFilename());
     uploadFile.setMime_type(fileToUpload.getContentType());
     uploadFile.setUser(currentUser);
-
-
     return fileRepository.save(uploadFile);
   }
 }
