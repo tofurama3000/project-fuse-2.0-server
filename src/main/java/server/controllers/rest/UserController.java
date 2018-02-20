@@ -1,6 +1,7 @@
 package server.controllers.rest;
 
 import static server.constants.Availability.NOT_AVAILABLE;
+import static server.constants.ImageSize.THUMBNAIL_DIM;
 import static server.constants.InvitationStatus.ACCEPTED;
 import static server.constants.InvitationStatus.DECLINED;
 import static server.constants.RegistrationStatus.REGISTERED;
@@ -91,9 +92,18 @@ import server.utility.RolesUtility;
 import server.utility.StreamUtil;
 import springfox.documentation.annotations.ApiIgnore;
 
+import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.websocket.server.PathParam;
+
+import java.awt.AlphaComposite;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -102,6 +112,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
 
 @Controller
 @Api(value = "User Endpoints")
@@ -769,23 +780,41 @@ public class UserController {
       errors.add(INVALID_SESSION);
       return new TypedResponse<>(response, GeneralResponse.Status.DENIED, errors);
     }
-
-    String fileType = fileToUpload.getContentType().split("/")[0];
-    if(!fileType.equals("image")){
+    String[] fileType = fileToUpload.getContentType().split("/");
+    if(!fileType[0].equals("image")){
       return new TypedResponse<>(response, BAD_DATA, errors);
     }
 
-    UploadFile uploadFile = fileController.saveFile(fileToUpload, errors, session.get().getUser());
+
+    UploadFile uploadFile = fileController.saveFile(fileToUpload, "avatar", errors, session.get().getUser());
     if (uploadFile == null) {
       return new TypedResponse<>(response, ERROR, errors);
     }
 
+//    String path = fileUploadPath+ "\\" + uploadFile.getFileName();
+//    try {
+//      BufferedImage originalImage = ImageIO.read(new File("G:\\5.jpg"));
+//      BufferedImage resizedImage = new BufferedImage(THUMBNAIL_DIM, THUMBNAIL_DIM, originalImage.getType());
+//      Graphics2D g = resizedImage.createGraphics();
+//      g.drawImage(originalImage, 0, 0, THUMBNAIL_DIM, THUMBNAIL_DIM, null);
+//      g.setComposite(AlphaComposite.Src);
+//      g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+//      g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+//      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+//      ImageIO.write(resizedImage, "jpg", new File(path));
+//    }
+//    catch(IOException e)
+//    {
+//
+//    }
     User user = session.get().getUser();
     UserProfile profile = user.getProfile();
     if (profile == null) {
       profile = new UserProfile();
+      profile.setBackground_Id(0L);
       user.setProfile(profile);
     }
+
     profile.setThumbnail_id(uploadFile.getId());
     userProfileRepository.save(user.getProfile());
     return new TypedResponse<>(response, OK, null, uploadFile);
@@ -809,7 +838,7 @@ public class UserController {
       return new TypedResponse<>(response, BAD_DATA, errors);
     }
 
-    UploadFile uploadFile = fileController.saveFile(fileToUpload, errors, session.get().getUser());
+    UploadFile uploadFile = fileController.saveFile(fileToUpload, "background", errors, session.get().getUser());
     if (uploadFile == null) {
       return new TypedResponse<>(response, ERROR, errors);
     }
