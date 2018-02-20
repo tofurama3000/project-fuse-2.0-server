@@ -882,7 +882,8 @@ public class UserController {
         notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has declined " + savedInvitation.getType() + " invitation from " + group.getGroupType() + ": " + group.getName(),
             "OrganizationInvitation", "OrganizationInvitation:Declined", group.getId());
       } catch (Exception e) {
-        e.printStackTrace();
+        errors.add("Can't send notification");
+        return new GeneralResponse(response, ERROR, errors);
       }
       return new GeneralResponse(response);
     }
