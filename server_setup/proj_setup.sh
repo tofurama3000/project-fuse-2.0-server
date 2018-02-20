@@ -32,3 +32,5 @@ sudo mv project_fuse_client.service /etc/systemd/system
 sudo systemctl daemon-reload
 sudo systemctl start project_fuse_client.service
 sudo systemctl start project_fuse_server.service
+
+python3 src/config/elasticsearch_config.py
