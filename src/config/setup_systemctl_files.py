@@ -18,7 +18,9 @@ context = {
     'jar': os.path.join(args[1], "target/project-fuse-2.0-1.0-SNAPSHOT.jar"),
     'app_js': os.path.join(args[2], "app.js"),
     'client_dir': args[2],
-    'server_dir': os.path.join(args[1], "target")
+    'server_dir': os.path.join(args[1], "target"),
+    'user': 'project_fuse',
+    'group': 'project_fuse'
 }
 
 DIRECTORY = os.path.dirname(os.path.realpath(__file__))

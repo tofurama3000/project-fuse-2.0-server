@@ -24,12 +24,8 @@ sudo pip3 install pystache
 sudo apt install -y maven
 
 # Setup NVM
-wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh | bash
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-nvm install v8.9.4
-nvm use v8.9.4
+curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+sudo apt-get install -y nodejs build-essential
 
 # Install MySQL
 echo "mysql-server mysql-server/root_password select root" | sudo debconf-set-selections
@@ -54,3 +50,8 @@ openssl req \
     -out /tmp/project-fuse.com.cert
 cat /tmp/project-fuse.com.cert /tmp/project-fuse.com.key > /tmp/project-fuse.com.pem
 sudo mv /tmp/project-fuse.com.pem /etc/haproxy/certs/project-fuse.com.pem
+
+#Setup user accounts
+sudo groupadd project_fuse
+sudo useradd project_fuse
+sudo usermod -a -G project_fuse project_fuse
