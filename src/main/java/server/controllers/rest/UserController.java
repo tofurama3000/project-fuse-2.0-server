@@ -927,6 +927,7 @@ public class UserController {
         notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName()
                 ,"OrganizationInvitation","OrganizationInvitation:Accepted",group.getId());
       } catch (Exception e) {
+
         e.printStackTrace();
       }
     }

@@ -174,7 +174,6 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     T group = getGroupRepository().findOne(id);
     application.setGroup(group);
 
-    // UserToTeamPermission permission = permissionFactory.createUserToTeamPermission(session.get().getUser(), applicant.getTeam());
     switch (getUserToGroupPermission(session.get().getUser(), application.getGroup()).canJoin()) {
       case ALREADY_JOINED:
         errors.add(ALREADY_JOINED_MSG);

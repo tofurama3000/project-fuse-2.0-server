@@ -155,11 +155,6 @@ public class FriendController {
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     friend.setStatus("declined");
-    try {
-    //  notificationController.sendNotification(friend.getSender(),friend.getReceiver().getName() + " DO NOT WANT TO BE YOUR FRIEND","Friend:Declined", friend.getId());
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
     return new GeneralResponse(response, OK);
   }
 

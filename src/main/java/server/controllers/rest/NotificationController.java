@@ -187,13 +187,8 @@ public class NotificationController<T extends Group> {
       errors.add(INSUFFICIENT_PRIVELAGES);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
-    boolean b;
-    if(action.equals("done")){
-      b=true;
-    }
-    else
-      b=false;
-    notification.setAction_done(b);
+
+    notification.setAction_done(action.equals("done"));
     notificationRepository.save(notification);
     return new GeneralResponse(response, OK);
   }
