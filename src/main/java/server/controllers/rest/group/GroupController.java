@@ -611,66 +611,56 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @ResponseBody
   @ApiOperation(value = "Uploads a new thumbnail",
       notes = "Max file size is 128KB")
-  public BaseResponse uploadThumbnail(@PathVariable(value = "id") Long id, @RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public TypedResponse<UploadFile> uploadThumbnail(@PathVariable(value = "id") Long id, @RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new TypedResponse<>(response, GeneralResponse.Status.DENIED, errors);
     }
 
     String fileType = fileToUpload.getContentType().split("/")[0];
     if (!fileType.equals("image")) {
-      return new GeneralResponse(response, BAD_DATA, errors);
+      return new TypedResponse<>(response, ERROR, errors);
     }
     UploadFile uploadFile = fileController.saveFile(fileToUpload, "avatar", errors, session.get().getUser());
     if(uploadFile == null)
     {
       errors.add("Invalid file, unable to save");
-      return new GeneralResponse(response, BAD_DATA, errors);
+      return new TypedResponse<>(response, ERROR, errors);
     }
-//    TypedResponse<UploadFile> response1 = fileController.fileUpload(fileToUpload, request, response);
-//    if (response1.getStatus() == DENIED) {
-//      return new GeneralResponse(response, response1.getStatus(), response1.getErrors());
-//    }
-   // UploadFile uploadFile = (UploadFile) response1.getData();
     T group = getGroupRepository().findOne(id);
     group.getProfile().setThumbnail_id(uploadFile.getId());
     getGroupApplicantRepository().save(group.getProfile());
-    return new GeneralResponse(response, OK, errors);
+    return new TypedResponse<>(response, OK, null, uploadFile);
   }
 
   @PostMapping(path = "/{id}/upload/background")
   @ResponseBody
   @ApiOperation(value = "Uploads a new background",
       notes = "Max file size is 128KB")
-  public BaseResponse uploadBackground(@PathVariable(value = "id") Long id, @RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public TypedResponse<UploadFile> uploadBackground(@PathVariable(value = "id") Long id, @RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new TypedResponse<>(response, GeneralResponse.Status.DENIED, errors);
     }
 
     String fileType = fileToUpload.getContentType().split("/")[0];
     if (!fileType.equals("image")) {
-      return new GeneralResponse(response, BAD_DATA, errors);
+      return new TypedResponse<>(response, BAD_DATA, errors);
     }
     UploadFile uploadFile = fileController.saveFile(fileToUpload, "background", errors, session.get().getUser());
     if(uploadFile == null)
     {
       errors.add("Invalid file, unable to save");
-      return new GeneralResponse(response, BAD_DATA, errors);
+      return new TypedResponse<>(response, BAD_DATA, errors);
     }
-//    TypedResponse<UploadFile> response1 = fileController.fileUpload(fileToUpload, request, response);
-//    if (response1.getStatus() == DENIED) {
-//      return new GeneralResponse(response, response1.getStatus(), response1.getErrors());
-//    }
-//    UploadFile uploadFile = (UploadFile) response1.getData();
     T group = getGroupRepository().findOne(id);
     group.getProfile().setBackground_Id(uploadFile.getId());
     getGroupApplicantRepository().save(group.getProfile());
-    return new GeneralResponse(response, OK, errors);
+    return new TypedResponse<>(response, OK, null, uploadFile);
   }
 
   @GetMapping(path = "/{id}/download/background")
