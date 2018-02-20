@@ -14,7 +14,7 @@ import javax.mail.internet.MimeMessage;
 @Component
 public class LocalMailSenderImpl implements MailSender {
 
-  Logger logger = LoggerFactory.getLogger(LocalMailSenderImpl.class);
+  private Logger logger = LoggerFactory.getLogger(LocalMailSenderImpl.class);
 
   @Autowired
   private JavaMailSender emailSender;

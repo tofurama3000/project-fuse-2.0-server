@@ -1,45 +1,53 @@
 package server.controllers.rest;
 
+import static server.constants.RoleValue.ADMIN;
+import static server.constants.RoleValue.OWNER;
+import static server.controllers.rest.response.BaseResponse.Status.OK;
+import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
+import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
+import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
 import server.entities.dto.FuseSession;
 import server.entities.dto.Notification;
-import server.entities.dto.User;
 import server.entities.dto.group.Group;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
 import server.entities.dto.group.team.Team;
-import server.entities.user_to_group.permissions.UserToGroupPermission;
-import server.repositories.FriendRepository;
+import server.entities.dto.user.User;
 import server.repositories.NotificationRepository;
 import server.repositories.UserRepository;
 import server.repositories.group.organization.OrganizationApplicantRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
 import server.repositories.group.organization.OrganizationMemberRepository;
+import server.repositories.group.organization.OrganizationRepository;
 import server.repositories.group.project.ProjectApplicantRepository;
 import server.repositories.group.project.ProjectInvitationRepository;
 import server.repositories.group.project.ProjectMemberRepository;
+import server.repositories.group.project.ProjectRepository;
 import server.repositories.group.team.TeamMemberRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
-
-import static server.constants.RoleValue.ADMIN;
-import static server.constants.RoleValue.OWNER;
-import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
-import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
-import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
-import static server.controllers.rest.response.BaseResponse.Status.OK;
 
 @Controller
 @RequestMapping(value = "/notifications")
@@ -57,6 +65,12 @@ public class NotificationController<T extends Group> {
 
   @Autowired
   private ProjectMemberRepository projectMemberRepository;
+
+  @Autowired
+  private ProjectRepository projectRepository;
+
+  @Autowired
+  private OrganizationRepository organizationRepository;
 
   @Autowired
   private OrganizationMemberRepository organizationMemberRepository;
@@ -77,14 +91,11 @@ public class NotificationController<T extends Group> {
   private OrganizationApplicantRepository organizationApplicantRepository;
 
 
-
-
-
-  public void sendNotification(User user, String message,  String dataType, String notificationType,long id) throws Exception {
-    if (!Notification.isValidNotificationType (notificationType)) {
+  public void sendNotification(User user, String message, String dataType, String notificationType, long id) throws Exception {
+    if (!Notification.isValidNotificationType(notificationType)) {
       throw new Exception("Invalid notification type '" + notificationType + "'");
     }
-    if (!Notification.isValidDataType (dataType)) {
+    if (!Notification.isValidDataType(dataType)) {
       throw new Exception("Invalid data type '" + dataType + "'");
     }
     Notification notification = new Notification();
@@ -100,11 +111,11 @@ public class NotificationController<T extends Group> {
     notificationRepository.save(notification);
   }
 
-  public void sendGroupNotificationToAdmins(T group, String message,String dataType,  String notificationType, long id) throws Exception {
-    if (!Notification.isValidNotificationType (notificationType)) {
+  public void sendGroupNotificationToAdmins(T group, String message, String dataType, String notificationType, long id) throws Exception {
+    if (!Notification.isValidNotificationType(notificationType)) {
       throw new Exception("Invalid notification type '" + notificationType + "'");
     }
-    if (!Notification.isValidDataType (dataType)) {
+    if (!Notification.isValidDataType(dataType)) {
       throw new Exception("Invalid data type '" + dataType + "'");
     }
     String type = group.getGroupType();
@@ -116,7 +127,7 @@ public class NotificationController<T extends Group> {
 
         for (int i : roleList) {
           if (i == ADMIN || i == OWNER) {
-            sendNotification(u, message,dataType,notificationType,id);
+            sendNotification(u, message, dataType, notificationType, id);
             break;
           }
         }
@@ -125,11 +136,11 @@ public class NotificationController<T extends Group> {
     } else if (type.equals("Project")) {
       List<User> usersByGroup = projectMemberRepository.getUsersByGroup((Project) group);
       Set<User> s = new HashSet<>(usersByGroup);
-      for (User u : s) {
-        List<Integer> roleList = projectMemberRepository.getRoles((Project) group, u);
+      for (User user : s) {
+        List<Integer> roleList = projectMemberRepository.getRoles((Project) group, user);
         for (int i : roleList) {
           if (i == ADMIN || i == OWNER) {
-            sendNotification(u, message,dataType,notificationType,id);
+            sendNotification(user, message, dataType, notificationType, id);
             break;
           }
         }
@@ -137,11 +148,11 @@ public class NotificationController<T extends Group> {
     } else if (type.equals("Organization")) {
       List<User> usersByGroup = organizationMemberRepository.getUsersByGroup((Organization) group);
       Set<User> s = new HashSet<>(usersByGroup);
-      for (User u : s) {
-        List<Integer> roleList = organizationMemberRepository.getRoles((Organization) group, u);
+      for (User user : s) {
+        List<Integer> roleList = organizationMemberRepository.getRoles((Organization) group, user);
         for (int i : roleList) {
           if (i == ADMIN || i == OWNER) {
-            sendNotification(u, message,dataType,notificationType,id);
+            sendNotification(user, message, dataType, notificationType, id);
             break;
           }
         }
@@ -152,7 +163,7 @@ public class NotificationController<T extends Group> {
   @CrossOrigin
   @PutMapping(path = "/{id}/read")
   @ResponseBody
-  public GeneralResponse readNotification(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
+  public BaseResponse readNotification(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -160,7 +171,7 @@ public class NotificationController<T extends Group> {
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     Notification notification = notificationRepository.findOne(id);
-    if(!Objects.equals(notification.getReceiver().getId(), session.get().getUser().getId())){
+    if (!Objects.equals(notification.getReceiver().getId(), session.get().getUser().getId())) {
       errors.add(INSUFFICIENT_PRIVELAGES);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
@@ -172,10 +183,11 @@ public class NotificationController<T extends Group> {
   @CrossOrigin
   @PutMapping(path = "/{id}/{action}")
   @ResponseBody
-  public GeneralResponse actionDone(@PathVariable(value = "id") Long id, @PathVariable(value = "action") String action,HttpServletRequest request, HttpServletResponse response) throws Exception  {
+  public GeneralResponse actionDone(@PathVariable(value = "id") Long id, @PathVariable(value = "action") String action, HttpServletRequest request, HttpServletResponse response) throws Exception {
     List<String> errors = new ArrayList<>();
-    if (!Notification.isValidAction (action)) {
-      throw new Exception("Invalid action type '" + action + "'");
+    if (!Notification.isValidAction(action)) {
+      errors.add("Invalid action type '" + action + "'");
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -183,11 +195,10 @@ public class NotificationController<T extends Group> {
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     Notification notification = notificationRepository.findOne(id);
-    if(!Objects.equals(notification.getReceiver().getId(), session.get().getUser().getId())){
+    if (!Objects.equals(notification.getReceiver().getId(), session.get().getUser().getId())) {
       errors.add(INSUFFICIENT_PRIVELAGES);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
-
     notification.setAction_done(action.equals("done"));
     notificationRepository.save(notification);
     return new GeneralResponse(response, OK);
@@ -196,7 +207,7 @@ public class NotificationController<T extends Group> {
   @CrossOrigin
   @PutMapping(path = "/{id}/delete")
   @ResponseBody
-  public GeneralResponse deleteNotification(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
+  public BaseResponse deleteNotification(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -204,7 +215,7 @@ public class NotificationController<T extends Group> {
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     Notification notification = notificationRepository.findOne(id);
-    if(notification.getReceiver().getId().equals(session.get().getUser().getId())){
+    if (notification.getReceiver().getId() != session.get().getUser().getId()) {
       errors.add(INSUFFICIENT_PRIVELAGES);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
@@ -227,7 +238,7 @@ public class NotificationController<T extends Group> {
 
   @GetMapping(path = "/{status}")
   @ResponseBody
-  public TypedResponse<List<Notification>> getNotifications(@PathVariable(value = "status") String status,HttpServletRequest request, HttpServletResponse response) {
+  public TypedResponse<List<Notification>> getNotifications(@PathVariable(value = "status") String status, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -254,7 +265,7 @@ public class NotificationController<T extends Group> {
           if (notification == null || notification.getData_type() == null || notification.getObjectId() == null) {
             return notification;
           }
-          switch(notification.getData_type()) {
+          switch (notification.getData_type()) {
 
             case "ProjectApplicant":
               notification.setData(projectApplicantRepository.findOne(notification.getObjectId()));

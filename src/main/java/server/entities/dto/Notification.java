@@ -2,14 +2,20 @@ package server.entities.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-import server.repositories.UserRepository;
+import server.entities.dto.user.User;
 
-import javax.persistence.*;
-import java.sql.Timestamp;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -68,30 +74,31 @@ public class Notification {
     }
     return "";
   }
-  private  static List<String> validAction = Arrays.asList(
+
+  private static List<String> validAction = Arrays.asList(
       "done",
       "undone"
   );
 
   private static List<String> validNotificationTypes = Arrays.asList(
 
-          "ProjectInvitation:Invite",
-          "ProjectInvitation:Accepted",
-          "ProjectInvitation:Declined",
-          "ProjectApplicant",
-          "ProjectApplicant:Accepted",
-          "ProjectApplicant:Declined",
+      "ProjectInvitation:Invite",
+      "ProjectInvitation:Accepted",
+      "ProjectInvitation:Declined",
+      "ProjectApplicant",
+      "ProjectApplicant:Accepted",
+      "ProjectApplicant:Declined",
 
 
-          "OrganizationInvitation:Accepted",
-          "OrganizationInvitation:Invite",
-          "OrganizationInvitation:Declined",
-          "OrganizationApplicant",
-          "OrganizationApplicant:Accepted",
-          "OrganizationApplicant:Declined",
+      "OrganizationInvitation:Accepted",
+      "OrganizationInvitation:Invite",
+      "OrganizationInvitation:Declined",
+      "OrganizationApplicant",
+      "OrganizationApplicant:Accepted",
+      "OrganizationApplicant:Declined",
 
-          "Friend:Request",
-          "Friend:Accepted"
+      "Friend:Request",
+      "Friend:Accepted"
   );
 
   private static List<String> validDataTypes = Arrays.asList(
@@ -107,10 +114,12 @@ public class Notification {
   public static boolean isValidAction(String action) {
     return validAction.contains(action);
   }
-  public static boolean isValidNotificationType (String type) {
+
+  public static boolean isValidNotificationType(String type) {
     return validNotificationTypes.contains(type);
   }
-  public static boolean isValidDataType (String type) {
+
+  public static boolean isValidDataType(String type) {
     return validDataTypes.contains(type);
   }
 

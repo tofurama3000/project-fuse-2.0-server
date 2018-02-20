@@ -17,7 +17,7 @@ import server.Application;
 import server.config.Dependencies;
 import server.controllers.FuseSessionController;
 import server.entities.dto.FuseSession;
-import server.entities.dto.User;
+import server.entities.dto.user.User;
 import server.repositories.UserRepository;
 
 import java.io.File;

@@ -1,17 +1,25 @@
-package server.entities.dto;
+package server.entities.dto.user;
 
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.Setter;
 import lombok.ToString;
+import server.entities.dto.Link;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @ToString(exclude = "user")
 @Entity
@@ -34,9 +42,25 @@ public class UserProfile {
 
   private String skills;
 
-  private  long thumbnail_id;
+  private Long thumbnail_id;
 
-  private  long background_Id;
+  private Long background_Id;
+
+  @Setter(AccessLevel.NONE)
+  @JsonIgnore
+  @Transient
+  private String profileType = "User";
+
+  @OneToMany
+  @JoinColumn(name = "referenced_id", referencedColumnName = "id")
+  private List<Link> links;
+
+  public List<Link> getLinks() {
+    if (links == null) {
+      return links;
+    }
+    return links.stream().filter(link -> link.getReferencedType().equals("User")).collect(Collectors.toList());
+  }
 
   public UserProfile merge(UserProfile original, UserProfile newUserProfile) {
     if (newUserProfile.getHeadline() != null) {

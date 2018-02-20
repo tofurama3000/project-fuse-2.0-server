@@ -1,11 +1,14 @@
 package server.entities.dto.group.project;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import server.entities.dto.group.GroupApplicant;
 import server.entities.dto.group.GroupInvitation;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
 
 @Data
 @Entity
@@ -25,16 +28,13 @@ public class ProjectInvitation extends GroupInvitation<Project> {
   }
 
   @Override
-  public  ProjectApplicant getApplicant(){ return applicant; }
+  public ProjectApplicant getApplicant() {
+    return applicant;
+  }
 
   @Override
   public void setApplicant(GroupApplicant applicant) {
-    this.applicant.setId(applicant.getId());
-    this.applicant.setGroup(project);
-    this.applicant.setProject(project);
-    this.applicant.setSender(applicant.getSender());
-    this.applicant.setStatus(applicant.getStatus());
-    this.applicant.setTime(applicant.getTime());
+    this.applicant = (ProjectApplicant) applicant;
   }
 
   @Override

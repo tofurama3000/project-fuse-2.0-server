@@ -11,9 +11,17 @@ import static server.controllers.rest.response.BaseResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.BaseResponse.Status.DENIED;
 import static server.controllers.rest.response.BaseResponse.Status.ERROR;
 import static server.controllers.rest.response.BaseResponse.Status.OK;
-import static server.controllers.rest.response.CannedResponse.*;
+import static server.controllers.rest.response.CannedResponse.ALREADY_JOINED_MSG;
+import static server.controllers.rest.response.CannedResponse.ALREADY_JOINED_OR_INVITED;
+import static server.controllers.rest.response.CannedResponse.FILE_NOT_FOUND;
+import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
+import static server.controllers.rest.response.CannedResponse.INTERVIEW_NOT_AVAILABLE;
+import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
+import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS_FOR_CREATE;
+import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
+import static server.controllers.rest.response.CannedResponse.NO_GROUP_FOUND;
+import static server.controllers.rest.response.CannedResponse.SERVER_ERROR;
 import static server.utility.RolesUtility.getRoleFromInvitationType;
-
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.hibernate.Session;
@@ -21,7 +29,15 @@ import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.FileController;
@@ -32,17 +48,22 @@ import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
 import server.entities.PossibleError;
 import server.entities.dto.FuseSession;
-import server.entities.dto.GroupMember;
 import server.entities.dto.UploadFile;
-import server.entities.dto.User;
 import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupApplicant;
 import server.entities.dto.group.GroupInvitation;
+import server.entities.dto.group.GroupMember;
 import server.entities.dto.group.GroupProfile;
 import server.entities.dto.group.interview.Interview;
+import server.entities.dto.user.User;
 import server.entities.user_to_group.permissions.UserToGroupPermission;
 import server.repositories.UserRepository;
-import server.repositories.group.*;
+import server.repositories.group.GroupApplicantRepository;
+import server.repositories.group.GroupInvitationRepository;
+import server.repositories.group.GroupMemberRepository;
+import server.repositories.group.GroupProfileRepository;
+import server.repositories.group.GroupRepository;
+import server.repositories.group.InterviewRepository;
 import server.utility.UserFindHelper;
 import springfox.documentation.annotations.ApiIgnore;
 
@@ -51,7 +72,14 @@ import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 @SuppressWarnings("unused")
 public abstract class GroupController<T extends Group, R extends GroupMember<T>, I extends GroupInvitation<T>> {
@@ -80,12 +108,12 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @Autowired
   private SessionFactory sessionFactory;
 
-  private static Logger logger = LoggerFactory.getLogger(TeamController.class);
+  private static Logger logger = LoggerFactory.getLogger(GroupController.class);
 
   @PostMapping
   @ResponseBody
   @ApiOperation("Create a new entity")
-  public synchronized GeneralResponse create(
+  public synchronized TypedResponse<Group> create(
       @ApiParam("Entity information")
       @RequestBody T entity, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
@@ -93,17 +121,17 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, DENIED, errors);
+      return new TypedResponse<>(response, DENIED, errors);
     }
 
     if (!validFieldsForCreate(entity)) {
       errors.add(INVALID_FIELDS_FOR_CREATE);
-      return new GeneralResponse(response, errors);
+      return new TypedResponse<>(response, errors);
     }
 
     if (entity.getProfile() == null) {
       errors.add("Missing profile information!");
-      return new GeneralResponse(response, errors);
+      return new TypedResponse<>(response, errors);
     }
 
     User user = session.get().getUser();
@@ -111,7 +139,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     PossibleError possibleError = validateGroup(user, entity);
 
     if (possibleError.hasError()) {
-      return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
+      return new TypedResponse<>(response, possibleError.getStatus(), possibleError.getErrors());
     }
 
     List<T> entities = getGroupsWith(user, entity);
@@ -122,10 +150,10 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       addRelationship(user, entity, OWNER);
       addRelationship(user, entity, ADMIN);
       savedEntity.indexAsync();
-      return new GeneralResponse(response, OK, null, savedEntity);
+      return new TypedResponse<>(response, OK, null, savedEntity);
     } else {
       errors.add("entity name already exists for user");
-      return new GeneralResponse(response, errors);
+      return new TypedResponse<>(response, errors);
     }
   }
 
@@ -199,9 +227,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     result.put("applied", true);
     try {
       notificationController.sendGroupNotificationToAdmins(group, session.get().getUser().getName() + " has applied to " + group.getName(),
-          group.getGroupType() + "Applicant",group.getGroupType() + "Applicant",session.get().getUser().getId());
+          group.getGroupType() + "Applicant", group.getGroupType() + "Applicant", session.get().getUser().getId());
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
+
+      return new GeneralResponse(response, BaseResponse.Status.ERROR, "Could not send notification");
     }
     return new GeneralResponse(response, BaseResponse.Status.OK, errors, result);
   }
@@ -210,7 +240,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @PutMapping(path = "/{id}")
   @ApiOperation("Updates the specified entity")
   @ResponseBody
-  public GeneralResponse updateGroup(
+  public BaseResponse updateGroup(
       @ApiParam("The ID of the entity to update")
       @PathVariable(value = "id") long id,
       @ApiParam("The new data for the entity")
@@ -280,7 +310,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
         addRelationship(user, group, DEFAULT_USER);
         try {
           notificationController.sendGroupNotificationToAdmins(group, user.getName() + " joined " + group.getName(),
-              group.getGroupType() + "Applicant",group.getGroupType() + "Applicant:Accepted",group.getId());
+              group.getGroupType() + "Applicant", group.getGroupType() + "Applicant:Accepted", group.getId());
         } catch (Exception e) {
           e.printStackTrace();
         }
@@ -290,7 +320,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
         removeRelationship(user, group, INVITED_TO_JOIN);
         try {
           notificationController.sendGroupNotificationToAdmins(group, user.getName() + " joined " + group.getName(),
-              group.getGroupType() + "Invitation",group.getGroupType() + "Invitation:Accepted",group.getId());
+              group.getGroupType() + "Invitation", group.getGroupType() + "Invitation:Accepted", group.getId());
         } catch (Exception e) {
           e.printStackTrace();
         }
@@ -374,7 +404,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     }
 
     try {
-      notificationController.sendNotification(groupInvitation.getReceiver(), "You have been invited to join " + group.getName(),group.getName()+"Invitation",group.getName()+"Invitation:Invite",groupInvitation.getId());
+      notificationController.sendNotification(groupInvitation.getReceiver(), "You have been invited to join " + group.getName(), group.getGroupType() + "Invitation", group.getGroupType() + "Invitation:Invite", groupInvitation.getId());
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -384,7 +414,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @PostMapping(path = "/{id}/invite/{applicant_id}/{type}")
   @ResponseBody
   public GeneralResponse invite(@PathVariable("id") Long id,
-                                @PathVariable("applicant_id") Long applicantId,
+                                @PathVariable("user_id") Long applicantId,
                                 @PathVariable("type") String inviteType,
                                 HttpServletRequest request, HttpServletResponse response) {
     I invite = getInvitation();
@@ -392,7 +422,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     invite.setGroup(getGroupRepository().findOne(id));
     GroupApplicantRepository applicantRespo = getGroupApplicantRepository();
     GroupApplicant<T> applicant = (GroupApplicant) applicantRespo.findOne(applicantId);
-    if(applicant==null){
+    if (applicant == null) {
       errors.add("Applicant not found");
       return new GeneralResponse(response, errors);
     }
@@ -403,7 +433,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   }
 
 
-  @ApiOperation(value="Add a new interview slot",notes="This creates a new interview slot that can be used when scheduling interviews.")
+  @ApiOperation(value = "Add a new interview slot", notes = "This creates a new interview slot that can be used when scheduling interviews.")
   @PostMapping(path = "/{id}/interview_slots/add")
   @ResponseBody
   public BaseResponse addInterviewSlots(
@@ -451,6 +481,91 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     return new TypedResponse<>(response, OK, new ArrayList<>(), availableInterviewsAfterDate);
   }
 
+  @CrossOrigin
+  @ApiOperation(value = "Delete a interview slot", notes = "This endpoint is used to delete interview slot.")
+  @PutMapping(path = "/{id}/interview_slots/delete")
+  @ResponseBody
+  public BaseResponse deleteInterviewSlots(
+      @ApiParam("The ID of the interview to delete")
+      @PathVariable("id") long id,
+      HttpServletRequest request,
+      HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+    Interview interview = interviewRepository.findOne(id);
+    if (interview == null) {
+      errors.add(INVALID_FIELDS);
+      return new GeneralResponse(response, BAD_DATA, errors);
+    }
+    interview.setDeleted(true);
+    interviewRepository.save(interview);
+    return new GeneralResponse(response, OK);
+  }
+
+  @CrossOrigin
+  @ApiOperation(value = "Edit a interview slot", notes = "This endpoint is used to edit interview slot, user can only edit time.")
+  @PutMapping(path = "/{id}/interview_slots/edit")
+  @ResponseBody
+  public BaseResponse editInterviewSlots(
+      @ApiParam("The ID of the interview to delete")
+      @PathVariable("id") long id,
+      @ApiParam("Interview object")
+      @RequestBody Interview interview,
+      HttpServletRequest request,
+      HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, DENIED, errors);
+    }
+    Interview interviewTosave = interviewRepository.findOne(id);
+    if (interviewTosave == null) {
+      errors.add(INVALID_FIELDS);
+      return new GeneralResponse(response, BAD_DATA, errors);
+    }
+    if (interview.getStart() != null && interview.getEnd() != null) {
+      ZonedDateTime startZonedDateTime = ZonedDateTime.parse(interview.getStart());
+      LocalDateTime startDateTime = startZonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+      ZonedDateTime endZonedDateTime = ZonedDateTime.parse(interview.getEnd());
+      LocalDateTime endDateTime = endZonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+      if (endDateTime.isBefore(startDateTime)) {
+        errors.add("Invalid time");
+        return new GeneralResponse(response, DENIED, errors);
+      }
+      interview.setStart(interview.getStart());
+      interview.setEnd(interview.getEnd());
+    } else {
+      if (interview.getStart() != null) {
+        ZonedDateTime startZonedDateTime = ZonedDateTime.parse(interview.getStart());
+        LocalDateTime startDateTime = startZonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+        if (startDateTime.isAfter(interview.getEndDateTime())) {
+          errors.add("Invalid time");
+          return new GeneralResponse(response, DENIED, errors);
+        }
+        interview.setStart(interview.getStart());
+      }
+
+      if (interview.getEnd() != null) {
+        ZonedDateTime endZonedDateTime = ZonedDateTime.parse(interview.getEnd());
+        LocalDateTime endDateTime = endZonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+        if (endDateTime.isBefore(interview.getStartDateTime())) {
+          errors.add("Invalid time");
+          return new GeneralResponse(response, DENIED, errors);
+        }
+        interview.setEnd(interview.getEnd());
+      }
+    }
+    interviewRepository.save(interviewTosave);
+    return new GeneralResponse(response, OK);
+  }
+
   @ApiOperation("Find a group by the name and/or owner email")
   @GetMapping(path = "/find", params = {"name", "email"})
   @ResponseBody
@@ -487,38 +602,38 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @ApiOperation("Gets the members for the group")
   @GetMapping(path = "/{id}/members")
   @ResponseBody
-  public GeneralResponse getMembersOfGroup(
+  public TypedResponse<List<User>> getMembersOfGroup(
       @ApiParam("The id of the group to get the members for")
       @PathVariable(value = "id") T group,
-      @ApiParam(value="The page of results to pull")
-      @RequestParam(value = "page", required=false, defaultValue="0") int page,
-      @ApiParam(value="The number of results per page")
-      @RequestParam(value = "size", required=false, defaultValue="15") int pageSize,
+      @ApiParam(value = "The page of results to pull")
+      @RequestParam(value = "page", required = false, defaultValue = "0") int page,
+      @ApiParam(value = "The number of results per page")
+      @RequestParam(value = "size", required = false, defaultValue = "15") int pageSize,
       HttpServletRequest request, HttpServletResponse response) {
 
-    List<User> list =  new ArrayList<>(getMembersOf(group));
+    List<User> list = new ArrayList<>(getMembersOf(group));
     List<User> returnList = new ArrayList<>();
-    for(int i = page*pageSize; i<(page*pageSize)+pageSize;i++){
-      if(i>=list.size()){
+    for (int i = page * pageSize; i < (page * pageSize) + pageSize; i++) {
+      if (i >= list.size()) {
         break;
       }
       returnList.add(list.get(i));
     }
 
-    return new GeneralResponse(response, BaseResponse.Status.OK, null,returnList);
+    return new TypedResponse<>(response, BaseResponse.Status.OK, null, returnList);
   }
 
   @GetMapping
   @ResponseBody
   @ApiOperation("Gets all of the groups of this type")
-  protected GeneralResponse getAll(HttpServletResponse response) {
-    return new GeneralResponse(response, OK, null, getGroupRepository().findAll());
+  protected TypedResponse<Iterable<T>> getAll(HttpServletResponse response) {
+    return new TypedResponse<>(response, OK, null, getGroupRepository().findAll());
   }
 
   @GetMapping(path = "/{id}")
   @ApiOperation("Gets the group entity by id")
   @ResponseBody
-  protected GeneralResponse getById(
+  protected TypedResponse<T> getById(
       @ApiParam("ID of the gruop to get the id for")
       @PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
@@ -526,21 +641,21 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, DENIED, errors);
+      return new TypedResponse<>(response, DENIED, errors);
     }
 
-    Group res = getGroupRepository().findOne(id);
+    T res = getGroupRepository().findOne(id);
     if (res != null) {
       User user = session.get().getUser();
       T groupToFindRestriction = getGroupRepository().findOne(id);
       UserToGroupPermission permission = getUserToGroupPermission(user, groupToFindRestriction);
       res.setCanEdit(permission.canUpdate());
 
-      return new GeneralResponse(response, OK, null, res);
+      return new TypedResponse<>(response, OK, null, res);
     }
     errors.add("Invalid ID! Object does not exist!");
 
-    return new GeneralResponse(response, BAD_DATA, errors);
+    return new TypedResponse<>(response, BAD_DATA, errors);
   }
 
   @GetMapping(path = "/{id}/applicants/{status}")
@@ -581,13 +696,13 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @CrossOrigin
   @PutMapping(path = "/{id}/applicants/{appId}/{status}")
   @ResponseBody
-  public GeneralResponse setApplicantsStatus(@ApiParam("ID of entity")
-                                             @PathVariable(value = "id") Long id,
-                                             @ApiParam("Applicant status (one of 'accepted', 'declined', 'pending' 'interviewed', 'interview_scheduled')")
-                                             @PathVariable(value = "status") String status,
-                                             @ApiParam("ID of application to update")
-                                             @PathVariable(value = "appId") Long appId,
-                                             HttpServletRequest request, HttpServletResponse response) {
+  public BaseResponse setApplicantsStatus(@ApiParam("ID of entity")
+                                          @PathVariable(value = "id") Long id,
+                                          @ApiParam("Applicant status (one of 'accepted', 'declined', 'pending' 'interviewed', 'interview_scheduled')")
+                                          @PathVariable(value = "status") String status,
+                                          @ApiParam("ID of application to update")
+                                          @PathVariable(value = "appId") Long appId,
+                                          HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -621,7 +736,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     if (status.equals("declined")) {
       try {
         notificationController.sendNotification(applicantToSave.getSender(), applicantToSave.getGroup().getName() + "'s admin rejected your application",
-            applicantToSave.getGroup().getGroupType() + "Applicant",applicantToSave.getGroup().getGroupType() + "Applicant:Declined",applicantToSave.getId());
+            applicantToSave.getGroup().getGroupType() + "Applicant", applicantToSave.getGroup().getGroupType() + "Applicant:Declined", applicantToSave.getId());
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -629,12 +744,13 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
 
     if (!status.equals("interview_scheduled")) {
       List<Interview> interviews = interviewRepository.getAllByUserAndGroupTypeAndGroup(applicantToSave.getSender(), applicantToSave.getGroup().getGroupType(), applicantToSave.getGroup().getId());
-      for(Interview interview : interviews) {
+      for (Interview interview : interviews) {
         interview.setUser(null);
         interview.setAvailability(AVAILABLE);
       }
       interviewRepository.save(interviews);
     } else {
+      // Runs if status set to interview_scheduled
       T g = getGroupRepository().findOne(applicantToSave.getGroup().getId());
       I invite = getInvitation();
       invite.setGroup(g);
@@ -646,9 +762,9 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
 
       try {
         notificationController.sendNotification(applicantToSave.getSender(),
-                "You have been invited to interview with " + applicantToSave.getGroup().getName() + "!",
-            applicantToSave.getGroup().getGroupType() + "Invitation",applicantToSave.getGroup().getGroupType() + "Invitation:Invite",
-                invite.getId()
+            "You have been invited to interview with " + applicantToSave.getGroup().getName() + "!",
+            applicantToSave.getGroup().getGroupType() + "Invitation", applicantToSave.getGroup().getGroupType() + "Invitation:Invite",
+            invite.getId()
         );
       } catch (Exception e) {
         e.printStackTrace();
@@ -669,11 +785,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       }
 
       errors = setInviteFields(invite,
-              session.get().getUser(),
-              role.get(),
-              applicantToSave.getSender(),
-              getGroupRepository().findOne(applicantToSave.getGroup().getId()));
-      if(errors.size() > 0) {
+          session.get().getUser(),
+          role.get(),
+          applicantToSave.getSender(),
+          getGroupRepository().findOne(applicantToSave.getGroup().getId()));
+      if (errors.size() > 0) {
         return new GeneralResponse(response, ERROR, errors);
       }
     }
@@ -704,11 +820,12 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     return new GeneralResponse(response, BaseResponse.Status.OK);
 
   }
+
   @PostMapping(path = "/{id}/upload/thumbnail")
   @ResponseBody
   @ApiOperation(value = "Uploads a new thumbnail",
       notes = "Max file size is 128KB")
-  public BaseResponse uploadThumbnail( @PathVariable(value = "id") Long id, @RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public BaseResponse uploadThumbnail(@PathVariable(value = "id") Long id, @RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -717,11 +834,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     }
 
     String fileType = fileToUpload.getContentType().split("/")[0];
-    if(!fileType.equals("image")){
+    if (!fileType.equals("image")) {
       return new GeneralResponse(response, BAD_DATA, errors);
     }
-    TypedResponse<UploadFile> response1 = fileController.fileUpload(fileToUpload,request,response);
-    if(response1.getStatus()==DENIED){
+    TypedResponse<UploadFile> response1 = fileController.fileUpload(fileToUpload, request, response);
+    if (response1.getStatus() == DENIED) {
       return new GeneralResponse(response, response1.getStatus(), response1.getErrors());
     }
     UploadFile uploadFile = (UploadFile) response1.getData();
@@ -735,7 +852,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @ResponseBody
   @ApiOperation(value = "Uploads a new background",
       notes = "Max file size is 128KB")
-  public BaseResponse uploadBackground( @PathVariable(value = "id") Long id,@RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public BaseResponse uploadBackground(@PathVariable(value = "id") Long id, @RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -744,11 +861,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     }
 
     String fileType = fileToUpload.getContentType().split("/")[0];
-    if(!fileType.equals("image")){
+    if (!fileType.equals("image")) {
       return new GeneralResponse(response, BAD_DATA, errors);
     }
-    TypedResponse<UploadFile>  response1 = fileController.fileUpload(fileToUpload,request,response);
-    if(response1.getStatus()==DENIED){
+    TypedResponse<UploadFile> response1 = fileController.fileUpload(fileToUpload, request, response);
+    if (response1.getStatus() == DENIED) {
       return new GeneralResponse(response, response1.getStatus(), response1.getErrors());
     }
     UploadFile uploadFile = (UploadFile) response1.getData();
@@ -761,26 +878,26 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @GetMapping(path = "/{id}/download/background")
   @ResponseBody
   @ApiOperation(value = "Download a background file")
-  public TypedResponse<Long> downloadBackground(  @PathVariable(value = "id") Long id,HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public TypedResponse<Long> downloadBackground(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) throws Exception {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
       return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
     }
-   T group = getGroupRepository().findOne(id);
+    T group = getGroupRepository().findOne(id);
     long f_id = group.getProfile().getBackground_Id();
-    if(f_id==0){
+    if (f_id == 0) {
       errors.add(FILE_NOT_FOUND);
       return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
     }
-    return new TypedResponse<>(response, OK,null, f_id);
+    return new TypedResponse<>(response, OK, null, f_id);
   }
 
   @GetMapping(path = "/{id}/download/thumbnail")
   @ResponseBody
   @ApiOperation(value = "Download a background file")
-  public TypedResponse<Long> downloadThumbnail(  @PathVariable(value = "id") Long id,HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public TypedResponse<Long> downloadThumbnail(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) throws Exception {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -789,11 +906,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     }
     T group = getGroupRepository().findOne(id);
     long f_id = group.getProfile().getThumbnail_id();
-    if(f_id==0){
+    if (f_id == 0) {
       errors.add(FILE_NOT_FOUND);
       return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
     }
-    return new TypedResponse(response, OK,null, f_id);
+    return new TypedResponse(response, OK, null, f_id);
   }
 
   protected boolean validFieldsForCreate(T entity) {

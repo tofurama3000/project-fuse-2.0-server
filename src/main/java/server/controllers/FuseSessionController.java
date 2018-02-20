@@ -5,7 +5,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.util.AlternativeJdkIdGenerator;
 import org.springframework.util.IdGenerator;
 import server.entities.dto.FuseSession;
-import server.entities.dto.User;
+import server.entities.dto.user.User;
 import server.repositories.SessionRepository;
 
 import javax.servlet.http.HttpServletRequest;

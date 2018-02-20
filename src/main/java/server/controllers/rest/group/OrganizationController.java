@@ -2,12 +2,12 @@ package server.controllers.rest.group;
 
 import static server.constants.RoleValue.ADMIN;
 import static server.constants.RoleValue.CREATE_PROJECT_IN_ORGANIZATION;
+import static server.controllers.rest.response.BaseResponse.Status.OK;
 import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import static server.controllers.rest.response.CannedResponse.NO_GROUP_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
-import static server.controllers.rest.response.BaseResponse.Status.OK;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -15,24 +15,24 @@ import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
-import server.constants.RoleValue;
 import server.controllers.rest.response.BaseResponse;
-import server.controllers.rest.response.CannedResponse;
 import server.controllers.rest.response.GeneralResponse;
+import server.controllers.rest.response.TypedResponse;
 import server.entities.PossibleError;
 import server.entities.dto.FuseSession;
-import server.entities.dto.User;
 import server.entities.dto.group.GroupApplicant;
-import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.GroupProfile;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.organization.OrganizationApplicant;
 import server.entities.dto.group.organization.OrganizationInvitation;
 import server.entities.dto.group.organization.OrganizationMember;
+import server.entities.dto.group.project.Project;
+import server.entities.dto.user.User;
 import server.entities.user_to_group.permissions.PermissionFactory;
 import server.entities.user_to_group.permissions.UserToGroupPermission;
 import server.entities.user_to_group.permissions.UserToOrganizationPermission;
@@ -46,6 +46,7 @@ import server.repositories.group.organization.OrganizationInvitationRepository;
 import server.repositories.group.organization.OrganizationMemberRepository;
 import server.repositories.group.organization.OrganizationProfileRepository;
 import server.repositories.group.organization.OrganizationRepository;
+import server.repositories.group.project.ProjectRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -55,7 +56,7 @@ import java.util.Optional;
 
 @Controller
 @RequestMapping(value = "/organizations")
-@Api(tags="Organizations")
+@Api(tags = "Organizations")
 @Transactional
 @SuppressWarnings("unused")
 public class OrganizationController extends GroupController<Organization, OrganizationMember, OrganizationInvitation> {
@@ -70,7 +71,7 @@ public class OrganizationController extends GroupController<Organization, Organi
   private OrganizationApplicantRepository organizationApplicantRepository;
 
   @Autowired
-  OrganizationProfileRepository organizationProfileRepository;
+  private OrganizationProfileRepository organizationProfileRepository;
 
   @Autowired
   private OrganizationMemberRepository organizationMemberRepository;
@@ -84,14 +85,82 @@ public class OrganizationController extends GroupController<Organization, Organi
   @Autowired
   private RelationshipFactory relationshipFactory;
 
+  @Autowired
+  private ProjectRepository projectRepository;
+
+  @GetMapping("/{id}/can_create_project")
+  @ResponseBody
+  @ApiOperation("Checks whether or not a user can create a project in the organization")
+  public TypedResponse<Boolean> canUserCreateProjectForOrganization(
+      @ApiParam("ID of the organization")
+      @PathVariable(value = "id") Long id,
+      HttpServletRequest request, HttpServletResponse response
+  ) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new TypedResponse<>(response, BaseResponse.Status.DENIED, errors);
+    }
+
+    User loggedInUser = session.get().getUser();
+
+    if (id == null) {
+      errors.add(INVALID_FIELDS);
+      return new TypedResponse<>(response, errors);
+    }
+
+    Organization organization = organizationRepository.findOne(id);
+    if (organization == null) {
+      errors.add(NO_GROUP_FOUND);
+      return new TypedResponse<>(response, errors);
+    }
+
+    UserToOrganizationPermission loggedInUserPermission = new UserToOrganizationPermission(loggedInUser, organization);
+    return new TypedResponse<>(response, OK, errors, loggedInUserPermission.canCreateProjectsInOrganization());
+  }
+
+  @GetMapping("/{id}/projects")
+  @ResponseBody
+  @ApiOperation("Returns all projects associated with an organization")
+  public TypedResponse<List<Project>> getOrganizationProjects(
+      @ApiParam("Id of the organization")
+      @PathVariable(value = "id") Long id,
+      HttpServletRequest request, HttpServletResponse response
+  ) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new TypedResponse<>(response, BaseResponse.Status.DENIED, errors);
+    }
+
+    User loggedInUser = session.get().getUser();
+
+    if (id == null) {
+      errors.add(INVALID_FIELDS);
+      return new TypedResponse<>(response, errors);
+    }
+
+    Organization organization = organizationRepository.findOne(id);
+    if (organization == null) {
+      errors.add(NO_GROUP_FOUND);
+      return new TypedResponse<>(response, errors);
+    }
+
+    return new TypedResponse<>(response, OK, errors, organizationRepository.getAllProjectsByOrganization(organization));
+  }
+
   @PostMapping("/{id}/grantProjectCreatePermission/{user_id}")
   @ResponseBody
   @ApiOperation("Grants specified user to be able to create projects with in organization")
-  public GeneralResponse grantUserPermissionToCreateProjectsInOrganization(@ApiParam("ID of the organization")
-                                                                           @PathVariable(value = "id") Long id,
-                                                                           @ApiParam("Id of user to be granted permission")
-                                                                           @PathVariable(value = "user_id") Long userId,
-                                                                           HttpServletRequest request, HttpServletResponse response) {
+  public BaseResponse grantUserPermissionToCreateProjectsInOrganization(@ApiParam("ID of the organization")
+                                                                        @PathVariable(value = "id") Long id,
+                                                                        @ApiParam("Id of user to be granted permission")
+                                                                        @PathVariable(value = "user_id") Long userId,
+                                                                        HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -173,6 +242,10 @@ public class OrganizationController extends GroupController<Organization, Organi
   @Override
   protected void addRelationship(User user, Organization group, int role) {
     relationshipFactory.createUserToOrganizationRelationship(user, group).addRelationship(role);
+  }
+
+  protected void addProjectRelationship(User user, Project group, int role) {
+    relationshipFactory.createUserToProjectRelationship(user, group).addRelationship(role);
   }
 
   @Override

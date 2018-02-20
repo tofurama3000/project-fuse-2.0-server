@@ -2,7 +2,7 @@ package server.utility;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import server.entities.dto.User;
+import server.entities.dto.user.User;
 import server.repositories.UserRepository;
 
 import java.util.Optional;

@@ -2,7 +2,8 @@ package server.entities.dto.group;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-import server.entities.dto.User;
+import server.entities.dto.group.interview.Interview;
+import server.entities.dto.user.User;
 
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
@@ -27,6 +28,10 @@ public abstract class GroupApplicant<T extends Group> {
   @JoinColumn(name = "sender_id", referencedColumnName = "id")
   private User sender;
 
+  @ManyToOne
+  @JoinColumn(name = "interview_id", referencedColumnName = "id")
+  private Interview interview;
+
   @Column(name = "status")
   private String status;
 
@@ -40,7 +45,7 @@ public abstract class GroupApplicant<T extends Group> {
 
   public void setStatus(String status) {
     status = status.toLowerCase();
-    if (ValidStatuses().indexOf(status) != -1) {
+    if (IsValidStatus(status)) {
       this.status = status;
     } else {
       this.status = null;
@@ -65,10 +70,10 @@ public abstract class GroupApplicant<T extends Group> {
   public abstract void setGroup(T group);
 
   public static List<String> ValidStatuses() {
-    return valid;
+    return validStatuses;
   }
 
-  private static List<String> valid = java.util.Arrays.asList(
+  private static List<String> validStatuses = java.util.Arrays.asList(
       "accepted",
       "pending",
       "interviewed",
@@ -77,8 +82,12 @@ public abstract class GroupApplicant<T extends Group> {
       "declined"
   );
 
+  public static boolean IsValidStatus(String status) {
+    return validStatuses.contains(status);
+  }
+
   public static Integer GetStatusOrder(String status) {
-    final int index = valid.indexOf(status.toLowerCase());
-    return (index >= 0) ? index : valid.size();
+    final int index = validStatuses.indexOf(status.toLowerCase());
+    return (index >= 0) ? index : validStatuses.size();
   }
 }

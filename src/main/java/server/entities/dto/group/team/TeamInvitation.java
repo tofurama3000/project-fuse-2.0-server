@@ -3,9 +3,13 @@ package server.entities.dto.group.team;
 import lombok.Data;
 import server.entities.dto.group.GroupApplicant;
 import server.entities.dto.group.GroupInvitation;
-import server.entities.dto.group.project.ProjectApplicant;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
 @Data
 @Entity
@@ -26,18 +30,14 @@ public class TeamInvitation extends GroupInvitation<Team> {
   }
 
   @Override
-  public TeamApplicant getApplicant(){ return applicant; }
+  public TeamApplicant getApplicant() {
+    return applicant;
+  }
 
   @Override
   public void setApplicant(GroupApplicant applicant) {
-    this.applicant.setId(applicant.getId());
-    this.applicant.setGroup(team);
-    this.applicant.setTeam(team);
-    this.applicant.setSender(applicant.getSender());
-    this.applicant.setStatus(applicant.getStatus());
-    this.applicant.setTime(applicant.getTime());
+    this.applicant = (TeamApplicant) applicant;
   }
-
 
 
   @Override

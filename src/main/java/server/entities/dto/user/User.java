@@ -1,7 +1,6 @@
-package server.entities.dto;
+package server.entities.dto.user;
 
 import static server.constants.RegistrationStatus.UNREGISTERED;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.AccessLevel;
@@ -21,9 +20,12 @@ import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @ToString(exclude = "user")
 @Entity
@@ -91,13 +93,20 @@ public class User extends BaseIndexable {
     map.put("email", this.email);
     map.put("index", this.getEsIndex());
     if (this.profile != null) {
-      map.put("skills", this.profile.getSkills().split(","));
+      if (this.profile.getSkills() == null) {
+        map.put("skills", null);
+      } else {
+        List<String> skills = Arrays.asList(this.profile.getSkills().split(","));
+        map.put("skills", skills.stream().filter(s -> !s.isEmpty()).collect(Collectors.toList()));
+      }
       map.put("headline", this.profile.getHeadline());
       map.put("summary", this.profile.getSummary());
+      map.put("img", this.profile.getThumbnail_id());
     } else {
       map.put("skills", new String[0]);
       map.put("headline", "");
       map.put("summary", "");
+      map.put("img", null);
     }
 
     return map;
