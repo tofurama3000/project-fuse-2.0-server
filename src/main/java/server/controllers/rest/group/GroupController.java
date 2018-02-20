@@ -623,11 +623,17 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     if (!fileType.equals("image")) {
       return new GeneralResponse(response, BAD_DATA, errors);
     }
-    TypedResponse<UploadFile> response1 = fileController.fileUpload(fileToUpload, request, response);
-    if (response1.getStatus() == DENIED) {
-      return new GeneralResponse(response, response1.getStatus(), response1.getErrors());
+    UploadFile uploadFile = fileController.saveFile(fileToUpload, "avatar", errors, session.get().getUser());
+    if(uploadFile == null)
+    {
+      errors.add("Invalid file, unable to save");
+      return new GeneralResponse(response, BAD_DATA, errors);
     }
-    UploadFile uploadFile = (UploadFile) response1.getData();
+//    TypedResponse<UploadFile> response1 = fileController.fileUpload(fileToUpload, request, response);
+//    if (response1.getStatus() == DENIED) {
+//      return new GeneralResponse(response, response1.getStatus(), response1.getErrors());
+//    }
+   // UploadFile uploadFile = (UploadFile) response1.getData();
     T group = getGroupRepository().findOne(id);
     group.getProfile().setThumbnail_id(uploadFile.getId());
     getGroupApplicantRepository().save(group.getProfile());
@@ -650,11 +656,17 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     if (!fileType.equals("image")) {
       return new GeneralResponse(response, BAD_DATA, errors);
     }
-    TypedResponse<UploadFile> response1 = fileController.fileUpload(fileToUpload, request, response);
-    if (response1.getStatus() == DENIED) {
-      return new GeneralResponse(response, response1.getStatus(), response1.getErrors());
+    UploadFile uploadFile = fileController.saveFile(fileToUpload, "background", errors, session.get().getUser());
+    if(uploadFile == null)
+    {
+      errors.add("Invalid file, unable to save");
+      return new GeneralResponse(response, BAD_DATA, errors);
     }
-    UploadFile uploadFile = (UploadFile) response1.getData();
+//    TypedResponse<UploadFile> response1 = fileController.fileUpload(fileToUpload, request, response);
+//    if (response1.getStatus() == DENIED) {
+//      return new GeneralResponse(response, response1.getStatus(), response1.getErrors());
+//    }
+//    UploadFile uploadFile = (UploadFile) response1.getData();
     T group = getGroupRepository().findOne(id);
     group.getProfile().setBackground_Id(uploadFile.getId());
     getGroupApplicantRepository().save(group.getProfile());
