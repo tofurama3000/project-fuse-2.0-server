@@ -10,6 +10,8 @@ import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import com.google.common.hash.Hashing;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
@@ -34,6 +36,7 @@ import server.entities.dto.UploadFile;
 import server.entities.dto.user.User;
 import server.repositories.FileRepository;
 import server.repositories.group.FileDownloadRepository;
+import server.utility.ElasticsearchReindexService;
 
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
@@ -135,6 +138,7 @@ public class FileController {
   public UploadFile saveFile(MultipartFile fileToUpload, String type, List<String> errors, User currentUser) throws IOException {
     UploadFile uploadFile = new UploadFile();
 
+    final Logger logger = LoggerFactory.getLogger(ElasticsearchReindexService.class);
     String hash = Hashing.sha256()
             .hashString(fileToUpload.getOriginalFilename(), StandardCharsets.UTF_8)
             .toString();
@@ -170,7 +174,7 @@ public class FileController {
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             ImageIO.write(resizedImage, fileType[1], new File(path));
         } catch (IOException e) {
-            System.out.println(e.getMessage());
+           logger.error("Cannot resize image");
         }
     }
     Long size = (Long)new File(path).length();

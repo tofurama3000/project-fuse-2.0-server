@@ -16,4 +16,6 @@ public interface GroupApplicantRepository<T extends GroupApplicant, W extends Gr
   List<T> getApplicantsBySender(@Param("sender") User user);
 
   List<T> getApplicantsBySenderAndStatus(@Param("sender") User user, @Param("status") String status);
+
+  List<T> getApplicantsByStatus(@Param("status") String status);
 }
