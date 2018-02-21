@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.BaseResponse;
-import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
 import server.entities.dto.FuseSession;
 import server.entities.dto.Notification;
@@ -38,9 +37,9 @@ public class FeedController {
   @GetMapping
   @ResponseBody
   public TypedResponse<List<Notification>> getFeed(@ApiParam(value = "The page of results to pull")
-                                 @RequestParam(value = "page", required = false, defaultValue = "0") int page,
-                               @ApiParam(value = "The number of results per page")
-                                 @RequestParam(value = "size", required = false, defaultValue = "15") int pageSize, HttpServletRequest request, HttpServletResponse response) {
+                                                   @RequestParam(value = "page", required = false, defaultValue = "0") int page,
+                                                   @ApiParam(value = "The number of results per page")
+                                                   @RequestParam(value = "size", required = false, defaultValue = "15") int pageSize, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {

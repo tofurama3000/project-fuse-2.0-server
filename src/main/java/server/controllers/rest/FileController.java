@@ -140,8 +140,8 @@ public class FileController {
 
     final Logger logger = LoggerFactory.getLogger(ElasticsearchReindexService.class);
     String hash = Hashing.sha256()
-            .hashString(fileToUpload.getOriginalFilename(), StandardCharsets.UTF_8)
-            .toString();
+        .hashString(fileToUpload.getOriginalFilename(), StandardCharsets.UTF_8)
+        .toString();
     Timestamp ts = new Timestamp(System.currentTimeMillis());
     long timestamp = ((ts.getTime()) / 1000) * 1000;
     String fileName = hash + "." + timestamp + "." + currentUser.getId().toString();

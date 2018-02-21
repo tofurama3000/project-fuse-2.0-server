@@ -85,8 +85,7 @@ public class FriendController {
   @GetMapping("/all")
   @ResponseBody
   public TypedResponse<List<Friend>> getFriendIds(HttpServletRequest request,
-                                                HttpServletResponse response)
-  {
+                                                  HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -125,7 +124,7 @@ public class FriendController {
   @ApiOperation("Accept a friend invite")
   @PutMapping(path = "/accept/{id}")
   @ResponseBody
-  public BaseResponse acceptFriend(@ApiParam(name="ID of pending friendship to accept") @PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
+  public BaseResponse acceptFriend(@ApiParam(name = "ID of pending friendship to accept") @PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -147,7 +146,7 @@ public class FriendController {
     }
     friend.setStatus("accepted");
     try {
-      notificationController.sendNotification(friend.getSender(), friend.getReceiver().getName() + " has accepted your friend request", "Friend:Accepted", friend.getId());
+      notificationController.sendNotification(friend.getSender(), friend.getReceiver().getName() + " has accepted your friend request", "Friend", "Friend:Accepted", friend.getId());
     } catch (Exception e) {
       logger.error(e.getMessage());
     }
@@ -210,7 +209,7 @@ public class FriendController {
   @ApiOperation("Send a friend invite")
   @PostMapping(path = "/{id}")
   @ResponseBody
-  public BaseResponse applyFriend(@ApiParam(name="ID of user to send a request to") @PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response) {
+  public BaseResponse applyFriend(@ApiParam(name = "ID of user to send a request to") @PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -234,7 +233,7 @@ public class FriendController {
     friendRepository.save(friend);
     try {
       notificationController.sendNotification(receiver, sender.getName() + " wants to be your friend!",
-          "Friend:Request",
+          "Friend", "Friend:Request",
           sender.getId()
       );
     } catch (Exception e) {
