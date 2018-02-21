@@ -44,7 +44,7 @@ public class UserProfile {
 
   private  Long thumbnail_id;
 
-  private  Long background_Id;
+  private  Long background_id;
 
   @Setter(AccessLevel.NONE)
   @JsonIgnore
