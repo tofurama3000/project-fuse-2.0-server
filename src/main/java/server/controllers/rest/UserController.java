@@ -845,6 +845,7 @@ public class UserController {
     UserProfile profile = user.getProfile();
     if (profile == null) {
       profile = new UserProfile();
+      profile.setThumbnail_id(0L);
       user.setProfile(profile);
     }
     profile.setBackground_Id(uploadFile.getId());
