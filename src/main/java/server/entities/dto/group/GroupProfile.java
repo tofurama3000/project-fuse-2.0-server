@@ -20,9 +20,9 @@ public abstract class GroupProfile<T extends Group> {
 
   private String summary;
 
-  private Long thumbnail_id;
+  private Long thumbnail_id = 0L;
 
-  private Long background_id;
+  private Long background_id = 0L;
 
   @JsonIgnore
   public abstract T getGroup();
