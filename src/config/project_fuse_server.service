@@ -1,0 +1,15 @@
+[Unit]
+Description=Project Fuse Server
+After=network.target
+
+[Service]
+ExecStart=/bin/sh -c "exec /usr/bin/java -jar {{jar}}"
+Restart=always
+User=project_fuse
+Group=project_fuse
+Environment=PATH=/usr/bin:/usr/local/bin
+Environment=NODE_ENV=production
+WorkingDirectory={{server_dir}}
+
+[Install]
+WantedBy=multi-user.target

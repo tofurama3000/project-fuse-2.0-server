@@ -872,7 +872,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       return new TypedResponse<>(response, BAD_DATA, errors);
     }
     T group = getGroupRepository().findOne(id);
-    group.getProfile().setBackground_Id(uploadFile.getId());
+    group.getProfile().setBackground_id(uploadFile.getId());
     getGroupApplicantRepository().save(group.getProfile());
     return new TypedResponse<>(response, OK, null, uploadFile);
   }
@@ -888,7 +888,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
     }
     T group = getGroupRepository().findOne(id);
-    long f_id = group.getProfile().getBackground_Id();
+    long f_id = group.getProfile().getBackground_id();
     if (f_id == 0) {
       errors.add(FILE_NOT_FOUND);
       return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);

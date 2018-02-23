@@ -848,7 +848,7 @@ public class UserController {
       profile.setThumbnail_id(0L);
       user.setProfile(profile);
     }
-    profile.setBackground_Id(uploadFile.getId());
+    profile.setBackground_id(uploadFile.getId());
     userProfileRepository.save(user.getProfile());
     return new TypedResponse<>(response, OK, null, uploadFile);
   }

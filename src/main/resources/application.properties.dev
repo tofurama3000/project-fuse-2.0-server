@@ -42,7 +42,7 @@ spring.jpa.hibernate.naming-strategy = org.hibernate.cfg.ImprovedNamingStrategy
 # Allows Hibernate to generate SQL optimized for a particular DBMS
 spring.jpa.properties.hibernate.dialect = org.hibernate.dialect.MySQL5Dialect
 
-spring.http.multipart.max-file-size=128KB
-spring.http.multipart.max-request-size=128KB
+spring.http.multipart.max-file-size=5MB
+spring.http.multipart.max-request-size=5MB
 
 spring.jpa.properties.hibernate.current_session_context_class=org.springframework.orm.hibernate4.SpringSessionContext
