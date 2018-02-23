@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS friend (
   REFERENCES `user` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
-  FOREIGN KEY (`sender_id`) REFERENCES `user` (`id`)
+  FOREIGN KEY (`sender_id`)
+  REFERENCES `user` (`id`)
   ON DELETE NO ACTION
   ON UPDATE NO ACTION
 );
