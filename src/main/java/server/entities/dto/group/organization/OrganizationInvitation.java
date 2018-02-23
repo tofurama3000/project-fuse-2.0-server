@@ -1,11 +1,13 @@
 package server.entities.dto.group.organization;
 
 import lombok.Data;
+import server.entities.dto.group.GroupApplicant;
 import server.entities.dto.group.GroupInvitation;
 
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 @Data
@@ -17,10 +19,25 @@ public class OrganizationInvitation extends GroupInvitation<Organization> {
   @JoinColumn(name = "organization_id", referencedColumnName = "id")
   private Organization organization;
 
+  @OneToOne
+  @JoinColumn(name = "applicant_id", referencedColumnName = "id")
+  private OrganizationApplicant applicant;
+
   @Override
   public Organization getGroup() {
     return organization;
   }
+
+  @Override
+  public OrganizationApplicant getApplicant() {
+    return applicant;
+  }
+
+  @Override
+  public void setApplicant(GroupApplicant applicant) {
+    this.applicant = (OrganizationApplicant) applicant;
+  }
+
 
   @Override
   public void setGroup(Organization group) {

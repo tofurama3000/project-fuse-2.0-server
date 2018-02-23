@@ -1,7 +1,6 @@
 package server.entities.dto.group;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.common.base.Optional;
 import lombok.Data;
 import server.entities.dto.group.interview.Interview;
 import server.entities.dto.user.User;
@@ -50,6 +49,12 @@ public abstract class GroupInvitation<T extends Group> {
 
   @JsonIgnore
   public abstract T getGroup();
+
+  @JsonIgnore
+  public abstract GroupApplicant getApplicant();
+
+  @JsonIgnore
+  public abstract void setApplicant(GroupApplicant applicant);
 
   public abstract void setGroup(T group);
 }
