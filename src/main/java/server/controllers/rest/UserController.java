@@ -809,7 +809,7 @@ public class UserController {
     UserProfile profile = user.getProfile();
     if (profile == null) {
       profile = new UserProfile();
-      profile.setBackground_Id(0L);
+      profile.setBackground_id(0L);
       user.setProfile(profile);
     }
 
