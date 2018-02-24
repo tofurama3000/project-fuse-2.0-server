@@ -105,6 +105,11 @@ public class TeamController extends GroupController<Team, TeamMember, TeamInvita
   }
 
   @Override
+  protected UserToGroupPermission<Team> getUserToGroupPermissionTyped(User user, Team group) {
+    return permissionFactory.createUserToTeamPermission(user, group);
+  }
+
+  @Override
   protected GroupApplicant<Team> getApplication() {
     return new TeamApplicant();
   }

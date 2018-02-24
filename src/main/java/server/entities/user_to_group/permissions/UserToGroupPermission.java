@@ -78,7 +78,7 @@ public abstract class UserToGroupPermission<T extends Group> {
   }
 
 
-  protected abstract Iterable<Integer> getRoles();
+  public abstract Iterable<Integer> getRoles();
 
   public boolean canUpdate() {
     return isAdmin();
