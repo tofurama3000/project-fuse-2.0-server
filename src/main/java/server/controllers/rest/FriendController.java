@@ -4,6 +4,7 @@ import static server.controllers.rest.response.BaseResponse.Status.OK;
 import static server.controllers.rest.response.CannedResponse.FRIEND_FOUND;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -55,6 +56,7 @@ public class FriendController {
   @Autowired
   private NotificationController notificationController;
 
+  @ApiOperation("Get all friends with paginate option")
   @GetMapping
   @ResponseBody
   public TypedResponse<List<Friend>> getFriends(@ApiParam(value = "The page of results to pull")
@@ -82,11 +84,11 @@ public class FriendController {
     return new TypedResponse<>(response, BaseResponse.Status.OK, null, returnList);
   }
 
+  @ApiOperation("Get all friends")
   @GetMapping("/all")
   @ResponseBody
   public TypedResponse<List<Friend>> getFriendIds(HttpServletRequest request,
-                                                HttpServletResponse response)
-  {
+                                                  HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -97,6 +99,7 @@ public class FriendController {
     return new TypedResponse<>(response, BaseResponse.Status.OK, null, list);
   }
 
+  @ApiOperation("Get all friend applicants")
   @GetMapping(path = "/applicants")
   @ResponseBody
   public TypedResponse<List<Friend>> getFriendRequests(@ApiParam(value = "The page of results to pull")
@@ -125,7 +128,7 @@ public class FriendController {
   @ApiOperation("Accept a friend invite")
   @PutMapping(path = "/accept/{id}")
   @ResponseBody
-  public BaseResponse acceptFriend(@ApiParam(name="ID of pending friendship to accept") @PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
+  public BaseResponse acceptFriend(@ApiParam(name = "ID of pending friendship to accept") @PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -182,10 +185,14 @@ public class FriendController {
     return new GeneralResponse(response, OK);
   }
 
+  @ApiOperation(value = "Delete Friend")
   @CrossOrigin
   @PutMapping(path = "/delete/{id}")
   @ResponseBody
-  public BaseResponse deleteFriend(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
+  public BaseResponse deleteFriend(
+      @ApiParam("ID of user to delete")
+      @PathVariable(value = "id") Long id,
+      HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -210,7 +217,7 @@ public class FriendController {
   @ApiOperation("Send a friend invite")
   @PostMapping(path = "/{id}")
   @ResponseBody
-  public BaseResponse applyFriend(@ApiParam(name="ID of user to send a request to") @PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response) {
+  public BaseResponse applyFriend(@ApiParam(name = "ID of user to send a request to") @PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {

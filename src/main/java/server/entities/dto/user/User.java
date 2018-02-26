@@ -1,6 +1,7 @@
 package server.entities.dto.user;
 
 import static server.constants.RegistrationStatus.UNREGISTERED;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.AccessLevel;
@@ -89,7 +90,7 @@ public class User extends BaseIndexable {
     map.put("email", this.email);
     map.put("index", this.getEsIndex());
     if (this.profile != null) {
-      if (this.profile.getSkills() == null){
+      if (this.profile.getSkills() == null) {
         map.put("skills", null);
       } else {
         List<String> skills = Arrays.asList(this.profile.getSkills().split(","));

@@ -122,7 +122,7 @@ public class ElasticsearchClient {
   // Perform a synchronous index of a document
   public DocWriteResponse index(Indexable doc) throws IOException {
     IndexRequest req = getIndexRequest(doc);
-    if(req != null)
+    if (req != null)
       return elasticsearch_client.index(req);
     return elasticsearch_client.delete(getDeleteRequest(doc));
   }
@@ -130,7 +130,7 @@ public class ElasticsearchClient {
   // Perform an asynchronous index of a document
   public void indexAsync(Indexable doc) {
     IndexRequest req = getIndexRequest(doc);
-    if(req != null)
+    if (req != null)
       elasticsearch_client.indexAsync(req, getDefaultAsyncHandler());
     else
       elasticsearch_client.deleteAsync(getDeleteRequest(doc), getDefaultAsyncHandler());

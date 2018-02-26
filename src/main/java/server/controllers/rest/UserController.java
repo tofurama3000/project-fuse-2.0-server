@@ -18,6 +18,7 @@ import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import static server.controllers.rest.response.CannedResponse.NO_INTERVIEW_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_INVITATION_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
+
 import com.google.common.collect.Lists;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -771,7 +772,7 @@ public class UserController {
     }
 
     String fileType = fileToUpload.getContentType().split("/")[0];
-    if(!fileType.equals("image")){
+    if (!fileType.equals("image")) {
       return new TypedResponse<>(response, BAD_DATA, errors);
     }
 
@@ -805,7 +806,7 @@ public class UserController {
     }
 
     String fileType = fileToUpload.getContentType().split("/")[0];
-    if(!fileType.equals("image")){
+    if (!fileType.equals("image")) {
       return new TypedResponse<>(response, BAD_DATA, errors);
     }
 

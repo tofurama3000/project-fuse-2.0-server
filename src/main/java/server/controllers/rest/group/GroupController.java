@@ -22,6 +22,7 @@ import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import static server.controllers.rest.response.CannedResponse.NO_GROUP_FOUND;
 import static server.controllers.rest.response.CannedResponse.SERVER_ERROR;
 import static server.utility.RolesUtility.getRoleFromInvitationType;
+
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.hibernate.Session;
@@ -290,10 +291,15 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
         return new GeneralResponse(response, ERROR, errors);
     }
   }
+
+  @ApiOperation(value = "Invite user to join/interview")
   @PostMapping(path = "/{id}/invite/{user_id}/{type}")
   @ResponseBody
-  public GeneralResponse invite(@PathVariable("id") Long id,
+  public GeneralResponse invite(@ApiParam("The ID of the group")
+                                @PathVariable("id") Long id,
+                                @ApiParam("The ID of the user to invite")
                                 @PathVariable("user_id") Long userId,
+                                @ApiParam("Invite types: join or interview")
                                 @PathVariable("type") String inviteType,
                                 HttpServletRequest request, HttpServletResponse response) {
     I invite = getInvitation();
@@ -483,12 +489,12 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @PutMapping(path = "/{id}/applicants/{appId}/{status}")
   @ResponseBody
   public BaseResponse setApplicantsStatus(@ApiParam("ID of entity")
-                                             @PathVariable(value = "id") Long id,
-                                             @ApiParam("Applicant status (one of 'accepted', 'declined', 'pending' 'interviewed', 'interview_scheduled')")
-                                             @PathVariable(value = "status") String status,
-                                             @ApiParam("ID of application to update")
-                                             @PathVariable(value = "appId") Long appId,
-                                             HttpServletRequest request, HttpServletResponse response) {
+                                          @PathVariable(value = "id") Long id,
+                                          @ApiParam("Applicant status (one of 'accepted', 'declined', 'pending' 'interviewed', 'interview_scheduled')")
+                                          @PathVariable(value = "status") String status,
+                                          @ApiParam("ID of application to update")
+                                          @PathVariable(value = "appId") Long appId,
+                                          HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -885,7 +891,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     result.put("applied", true);
     try {
       notificationController.sendGroupNotificationToAdmins(group, session.get().getUser().getName() + " has applied to " + group.getName(),
-              group.getGroupType() + "Applicant", group.getId());
+          group.getGroupType() + "Applicant", group.getId());
     } catch (Exception e) {
       e.printStackTrace();
     }

@@ -6,7 +6,10 @@ import static server.controllers.rest.response.BaseResponse.Status.OK;
 import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
+
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -146,9 +149,13 @@ public class NotificationController<T extends Group> {
   }
 
   @CrossOrigin
+  @ApiOperation(value = "Mark notification as read")
   @PutMapping(path = "/{id}/read")
   @ResponseBody
-  public BaseResponse readNotification(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
+  public BaseResponse readNotification(
+      @ApiParam(value = "Id of notification to mark")
+      @PathVariable(value = "id") Long id,
+      HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -166,9 +173,13 @@ public class NotificationController<T extends Group> {
   }
 
   @CrossOrigin
+  @ApiOperation(value = "Delete a notification")
   @PutMapping(path = "/{id}/delete")
   @ResponseBody
-  public BaseResponse deleteNotification(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
+  public BaseResponse deleteNotification(
+      @ApiParam(value = "Id of notification to delete")
+      @PathVariable(value = "id") Long id,
+      HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -185,6 +196,7 @@ public class NotificationController<T extends Group> {
     return new GeneralResponse(response, OK);
   }
 
+  @ApiOperation(value = "Get all notifications")
   @GetMapping
   @ResponseBody
   public TypedResponse<List<Notification>> getAllNotifications(HttpServletRequest request, HttpServletResponse response) {
@@ -197,9 +209,13 @@ public class NotificationController<T extends Group> {
     return new TypedResponse<>(response, OK, null, populateNotifications(notificationRepository.getNotifications(session.get().getUser())));
   }
 
+  @ApiOperation(value = "Get all notifications by status")
   @GetMapping(path = "/{status}")
   @ResponseBody
-  public TypedResponse<List<Notification>> getNotifications(@PathVariable(value = "status") String status, HttpServletRequest request, HttpServletResponse response) {
+  public TypedResponse<List<Notification>> getNotifications(
+      @ApiParam(value = "There are three kinds of status: all, read, unread")
+      @PathVariable(value = "status") String status,
+      HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {

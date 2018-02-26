@@ -88,9 +88,9 @@ public class OrganizationController extends GroupController<Organization, Organi
   @ResponseBody
   @ApiOperation("Checks whether or not a user can create a project in the organization")
   public TypedResponse<Boolean> canUserCreateProjectForOrganization(
-          @ApiParam("ID of the organization")
-          @PathVariable(value = "id") Long id,
-          HttpServletRequest request, HttpServletResponse response
+      @ApiParam("ID of the organization")
+      @PathVariable(value = "id") Long id,
+      HttpServletRequest request, HttpServletResponse response
   ) {
     List<String> errors = new ArrayList<>();
 
@@ -121,9 +121,9 @@ public class OrganizationController extends GroupController<Organization, Organi
   @ResponseBody
   @ApiOperation("Returns all projects associated with an organization")
   public TypedResponse<List<Project>> getOrganizationProjects(
-          @ApiParam("Id of the organization")
-          @PathVariable(value = "id") Long id,
-          HttpServletRequest request, HttpServletResponse response
+      @ApiParam("Id of the organization")
+      @PathVariable(value = "id") Long id,
+      HttpServletRequest request, HttpServletResponse response
   ) {
     List<String> errors = new ArrayList<>();
 
@@ -153,10 +153,10 @@ public class OrganizationController extends GroupController<Organization, Organi
   @ResponseBody
   @ApiOperation("Grants specified user to be able to create projects with in organization")
   public BaseResponse grantUserPermissionToCreateProjectsInOrganization(@ApiParam("ID of the organization")
-                                                                           @PathVariable(value = "id") Long id,
-                                                                           @ApiParam("Id of user to be granted permission")
-                                                                           @PathVariable(value = "user_id") Long userId,
-                                                                           HttpServletRequest request, HttpServletResponse response) {
+                                                                        @PathVariable(value = "id") Long id,
+                                                                        @ApiParam("Id of user to be granted permission")
+                                                                        @PathVariable(value = "user_id") Long userId,
+                                                                        HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);

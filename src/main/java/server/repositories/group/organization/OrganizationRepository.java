@@ -17,5 +17,5 @@ public interface OrganizationRepository extends GroupRepository<Organization> {
 
 
   @Query("From Project p WHERE p.organization = :organization")
-  List<Project> getAllProjectsByOrganization(@Param("organization")Organization organizationId);
+  List<Project> getAllProjectsByOrganization(@Param("organization") Organization organizationId);
 }

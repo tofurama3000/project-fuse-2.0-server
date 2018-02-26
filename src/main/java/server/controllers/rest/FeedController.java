@@ -1,7 +1,9 @@
 package server.controllers.rest;
 
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
+
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -36,11 +38,12 @@ public class FeedController {
 
 
   @GetMapping
+  @ApiOperation(value = "The user feed page, which included notifications and reminders")
   @ResponseBody
   public TypedResponse<List<Notification>> getFeed(@ApiParam(value = "The page of results to pull")
-                                 @RequestParam(value = "page", required = false, defaultValue = "0") int page,
-                               @ApiParam(value = "The number of results per page")
-                                 @RequestParam(value = "size", required = false, defaultValue = "15") int pageSize, HttpServletRequest request, HttpServletResponse response) {
+                                                   @RequestParam(value = "page", required = false, defaultValue = "0") int page,
+                                                   @ApiParam(value = "The number of results per page")
+                                                   @RequestParam(value = "size", required = false, defaultValue = "15") int pageSize, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
