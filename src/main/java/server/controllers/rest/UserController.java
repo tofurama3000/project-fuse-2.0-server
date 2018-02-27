@@ -25,6 +25,8 @@ import com.google.common.collect.Lists;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -40,6 +42,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
+import server.Application;
 import server.controllers.FuseSessionController;
 import server.controllers.MembersOfGroupController;
 import server.controllers.rest.response.BaseResponse;
@@ -189,6 +192,7 @@ public class UserController {
   private StandardEmailSender emailSender;
 
   private static IdGenerator generator = new AlternativeJdkIdGenerator();
+  private Logger logger = LoggerFactory.getLogger(UserController.class);
 
   @ApiOperation(value = "Creates a new user",
       notes = "Must provide a name, password, and email")
@@ -239,6 +243,11 @@ public class UserController {
       unregisteredUserRepository.save(unregisteredUser);
 
       emailSender.sendRegistrationEmail(user.getEmail(), registrationKey);
+    }
+
+    if(user.getProfile() == null)
+    {
+      user.setProfile(new UserProfile());
     }
 
     return new TypedResponse<>(response, OK, errors, savedUser);
@@ -698,7 +707,7 @@ public class UserController {
       notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(),
           "TeamInvitation", "TeamInvitation:Accepted", group.getId());
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage(), e);
     }
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
   }
@@ -745,7 +754,7 @@ public class UserController {
         notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has declined" + savedInvitation.getType() + " invitation from " + group.getGroupType() + ": " + group.getName(),
             "ProjectInvitation", "ProjectInvitation:Declined", group.getId());
       } catch (Exception e) {
-        e.printStackTrace();
+        logger.error(e.getMessage(), e);
       }
       return new GeneralResponse(response);
     }
@@ -778,7 +787,7 @@ public class UserController {
         notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted" + savedInvitation.getType() + " invitation from " + group.getGroupType() + ": " + group.getName(),
             "ProjectInvitation", "ProjectInvitation:Accepted", group.getId());
       } catch (Exception e) {
-        e.printStackTrace();
+        logger.error(e.getMessage(), e);
       }
     }
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
@@ -922,8 +931,7 @@ public class UserController {
         notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted " + savedInvitation.getType() + " invitation from " + group.getGroupType() + ": " + group.getName()
             , "OrganizationInvitation", "OrganizationInvitation:Accepted", group.getId());
       } catch (Exception e) {
-
-        e.printStackTrace();
+        logger.error(e.getMessage(), e);
       }
     }
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());

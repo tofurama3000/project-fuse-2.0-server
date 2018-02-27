@@ -2,6 +2,9 @@ package server.entities;
 
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.rest.RestStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import server.controllers.rest.group.GroupController;
 import server.utility.ElasticsearchClient;
 
 import java.io.IOException;
@@ -10,6 +13,7 @@ import java.io.IOException;
  * Created by tofurama on 12/16/17.
  */
 public abstract class BaseIndexable implements Indexable {
+  private Logger logger = LoggerFactory.getLogger(BaseIndexable.class);
   public boolean tryToIndex() {
     ElasticsearchClient es_client = ElasticsearchClient.instance();
     if (es_client == null) return false;
@@ -18,7 +22,7 @@ public abstract class BaseIndexable implements Indexable {
       if (res.status() == RestStatus.CREATED || res.status() == RestStatus.OK)
         return true;
     } catch (IOException e) {
-      e.printStackTrace();
+      logger.error(e.getMessage(), e);
     }
     return false;
   }

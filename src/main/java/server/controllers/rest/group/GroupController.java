@@ -108,7 +108,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @Autowired
   private SessionFactory sessionFactory;
 
-  private static Logger logger = LoggerFactory.getLogger(GroupController.class);
+  private Logger logger = LoggerFactory.getLogger(GroupController.class);
 
   @PostMapping
   @ResponseBody
@@ -229,7 +229,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       notificationController.sendGroupNotificationToAdmins(group, session.get().getUser().getName() + " has applied to " + group.getName(),
           group.getGroupType() + "Applicant", group.getGroupType() + "Applicant", session.get().getUser().getId());
     } catch (Exception e) {
-      logger.error(e.getMessage());
+      logger.error(e.getMessage(), e);
 
       return new GeneralResponse(response, BaseResponse.Status.ERROR, "Could not send notification");
     }
@@ -312,7 +312,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
           notificationController.sendGroupNotificationToAdmins(group, user.getName() + " joined " + group.getName(),
               group.getGroupType() + "Applicant", group.getGroupType() + "Applicant:Accepted", group.getId());
         } catch (Exception e) {
-          e.printStackTrace();
+          logger.error(e.getMessage(), e);
         }
         return new GeneralResponse(response);
       case HAS_INVITE:
@@ -322,7 +322,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
           notificationController.sendGroupNotificationToAdmins(group, user.getName() + " joined " + group.getName(),
               group.getGroupType() + "Invitation", group.getGroupType() + "Invitation:Accepted", group.getId());
         } catch (Exception e) {
-          e.printStackTrace();
+          logger.error(e.getMessage(), e);
         }
         return new GeneralResponse(response);
       case NEED_INVITE:
@@ -406,7 +406,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     try {
       notificationController.sendNotification(groupInvitation.getReceiver(), "You have been invited to join " + group.getName(), group.getGroupType() + "Invitation", group.getGroupType() + "Invitation:Invite", groupInvitation.getId());
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage(), e);
     }
     return errors;
   }
@@ -738,7 +738,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
         notificationController.sendNotification(applicantToSave.getSender(), applicantToSave.getGroup().getName() + "'s admin rejected your application",
             applicantToSave.getGroup().getGroupType() + "Applicant", applicantToSave.getGroup().getGroupType() + "Applicant:Declined", applicantToSave.getId());
       } catch (Exception e) {
-        e.printStackTrace();
+        logger.error(e.getMessage(), e);
       }
     }
 
@@ -767,7 +767,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
             invite.getId()
         );
       } catch (Exception e) {
-        e.printStackTrace();
+        logger.error(e.getMessage(), e);
       }
     }
 

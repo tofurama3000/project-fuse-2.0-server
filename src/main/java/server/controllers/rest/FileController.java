@@ -70,6 +70,9 @@ public class FileController {
   @Value("${fuse.fileUploadPath}")
   private String fileUploadPath;
 
+
+  private Logger logger = LoggerFactory.getLogger(FileController.class);
+
   @PostMapping(path = "/upload")
   @ResponseBody
   @ApiOperation(value = "Uploads a new file",
@@ -137,8 +140,6 @@ public class FileController {
 
   public UploadFile saveFile(MultipartFile fileToUpload, String type, List<String> errors, User currentUser) throws IOException {
     UploadFile uploadFile = new UploadFile();
-
-    final Logger logger = LoggerFactory.getLogger(ElasticsearchReindexService.class);
     String hash = Hashing.sha256()
         .hashString(fileToUpload.getOriginalFilename(), StandardCharsets.UTF_8)
         .toString();
