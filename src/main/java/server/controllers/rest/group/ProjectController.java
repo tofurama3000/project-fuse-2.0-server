@@ -128,6 +128,10 @@ public class ProjectController extends GroupController<Project, ProjectMember, P
   @Override
   protected PossibleError validateGroup(User user, Project group) {
     Organization parentOrganization = group.getOrganization();
+    if(parentOrganization != null && parentOrganization.getId() == null) {
+      group.setOrganization(null);
+      parentOrganization = null;
+    }
     if (parentOrganization != null) {
       UserToOrganizationPermission permission = permissionFactory.createUserToOrganizationPermission(user, parentOrganization);
       if (permission.canCreateProjectsInOrganization()) {

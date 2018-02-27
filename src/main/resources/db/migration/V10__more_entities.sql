@@ -10,33 +10,28 @@ CREATE TABLE IF NOT EXISTS notification (
   receiver_id INT(11),
   message TEXT,
   time DATETIME,
-  hasRead    tinyint,
-  FOREIGN KEY (sender_id ) REFERENCES user(id),
-  FOREIGN KEY (receiver_id ) REFERENCES user(id)
+  hasRead    tinyint
 );
 
 CREATE TABLE IF NOT EXISTS project_profile (
   id INT(11) PRIMARY KEY AUTO_INCREMENT,
   headline varchar(100),
   summary varchar(300),
-  project_id INT(11),
-  FOREIGN KEY (project_id) REFERENCES project(id)
+  project_id INT(11)
 );
 
 CREATE TABLE IF NOT EXISTS team_profile (
   id INT(11) PRIMARY KEY AUTO_INCREMENT,
   headline varchar(100),
   summary varchar(300),
-  team_id INT(11),
-  FOREIGN KEY (team_id) REFERENCES team(id)
+  team_id INT(11)
 );
 
 CREATE TABLE IF NOT EXISTS organization_profile (
   id INT(11) PRIMARY KEY AUTO_INCREMENT,
   headline varchar(100),
   summary varchar(300),
-  organization_id INT(11),
-  FOREIGN KEY (organization_id) REFERENCES organization(id)
+  organization_id INT(11)
 );
 
 CREATE TABLE IF NOT EXISTS user_profile (
@@ -44,8 +39,7 @@ CREATE TABLE IF NOT EXISTS user_profile (
   headline varchar(100),
   summary varchar(300),
   skills TEXT,
-  user_id INT(11),
-  FOREIGN KEY (user_id) REFERENCES user(id)
+  user_id INT(11)
 );
 
 

@@ -5,6 +5,5 @@ CREATE TABLE IF NOT EXISTS files (
   mime_type VARCHAR(255),
   file_size INT,
   upload_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-  user_id INT,
-  FOREIGN KEY (user_id) REFERENCES user(id)
+  user_id INT
 );
