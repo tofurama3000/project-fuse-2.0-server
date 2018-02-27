@@ -29,7 +29,7 @@ public class UserToProjectPermission extends UserToGroupPermission<Project> {
   }
 
   @Override
-  protected Iterable<Integer> getRoles() {
+  public Iterable<Integer> getRoles() {
     return repository.getRoles(group, user);
   }
 

@@ -13,4 +13,7 @@ import java.util.List;
 public interface ProjectApplicantRepository extends GroupApplicantRepository<ProjectApplicant, Project> {
   @Query("FROM ProjectApplicant a where a.project = :project and a.status = :status ")
   List<ProjectApplicant> getApplicants(@Param("project") Project project, @Param("status") String status);
+
+  @Query("FROM ProjectApplicant a where a.status = :status ")
+  List<ProjectApplicant> getApplicantsByStatus( @Param("status") String status);
 }

@@ -2,11 +2,12 @@ package server.controllers.rest.group;
 
 import static server.constants.RoleValue.ADMIN;
 import static server.constants.RoleValue.CREATE_PROJECT_IN_ORGANIZATION;
-import static server.constants.RoleValue.OWNER;
-import static server.controllers.rest.response.BaseResponse.Status.DENIED;
 import static server.controllers.rest.response.BaseResponse.Status.OK;
-import static server.controllers.rest.response.CannedResponse.*;
-
+import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
+import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
+import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
+import static server.controllers.rest.response.CannedResponse.NO_GROUP_FOUND;
+import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -14,7 +15,11 @@ import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
@@ -48,7 +53,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping(value = "/organizations")
@@ -244,6 +248,33 @@ public class OrganizationController extends GroupController<Organization, Organi
     relationshipFactory.createUserToProjectRelationship(user, group).addRelationship(role);
   }
 
+
+  @ApiOperation("Grant admin access for a user")
+  @PostMapping(path = "/{id}/members/{member_id}/grant/project_create")
+  @ResponseBody
+  public BaseResponse grantCreateAccess(
+          @ApiParam("The id of the group to grant access for")
+          @PathVariable(value = "id") Long id,
+          @ApiParam("The id of the user to grant access to")
+          @PathVariable(value = "member_id") Long memberId,
+          HttpServletRequest request, HttpServletResponse response
+  ) {
+    return grantAccessForMember(id, memberId, CREATE_PROJECT_IN_ORGANIZATION, response, request);
+  }
+
+  @ApiOperation("Grant admin access for a user")
+  @PostMapping(path = "/{id}/members/{member_id}/revoke/project_create")
+  @ResponseBody
+  public BaseResponse revokeCreateAccess(
+          @ApiParam("The id of the group to grant access for")
+          @PathVariable(value = "id") Long id,
+          @ApiParam("The id of the user to grant access to")
+          @PathVariable(value = "member_id") Long memberId,
+          HttpServletRequest request, HttpServletResponse response
+  ) {
+    return revokeAccessForMember(id, memberId, CREATE_PROJECT_IN_ORGANIZATION, response, request);
+  }
+
   @Override
   protected GroupApplicant<Organization> getApplication() {
     return new OrganizationApplicant();
@@ -257,6 +288,11 @@ public class OrganizationController extends GroupController<Organization, Organi
   @Override
   protected GroupInvitationRepository<OrganizationInvitation> getGroupInvitationRepository() {
     return organizationInvitationRepository;
+  }
+  
+  @Override
+  protected UserToGroupPermission<Organization> getUserToGroupPermissionTyped(User user, Organization group) {
+    return permissionFactory.createUserToOrganizationPermission(user, group);
   }
 
   @Override

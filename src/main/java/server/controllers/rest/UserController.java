@@ -1,6 +1,7 @@
 package server.controllers.rest;
 
 import static server.constants.Availability.NOT_AVAILABLE;
+import static server.constants.ImageSize.THUMBNAIL_DIM;
 import static server.constants.InvitationStatus.ACCEPTED;
 import static server.constants.InvitationStatus.DECLINED;
 import static server.constants.RegistrationStatus.REGISTERED;
@@ -9,8 +10,10 @@ import static server.constants.RoleValue.DEFAULT_USER;
 import static server.constants.RoleValue.INVITED_TO_INTERVIEW;
 import static server.constants.RoleValue.INVITED_TO_JOIN;
 import static server.constants.RoleValue.TO_INTERVIEW;
-import static server.controllers.rest.response.BaseResponse.Status.*;
-import static server.controllers.rest.response.CannedResponse.FILE_NOT_FOUND;
+import static server.controllers.rest.response.BaseResponse.Status.BAD_DATA;
+import static server.controllers.rest.response.BaseResponse.Status.DENIED;
+import static server.controllers.rest.response.BaseResponse.Status.ERROR;
+import static server.controllers.rest.response.BaseResponse.Status.OK;
 import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_REGISTRATION_KEY;
@@ -92,9 +95,18 @@ import server.utility.RolesUtility;
 import server.utility.StreamUtil;
 import springfox.documentation.annotations.ApiIgnore;
 
+import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.websocket.server.PathParam;
+
+import java.awt.AlphaComposite;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -103,6 +115,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
 
 @Controller
 @Api(value = "User Endpoints")
@@ -684,7 +697,7 @@ public class UserController {
 
     try {
       notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(),
-          "TeamInvitation:Accepted", group.getId());
+          "TeamInvitation", "TeamInvitation:Accepted", group.getId());
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -722,11 +735,16 @@ public class UserController {
 
     if (action.equalsIgnoreCase("decline")) {
       savedInvitation.setStatus(DECLINED);
-      projectInvitationRepository.save(savedInvitation);
+      if (savedInvitation.getType().equals("join")) {
+        ProjectApplicant applicant = projectApplicantRepository.findOne(savedInvitation.getApplicant().getId());
+        applicant.setStatus("declined");
+        projectApplicantRepository.save(applicant);
+      }
 
+      projectInvitationRepository.save(savedInvitation);
       try {
-        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has declined invitation from " + group.getGroupType() + ": " + group.getName(),
-            "ProjectInvitation:Declined", group.getId());
+        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has declined" + savedInvitation.getType() + " invitation from " + group.getGroupType() + ": " + group.getName(),
+            "ProjectInvitation", "ProjectInvitation:Declined", group.getId());
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -747,11 +765,19 @@ public class UserController {
 
     if (!possibleError.hasError()) {
       savedInvitation.setStatus(ACCEPTED);
+      ProjectApplicant applicant = projectApplicantRepository.findOne(savedInvitation.getApplicant().getId());
+      if (savedInvitation.getType().equals("join")) {
+        applicant.setStatus("accepted");
+      } else {
+        applicant.setStatus("interview_scheduled");
+        applicant.setInterview(interviewRepository.findOne(savedInvitation.getInterview().getId()));
+      }
+      projectApplicantRepository.save(applicant);
       projectInvitationRepository.save(savedInvitation);
 
       try {
-        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(),
-            "ProjectInvitation:Accepted", group.getId());
+        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted" + savedInvitation.getType() + " invitation from " + group.getGroupType() + ": " + group.getName(),
+            "ProjectInvitation", "ProjectInvitation:Accepted", group.getId());
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -770,13 +796,12 @@ public class UserController {
       errors.add(INVALID_SESSION);
       return new TypedResponse<>(response, GeneralResponse.Status.DENIED, errors);
     }
-
-    String fileType = fileToUpload.getContentType().split("/")[0];
-    if (!fileType.equals("image")) {
+    String[] fileType = fileToUpload.getContentType().split("/");
+    if(!fileType[0].equals("image")){
       return new TypedResponse<>(response, BAD_DATA, errors);
     }
 
-    UploadFile uploadFile = fileController.saveFile(fileToUpload, errors, session.get().getUser());
+    UploadFile uploadFile = fileController.saveFile(fileToUpload, "avatar", errors, session.get().getUser());
     if (uploadFile == null) {
       return new TypedResponse<>(response, ERROR, errors);
     }
@@ -785,8 +810,10 @@ public class UserController {
     UserProfile profile = user.getProfile();
     if (profile == null) {
       profile = new UserProfile();
+      profile.setBackground_id(0L);
       user.setProfile(profile);
     }
+
     profile.setThumbnail_id(uploadFile.getId());
     userProfileRepository.save(user.getProfile());
     return new TypedResponse<>(response, OK, null, uploadFile);
@@ -810,7 +837,7 @@ public class UserController {
       return new TypedResponse<>(response, BAD_DATA, errors);
     }
 
-    UploadFile uploadFile = fileController.saveFile(fileToUpload, errors, session.get().getUser());
+    UploadFile uploadFile = fileController.saveFile(fileToUpload, "background", errors, session.get().getUser());
     if (uploadFile == null) {
       return new TypedResponse<>(response, ERROR, errors);
     }
@@ -819,9 +846,10 @@ public class UserController {
     UserProfile profile = user.getProfile();
     if (profile == null) {
       profile = new UserProfile();
+      profile.setThumbnail_id(0L);
       user.setProfile(profile);
     }
-    profile.setBackground_Id(uploadFile.getId());
+    profile.setBackground_id(uploadFile.getId());
     userProfileRepository.save(user.getProfile());
     return new TypedResponse<>(response, OK, null, uploadFile);
   }
@@ -858,12 +886,18 @@ public class UserController {
 
     if (action.equalsIgnoreCase("decline")) {
       savedInvitation.setStatus(DECLINED);
+      if (savedInvitation.getType().equals("join")) {
+        OrganizationApplicant applicant = organizationApplicantRepository.findOne(savedInvitation.getApplicant().getId());
+        applicant.setStatus("declined");
+        organizationApplicantRepository.save(applicant);
+      }
       organizationInvitationRepository.save(savedInvitation);
       try {
-        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has declined invitation from " + group.getGroupType() + ": " + group.getName(),
-            "ProjectInvitation:Declined", group.getId());
+        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has declined " + savedInvitation.getType() + " invitation from " + group.getGroupType() + ": " + group.getName(),
+            "OrganizationInvitation", "OrganizationInvitation:Declined", group.getId());
       } catch (Exception e) {
-        e.printStackTrace();
+        errors.add("Can't send notification");
+        return new GeneralResponse(response, ERROR, errors);
       }
       return new GeneralResponse(response);
     }
@@ -876,11 +910,20 @@ public class UserController {
 
     if (!possibleError.hasError()) {
       savedInvitation.setStatus(ACCEPTED);
+      OrganizationApplicant applicant = organizationApplicantRepository.findOne(savedInvitation.getApplicant().getId());
+      if (savedInvitation.getType().equals("join")) {
+        applicant.setStatus("accepted");
+      } else {
+        applicant.setStatus("interview_scheduled");
+        applicant.setInterview(interviewRepository.findOne(savedInvitation.getInterview().getId()));
+      }
+      organizationApplicantRepository.save(applicant);
       organizationInvitationRepository.save(savedInvitation);
       try {
-        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName()
-            , "OrganizationInvitation:Accepted", group.getId());
+        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted " + savedInvitation.getType() + " invitation from " + group.getGroupType() + ": " + group.getName()
+            , "OrganizationInvitation", "OrganizationInvitation:Accepted", group.getId());
       } catch (Exception e) {
+
         e.printStackTrace();
       }
     }

@@ -97,6 +97,11 @@ public class ProjectController extends GroupController<Project, ProjectMember, P
   }
 
   @Override
+  protected UserToGroupPermission<Project> getUserToGroupPermissionTyped(User user, Project group) {
+    return permissionFactory.createUserToProjectPermission(user, group);
+  }
+
+  @Override
   protected void removeRelationship(User user, Project group, int role) {
     relationshipFactory.createUserToProjectRelationship(user, group).removeRelationship(role);
   }

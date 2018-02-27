@@ -150,7 +150,7 @@ public class FriendController {
     }
     friend.setStatus("accepted");
     try {
-      notificationController.sendNotification(friend.getSender(), friend.getReceiver().getName() + " has accepted your friend request", "Friend:Accepted", friend.getId());
+      notificationController.sendNotification(friend.getSender(), friend.getReceiver().getName() + " has accepted your friend request", "Friend", "Friend:Accepted", friend.getId());
     } catch (Exception e) {
       logger.error(e.getMessage());
     }
@@ -241,7 +241,7 @@ public class FriendController {
     friendRepository.save(friend);
     try {
       notificationController.sendNotification(receiver, sender.getName() + " wants to be your friend!",
-          "Friend:Request",
+          "Friend", "Friend:Request",
           sender.getId()
       );
     } catch (Exception e) {

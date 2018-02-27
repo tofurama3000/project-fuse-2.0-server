@@ -47,6 +47,9 @@ public class Interview {
   @Column(name = "code")
   private String code = "";
 
+  @Column(name = "deleted")
+  private boolean deleted = false;
+
   @ManyToOne
   @JoinColumn(name = "user_id", referencedColumnName = "id")
   private User user;
