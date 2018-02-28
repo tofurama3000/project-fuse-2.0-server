@@ -242,10 +242,38 @@ public class OrganizationController extends GroupController<Organization, Organi
   @Override
   protected void addRelationship(User user, Organization group, int role) {
     relationshipFactory.createUserToOrganizationRelationship(user, group).addRelationship(role);
+    group.indexAsync();
   }
 
   protected void addProjectRelationship(User user, Project group, int role) {
     relationshipFactory.createUserToProjectRelationship(user, group).addRelationship(role);
+  }
+
+
+  @ApiOperation("Grant admin access for a user")
+  @PostMapping(path = "/{id}/members/{member_id}/grant/project_create")
+  @ResponseBody
+  public BaseResponse grantCreateAccess(
+          @ApiParam("The id of the group to grant access for")
+          @PathVariable(value = "id") Long id,
+          @ApiParam("The id of the user to grant access to")
+          @PathVariable(value = "member_id") Long memberId,
+          HttpServletRequest request, HttpServletResponse response
+  ) {
+    return grantAccessForMember(id, memberId, CREATE_PROJECT_IN_ORGANIZATION, response, request);
+  }
+
+  @ApiOperation("Grant admin access for a user")
+  @PostMapping(path = "/{id}/members/{member_id}/revoke/project_create")
+  @ResponseBody
+  public BaseResponse revokeCreateAccess(
+          @ApiParam("The id of the group to grant access for")
+          @PathVariable(value = "id") Long id,
+          @ApiParam("The id of the user to grant access to")
+          @PathVariable(value = "member_id") Long memberId,
+          HttpServletRequest request, HttpServletResponse response
+  ) {
+    return revokeAccessForMember(id, memberId, CREATE_PROJECT_IN_ORGANIZATION, response, request);
   }
 
   @Override
@@ -261,6 +289,11 @@ public class OrganizationController extends GroupController<Organization, Organi
   @Override
   protected GroupInvitationRepository<OrganizationInvitation> getGroupInvitationRepository() {
     return organizationInvitationRepository;
+  }
+  
+  @Override
+  protected UserToGroupPermission<Organization> getUserToGroupPermissionTyped(User user, Organization group) {
+    return permissionFactory.createUserToOrganizationPermission(user, group);
   }
 
   @Override

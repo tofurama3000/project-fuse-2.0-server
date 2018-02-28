@@ -21,6 +21,7 @@ import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import static server.controllers.rest.response.CannedResponse.NO_INTERVIEW_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_INVITATION_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
+
 import com.google.common.collect.Lists;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -816,7 +817,7 @@ public class UserController {
     UserProfile profile = user.getProfile();
     if (profile == null) {
       profile = new UserProfile();
-      profile.setBackground_Id(0L);
+      profile.setBackground_id(0L);
       user.setProfile(profile);
     }
 
@@ -855,7 +856,7 @@ public class UserController {
       profile.setThumbnail_id(0L);
       user.setProfile(profile);
     }
-    profile.setBackground_Id(uploadFile.getId());
+    profile.setBackground_id(uploadFile.getId());
     userProfileRepository.save(user.getProfile());
     return new TypedResponse<>(response, OK, null, uploadFile);
   }

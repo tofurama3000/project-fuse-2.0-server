@@ -4,6 +4,7 @@ import static server.constants.RoleValue.ADMIN;
 import static server.constants.RoleValue.DEFAULT_USER;
 import static server.constants.RoleValue.INVITED_TO_JOIN;
 import static server.constants.RoleValue.OWNER;
+
 import org.hibernate.Session;
 import org.springframework.transaction.annotation.Transactional;
 import server.entities.dto.group.Group;
@@ -78,7 +79,7 @@ public abstract class UserToGroupPermission<T extends Group> {
   }
 
 
-  protected abstract Iterable<Integer> getRoles();
+  public abstract Iterable<Integer> getRoles();
 
   public boolean canUpdate() {
     return isAdmin();

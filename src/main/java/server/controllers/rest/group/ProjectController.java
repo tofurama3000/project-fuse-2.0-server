@@ -1,6 +1,7 @@
 package server.controllers.rest.group;
 
 import static server.controllers.rest.response.BaseResponse.Status.OK;
+
 import io.swagger.annotations.Api;
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -96,6 +97,11 @@ public class ProjectController extends GroupController<Project, ProjectMember, P
   }
 
   @Override
+  protected UserToGroupPermission<Project> getUserToGroupPermissionTyped(User user, Project group) {
+    return permissionFactory.createUserToProjectPermission(user, group);
+  }
+
+  @Override
   protected void removeRelationship(User user, Project group, int role) {
     relationshipFactory.createUserToProjectRelationship(user, group).removeRelationship(role);
   }
@@ -123,6 +129,10 @@ public class ProjectController extends GroupController<Project, ProjectMember, P
   @Override
   protected PossibleError validateGroup(User user, Project group) {
     Organization parentOrganization = group.getOrganization();
+    if(parentOrganization != null && parentOrganization.getId() == null) {
+      group.setOrganization(null);
+      parentOrganization = null;
+    }
     if (parentOrganization != null) {
       UserToOrganizationPermission permission = permissionFactory.createUserToOrganizationPermission(user, parentOrganization);
       if (permission.canCreateProjectsInOrganization()) {

@@ -3,6 +3,5 @@ ALTER TABLE user
 
 CREATE TABLE IF NOT EXISTS unregistered_user (
   user_id INT(11) PRIMARY KEY AUTO_INCREMENT,
-  registration_key varchar(50),
-  FOREIGN KEY (user_id) REFERENCES user(id)
+  registration_key varchar(50)
 )

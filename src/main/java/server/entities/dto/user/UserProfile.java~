@@ -42,9 +42,15 @@ public class UserProfile {
 
   private String skills;
 
+<<<<<<< HEAD
+  private Long thumbnail_id;
+
+  private Long background_Id;
+=======
   private  Long thumbnail_id = 0L;
 
   private  Long background_id = 0L;
+>>>>>>> server_setup
 
   @Setter(AccessLevel.NONE)
   @JsonIgnore
