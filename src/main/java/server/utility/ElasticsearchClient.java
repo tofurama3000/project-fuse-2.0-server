@@ -13,6 +13,9 @@ import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import server.Application;
 import server.entities.Indexable;
 import server.entities.dto.PagedResults;
 
@@ -28,7 +31,7 @@ import java.util.stream.Collectors;
 
 public class ElasticsearchClient {
   private static String use_elasticsearch = "true";
-
+  private static Logger logger = LoggerFactory.getLogger(ElasticsearchClient.class);
   private ElasticsearchClient() throws UnknownHostException, InvalidObjectException {
     // Spring is not initialized when this is ran, so we need to get properties ourselves
     String rootPath = Thread.currentThread().getContextClassLoader().getResource("").getPath();
@@ -47,7 +50,7 @@ public class ElasticsearchClient {
       main_port = Integer.parseInt(appProps.getProperty("fuse.elasticsearch_port", main_port.toString()));
       secondary_port = Integer.parseInt(appProps.getProperty("fuse.elasticsearch_sec_port", secondary_port.toString()));
     } catch (IOException e) {
-      e.printStackTrace();
+      logger.error(e.getMessage(), e);
     }
 
     // Now create the elasticsearch REST client
@@ -66,7 +69,7 @@ public class ElasticsearchClient {
         inst = new ElasticsearchClient();
       } catch (UnknownHostException | InvalidObjectException e) {
         // If there was an error, print the stack trace and return null
-        e.printStackTrace();
+        logger.error(e.getMessage(), e);
         inst = null;
       }
     }
@@ -105,15 +108,12 @@ public class ElasticsearchClient {
     return new ActionListener<T>() {
       @Override
       public void onResponse(T response) {
-        // TODO: add logging
-        System.out.println(response);
+        logger.debug(response.toString());
       }
 
       @Override
       public void onFailure(Exception e) {
-        // TODO: add logging
-        System.err.println(e.getMessage());
-        e.printStackTrace();
+        logger.error(e.getMessage(), e);
       }
     };
   }
@@ -168,7 +168,7 @@ public class ElasticsearchClient {
       results.setPageSize(pageSize);
       return results;
     } catch (IOException e) {
-      e.printStackTrace();
+      logger.error(e.getMessage(), e);
       return null;
     }
   }

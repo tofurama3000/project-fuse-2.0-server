@@ -152,7 +152,7 @@ public class FriendController {
     try {
       notificationController.sendNotification(friend.getSender(), friend.getReceiver().getName() + " has accepted your friend request", "Friend", "Friend:Accepted", friend.getId());
     } catch (Exception e) {
-      logger.error(e.getMessage());
+      logger.error(e.getMessage(), e);
     }
     return new GeneralResponse(response, OK);
   }
@@ -245,7 +245,7 @@ public class FriendController {
           sender.getId()
       );
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage(), e);
     }
     return new GeneralResponse(response, OK);
   }
