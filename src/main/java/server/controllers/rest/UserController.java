@@ -230,10 +230,7 @@ public class UserController {
     }
 
     if(user.getProfile() == null) {
-      UserProfile profile = new UserProfile();
-      profile.setThumbnail_id(0L);
-      profile.setBackground_Id(0L);
-      user.setProfile(profile);
+      user.setProfile(new UserProfile());
     }
     User savedUser = userRepository.save(user);
     savedUser.indexAsync();
