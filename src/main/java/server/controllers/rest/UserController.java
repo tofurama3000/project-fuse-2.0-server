@@ -817,7 +817,6 @@ public class UserController {
     UserProfile profile = user.getProfile();
     if (profile == null) {
       profile = new UserProfile();
-      profile.setBackground_id(0L);
       user.setProfile(profile);
     }
 
@@ -853,7 +852,6 @@ public class UserController {
     UserProfile profile = user.getProfile();
     if (profile == null) {
       profile = new UserProfile();
-      profile.setThumbnail_id(0L);
       user.setProfile(profile);
     }
     profile.setBackground_id(uploadFile.getId());
