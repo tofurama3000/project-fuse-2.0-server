@@ -221,7 +221,6 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     }
     ZonedDateTime now = ZonedDateTime.now();
     application.setTime(now.toString());
-    application.setId(0L);
     getGroupApplicantRepository().save(application);
     Map<String, Object> result = new HashMap<>();
     result.put("applied", true);
