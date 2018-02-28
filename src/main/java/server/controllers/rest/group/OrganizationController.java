@@ -242,6 +242,7 @@ public class OrganizationController extends GroupController<Organization, Organi
   @Override
   protected void addRelationship(User user, Organization group, int role) {
     relationshipFactory.createUserToOrganizationRelationship(user, group).addRelationship(role);
+    group.indexAsync();
   }
 
   protected void addProjectRelationship(User user, Project group, int role) {
