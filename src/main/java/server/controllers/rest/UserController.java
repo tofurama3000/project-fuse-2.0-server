@@ -229,6 +229,12 @@ public class UserController {
       user.setRegistrationStatus(REGISTERED);
     }
 
+    if(user.getProfile() == null) {
+      UserProfile profile = new UserProfile();
+      profile.setThumbnail_id(0L);
+      profile.setBackground_Id(0L);
+      user.setProfile(profile);
+    }
     User savedUser = userRepository.save(user);
     savedUser.indexAsync();
     Long id = savedUser.getId();
@@ -243,11 +249,6 @@ public class UserController {
       unregisteredUserRepository.save(unregisteredUser);
 
       emailSender.sendRegistrationEmail(user.getEmail(), registrationKey);
-    }
-
-    if(user.getProfile() == null)
-    {
-      user.setProfile(new UserProfile());
     }
 
     return new TypedResponse<>(response, OK, errors, savedUser);

@@ -1,5 +1,5 @@
 ALTER table project_applicant
-  ADD COLUMN `interview_id` INT(11) NOT NULL DEFAULT 0,
+  ADD COLUMN `interview_id` INT(11) DEFAULT 0,
   ADD FOREIGN KEY interview_key (`interview_id`) REFERENCES `interview`(`id`);
 
 ALTER table organization_applicant

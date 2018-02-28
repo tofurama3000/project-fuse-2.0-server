@@ -222,6 +222,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     }
     ZonedDateTime now = ZonedDateTime.now();
     application.setTime(now.toString());
+    application.setId(0L);
     getGroupApplicantRepository().save(application);
     Map<String, Object> result = new HashMap<>();
     result.put("applied", true);
@@ -414,7 +415,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @PostMapping(path = "/{id}/invite/{applicant_id}/{type}")
   @ResponseBody
   public GeneralResponse invite(@PathVariable("id") Long id,
-                                @PathVariable("user_id") Long applicantId,
+                                @PathVariable("applicant_id") Long applicantId,
                                 @PathVariable("type") String inviteType,
                                 HttpServletRequest request, HttpServletResponse response) {
     I invite = getInvitation();
