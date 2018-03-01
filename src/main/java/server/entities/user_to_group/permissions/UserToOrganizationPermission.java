@@ -3,6 +3,7 @@ package server.entities.user_to_group.permissions;
 import static server.constants.RoleValue.ADMIN;
 import static server.constants.RoleValue.CREATE_PROJECT_IN_ORGANIZATION;
 import static server.constants.RoleValue.OWNER;
+
 import lombok.Setter;
 import org.hibernate.Session;
 import server.entities.dto.group.organization.Organization;
@@ -40,6 +41,8 @@ public class UserToOrganizationPermission extends UserToGroupPermission<Organiza
 
   public boolean canCreateProjectsInOrganization() {
     HashSet<Integer> roles = new HashSet<>(repository.getRoles(group, user));
+    if (group.get_everyone_can_create())
+      return true;
     return roles.contains(CREATE_PROJECT_IN_ORGANIZATION) || roles.contains(ADMIN) || roles.contains(OWNER);
   }
 }

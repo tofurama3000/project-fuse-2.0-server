@@ -8,6 +8,7 @@ import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import static server.controllers.rest.response.CannedResponse.NO_GROUP_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -15,11 +16,7 @@ import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
@@ -204,6 +201,48 @@ public class OrganizationController extends GroupController<Organization, Organi
     return new GeneralResponse(response, OK);
   }
 
+  @CrossOrigin
+  @PutMapping("/{id}/grantEveryoneCreatePermission/{action}")
+  @ResponseBody
+  @ApiOperation("Grants everyone to be able to create projects with in organization")
+  public BaseResponse grantEveryonePermissionToCreateProjectsInOrganization(@ApiParam("ID of the organization")
+                                                                            @PathVariable(value = "id") Long id,
+                                                                            @ApiParam("Action: can be true or false")
+                                                                            @PathVariable(value = "action") String action,
+                                                                            HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
+    }
+
+    User loggedInUser = session.get().getUser();
+
+    if (id == null) {
+      errors.add(INVALID_FIELDS);
+      return new GeneralResponse(response, errors);
+    }
+
+    Organization organization = organizationRepository.findOne(id);
+    if (organization == null) {
+      errors.add(NO_GROUP_FOUND);
+      return new GeneralResponse(response, errors);
+    }
+
+    UserToOrganizationPermission loggedInUserPermission =
+        permissionFactory.createUserToOrganizationPermission(loggedInUser, organization);
+
+    if (!loggedInUserPermission.hasRole(ADMIN)) {
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, INSUFFICIENT_PRIVELAGES);
+    }
+
+    organization.set_everyone_can_create(action.equals("true"));
+    organizationRepository.save(organization);
+    return new GeneralResponse(response, OK);
+  }
+
   @Override
   protected Organization createGroup() {
     return new Organization();
@@ -254,11 +293,11 @@ public class OrganizationController extends GroupController<Organization, Organi
   @PostMapping(path = "/{id}/members/{member_id}/grant/project_create")
   @ResponseBody
   public BaseResponse grantCreateAccess(
-          @ApiParam("The id of the group to grant access for")
-          @PathVariable(value = "id") Long id,
-          @ApiParam("The id of the user to grant access to")
-          @PathVariable(value = "member_id") Long memberId,
-          HttpServletRequest request, HttpServletResponse response
+      @ApiParam("The id of the group to grant access for")
+      @PathVariable(value = "id") Long id,
+      @ApiParam("The id of the user to grant access to")
+      @PathVariable(value = "member_id") Long memberId,
+      HttpServletRequest request, HttpServletResponse response
   ) {
     return grantAccessForMember(id, memberId, CREATE_PROJECT_IN_ORGANIZATION, response, request);
   }
@@ -267,11 +306,11 @@ public class OrganizationController extends GroupController<Organization, Organi
   @PostMapping(path = "/{id}/members/{member_id}/revoke/project_create")
   @ResponseBody
   public BaseResponse revokeCreateAccess(
-          @ApiParam("The id of the group to grant access for")
-          @PathVariable(value = "id") Long id,
-          @ApiParam("The id of the user to grant access to")
-          @PathVariable(value = "member_id") Long memberId,
-          HttpServletRequest request, HttpServletResponse response
+      @ApiParam("The id of the group to grant access for")
+      @PathVariable(value = "id") Long id,
+      @ApiParam("The id of the user to grant access to")
+      @PathVariable(value = "member_id") Long memberId,
+      HttpServletRequest request, HttpServletResponse response
   ) {
     return revokeAccessForMember(id, memberId, CREATE_PROJECT_IN_ORGANIZATION, response, request);
   }
@@ -290,7 +329,7 @@ public class OrganizationController extends GroupController<Organization, Organi
   protected GroupInvitationRepository<OrganizationInvitation> getGroupInvitationRepository() {
     return organizationInvitationRepository;
   }
-  
+
   @Override
   protected UserToGroupPermission<Organization> getUserToGroupPermissionTyped(User user, Organization group) {
     return permissionFactory.createUserToOrganizationPermission(user, group);
