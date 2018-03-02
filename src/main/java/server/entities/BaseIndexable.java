@@ -4,7 +4,6 @@ import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.rest.RestStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import server.controllers.rest.group.GroupController;
 import server.utility.ElasticsearchClient;
 
 import java.io.IOException;
@@ -14,6 +13,7 @@ import java.io.IOException;
  */
 public abstract class BaseIndexable implements Indexable {
   private Logger logger = LoggerFactory.getLogger(BaseIndexable.class);
+
   public boolean tryToIndex() {
     ElasticsearchClient es_client = ElasticsearchClient.instance();
     if (es_client == null) return false;

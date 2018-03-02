@@ -1,7 +1,6 @@
 package server.controllers.rest;
 
 import static server.constants.Availability.NOT_AVAILABLE;
-import static server.constants.ImageSize.THUMBNAIL_DIM;
 import static server.constants.InvitationStatus.ACCEPTED;
 import static server.constants.InvitationStatus.DECLINED;
 import static server.constants.RegistrationStatus.REGISTERED;
@@ -21,7 +20,6 @@ import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import static server.controllers.rest.response.CannedResponse.NO_INTERVIEW_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_INVITATION_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
-
 import com.google.common.collect.Lists;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -43,7 +41,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
-import server.Application;
 import server.controllers.FuseSessionController;
 import server.controllers.MembersOfGroupController;
 import server.controllers.rest.response.BaseResponse;
@@ -98,18 +95,9 @@ import server.utility.RolesUtility;
 import server.utility.StreamUtil;
 import springfox.documentation.annotations.ApiIgnore;
 
-import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.websocket.server.PathParam;
-
-import java.awt.AlphaComposite;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -230,7 +218,7 @@ public class UserController {
       user.setRegistrationStatus(REGISTERED);
     }
 
-    if(user.getProfile() == null) {
+    if (user.getProfile() == null) {
       user.setProfile(new UserProfile());
     }
     User savedUser = userRepository.save(user);
@@ -804,7 +792,7 @@ public class UserController {
       return new TypedResponse<>(response, GeneralResponse.Status.DENIED, errors);
     }
     String[] fileType = fileToUpload.getContentType().split("/");
-    if(!fileType[0].equals("image")){
+    if (!fileType[0].equals("image")) {
       return new TypedResponse<>(response, BAD_DATA, errors);
     }
 

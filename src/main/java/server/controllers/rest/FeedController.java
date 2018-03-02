@@ -1,7 +1,6 @@
 package server.controllers.rest;
 
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
-
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
