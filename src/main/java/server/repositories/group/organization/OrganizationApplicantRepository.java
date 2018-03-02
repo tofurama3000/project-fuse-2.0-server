@@ -5,7 +5,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.organization.OrganizationApplicant;
-import server.entities.dto.group.project.ProjectApplicant;
 import server.repositories.group.GroupApplicantRepository;
 
 import java.util.List;
