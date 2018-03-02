@@ -173,36 +173,40 @@ public class FileController {
       return null;
     }
     String path = fileUploadPath + "/" + fileName;
-    Graphics2D g = null;
     BufferedImage resizedImage = null;
     if (fileType[0].equals("image")) {
       try {
         BufferedImage originalImage = ImageIO.read(new File(path));
+        Graphics2D graphics = null;
         if (type.equals("avatar")) {
           resizedImage = new BufferedImage(THUMBNAIL_DIM, THUMBNAIL_DIM, originalImage.getType());
-          g = resizedImage.createGraphics();
-          g.drawImage(originalImage, 0, 0, THUMBNAIL_DIM, THUMBNAIL_DIM, null);
+          graphics = resizedImage.createGraphics();
+          graphics.drawImage(originalImage, 0, 0, THUMBNAIL_DIM, THUMBNAIL_DIM, null);
         } else if (type.equals("background")) {
           resizedImage = new BufferedImage(BACKGROUND_WIDTH, BACKGROUND_HEIGHT, originalImage.getType());
-          g = resizedImage.createGraphics();
-          g.drawImage(originalImage, 0, 0, BACKGROUND_WIDTH, BACKGROUND_HEIGHT, null);
+          graphics = resizedImage.createGraphics();
+          graphics.drawImage(originalImage, 0, 0, BACKGROUND_WIDTH, BACKGROUND_HEIGHT, null);
         }
-        g.setComposite(AlphaComposite.Src);
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        assert graphics != null;
+
+        graphics.setComposite(AlphaComposite.Src);
+        graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         ImageIO.write(resizedImage, fileType[1], new File(path));
       } catch (IOException e) {
         logger.error("Cannot resize image");
+        return null;
       }
     }
-    Long size = (Long) new File(path).length();
+    Long size = new File(path).length();
     uploadFile.setHash(hash);
     uploadFile.setUpload_time(new Timestamp(timestamp));
     uploadFile.setFile_size(size);
     uploadFile.setFileName(fileToUpload.getOriginalFilename());
     uploadFile.setMime_type(fileToUpload.getContentType());
     uploadFile.setUser(currentUser);
+
     return fileRepository.save(uploadFile);
   }
 }
