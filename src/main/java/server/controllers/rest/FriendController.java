@@ -4,6 +4,7 @@ import static server.controllers.rest.response.BaseResponse.Status.OK;
 import static server.controllers.rest.response.CannedResponse.FRIEND_FOUND;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -55,6 +56,7 @@ public class FriendController {
   @Autowired
   private NotificationController notificationController;
 
+  @ApiOperation("Get all friends with paginate option")
   @GetMapping
   @ResponseBody
   public TypedResponse<List<Friend>> getFriends(@ApiParam(value = "The page of results to pull")
@@ -82,6 +84,7 @@ public class FriendController {
     return new TypedResponse<>(response, BaseResponse.Status.OK, null, returnList);
   }
 
+  @ApiOperation("Get all friends")
   @GetMapping("/all")
   @ResponseBody
   public TypedResponse<List<Friend>> getFriendIds(HttpServletRequest request,
@@ -96,6 +99,7 @@ public class FriendController {
     return new TypedResponse<>(response, BaseResponse.Status.OK, null, list);
   }
 
+  @ApiOperation("Get all friend applicants")
   @GetMapping(path = "/applicants")
   @ResponseBody
   public TypedResponse<List<Friend>> getFriendRequests(@ApiParam(value = "The page of results to pull")
@@ -148,7 +152,7 @@ public class FriendController {
     try {
       notificationController.sendNotification(friend.getSender(), friend.getReceiver().getName() + " has accepted your friend request", "Friend", "Friend:Accepted", friend.getId());
     } catch (Exception e) {
-      logger.error(e.getMessage());
+      logger.error(e.getMessage(), e);
     }
     return new GeneralResponse(response, OK);
   }
@@ -181,10 +185,14 @@ public class FriendController {
     return new GeneralResponse(response, OK);
   }
 
+  @ApiOperation(value = "Delete Friend")
   @CrossOrigin
   @PutMapping(path = "/delete/{id}")
   @ResponseBody
-  public BaseResponse deleteFriend(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
+  public BaseResponse deleteFriend(
+      @ApiParam("ID of user to delete")
+      @PathVariable(value = "id") Long id,
+      HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -237,7 +245,7 @@ public class FriendController {
           sender.getId()
       );
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error(e.getMessage(), e);
     }
     return new GeneralResponse(response, OK);
   }

@@ -12,6 +12,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
@@ -70,11 +71,17 @@ public class FileController {
   @Value("${fuse.fileUploadPath}")
   private String fileUploadPath;
 
+
+  private Logger logger = LoggerFactory.getLogger(FileController.class);
+
   @PostMapping(path = "/upload")
   @ResponseBody
   @ApiOperation(value = "Uploads a new file",
       notes = "Max file size is 5MB")
-  public TypedResponse<UploadFile> fileUpload(@RequestParam("file") MultipartFile fileToUpload,HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public TypedResponse<UploadFile> fileUpload(
+      @ApiParam(value = "file to upoload")
+      @RequestParam("file") MultipartFile fileToUpload,
+      HttpServletRequest request, HttpServletResponse response) throws Exception {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -100,7 +107,10 @@ public class FileController {
   @ResponseBody
   @ApiOperation(value = "Downloads a file",
       notes = "Will download as an attachment")
-  public ResponseEntity<Resource> fileDownload(@PathVariable(value = "id") Long id, HttpServletResponse response, HttpServletRequest request) throws Exception {
+  public ResponseEntity<Resource> fileDownload(
+      @ApiParam(value = "file id to download")
+      @PathVariable(value = "id") Long id, HttpServletResponse response,
+      HttpServletRequest request) throws Exception {
 
     UploadFile fileToFind = fileDownloadRepository.findOne(id);
     if (fileToFind == null) {
@@ -122,6 +132,7 @@ public class FileController {
         .contentType(MediaType.parseMediaType("application/octet-stream")).body(resource);
   }
 
+  @ApiOperation(value = "Get user's files")
   @GetMapping
   @ResponseBody
   public TypedResponse<Iterable<UploadFile>> getFiles(HttpServletRequest request, HttpServletResponse response) {
@@ -137,8 +148,6 @@ public class FileController {
 
   public UploadFile saveFile(MultipartFile fileToUpload, String type, List<String> errors, User currentUser) {
     UploadFile uploadFile = new UploadFile();
-
-    final Logger logger = LoggerFactory.getLogger(ElasticsearchReindexService.class);
     String hash = Hashing.sha256()
         .hashString(fileToUpload.getOriginalFilename(), StandardCharsets.UTF_8)
         .toString();

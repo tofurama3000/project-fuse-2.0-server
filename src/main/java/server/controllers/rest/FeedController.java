@@ -1,7 +1,9 @@
 package server.controllers.rest;
 
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
+
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -35,6 +37,7 @@ public class FeedController {
 
 
   @GetMapping
+  @ApiOperation(value = "The user feed page, which included notifications and reminders")
   @ResponseBody
   public TypedResponse<List<Notification>> getFeed(@ApiParam(value = "The page of results to pull")
                                                    @RequestParam(value = "page", required = false, defaultValue = "0") int page,
