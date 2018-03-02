@@ -135,7 +135,7 @@ public class FileController {
     return new TypedResponse<>(response, OK, null, fileRepository.getUploadedFiles(session.get().getUser()));
   }
 
-  public UploadFile saveFile(MultipartFile fileToUpload, String type, List<String> errors, User currentUser) throws IOException {
+  public UploadFile saveFile(MultipartFile fileToUpload, String type, List<String> errors, User currentUser) {
     UploadFile uploadFile = new UploadFile();
 
     final Logger logger = LoggerFactory.getLogger(ElasticsearchReindexService.class);
@@ -146,12 +146,24 @@ public class FileController {
     long timestamp = ((ts.getTime()) / 1000) * 1000;
     String fileName = hash + "." + timestamp + "." + currentUser.getId().toString();
     File fileToSave = new File(fileUploadPath, fileName);
-    if (!fileToSave.createNewFile()) {
-      errors.add("Unable to create file.");
+    try {
+      if (!fileToSave.createNewFile()) {
+        errors.add("Unable to create file.");
+        return null;
+      }
+    } catch (IOException e) {
+      logger.error(e.getMessage());
+      errors.add(e.getMessage());
       return null;
     }
     String[] fileType = fileToUpload.getContentType().split("/");
-    fileToUpload.transferTo(fileToSave);
+    try {
+      fileToUpload.transferTo(fileToSave);
+    } catch (IOException e) {
+      logger.error(e.getMessage());
+      errors.add(e.getMessage());
+      return null;
+    }
     String path = fileUploadPath+ "/" + fileName;
     Graphics2D g = null;
     BufferedImage resizedImage = null;
