@@ -667,11 +667,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       returnList.add(list.get(i));
     }
 
-    Stream<MemberRelationship> stream = returnList.stream().map(u -> {
-      UserToGroupPermission permission = getUserToGroupPermission(u, group);
-      MemberRelationship relationsihp = new MemberRelationship(u);
-      relationsihp.setPermissions(permission);
-      return relationsihp;
+    Stream<MemberRelationship> stream = returnList.stream().map(user -> {
+      UserToGroupPermission permission = getUserToGroupPermission(user, group);
+      MemberRelationship relationship = new MemberRelationship(user);
+      relationship.setPermissions(permission);
+      return relationship;
     });
 
     return new TypedResponse<>(response, BaseResponse.Status.OK, null, stream.collect(Collectors.toList()));
@@ -879,7 +879,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @ResponseBody
   @ApiOperation(value = "Uploads a new thumbnail",
       notes = "Max file size is 128KB")
-  public TypedResponse<UploadFile> uploadThumbnail(@PathVariable(value = "id") Long id, @RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public TypedResponse<UploadFile> uploadThumbnail(@PathVariable(value = "id") Long id, @RequestParam("file")
+      MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -891,11 +892,14 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     if (!fileType.equals("image")) {
       return new TypedResponse<>(response, ERROR, errors);
     }
-    UploadFile uploadFile = fileController.saveFile(fileToUpload, "avatar", errors, session.get().getUser());
-    if (uploadFile == null) {
-      errors.add("Invalid file, unable to save");
+    UploadFile uploadFile;
+    try {
+      uploadFile = fileController.saveFile(fileToUpload, "avatar", session.get().getUser());
+    } catch (Exception e) {
+      logger.error(e.getMessage(), e);
       return new TypedResponse<>(response, ERROR, errors);
     }
+
     T group = getGroupRepository().findOne(id);
     group.getProfile().setThumbnail_id(uploadFile.getId());
     getGroupApplicantRepository().save(group.getProfile());
@@ -906,7 +910,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @ResponseBody
   @ApiOperation(value = "Uploads a new background",
       notes = "Max file size is 128KB")
-  public TypedResponse<UploadFile> uploadBackground(@PathVariable(value = "id") Long id, @RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public TypedResponse<UploadFile> uploadBackground(@PathVariable(value = "id") Long id, @RequestParam("file")
+      MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -918,11 +923,14 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     if (!fileType.equals("image")) {
       return new TypedResponse<>(response, BAD_DATA, errors);
     }
-    UploadFile uploadFile = fileController.saveFile(fileToUpload, "background", errors, session.get().getUser());
-    if (uploadFile == null) {
-      errors.add("Invalid file, unable to save");
-      return new TypedResponse<>(response, BAD_DATA, errors);
+    UploadFile uploadFile;
+    try {
+      uploadFile = fileController.saveFile(fileToUpload, "background", session.get().getUser());
+    } catch (Exception e) {
+      logger.error(e.getMessage(), e);
+      return new TypedResponse<>(response, BAD_DATA, e.getMessage());
     }
+
     T group = getGroupRepository().findOne(id);
     group.getProfile().setBackground_id(uploadFile.getId());
     getGroupApplicantRepository().save(group.getProfile());
