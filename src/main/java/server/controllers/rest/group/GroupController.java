@@ -1180,32 +1180,32 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   }
 
 
-  private T setJoinPermissions(User user, T res) {
-    UserToGroupPermission<T> permission = getUserToGroupPermissionTyped(user, res);
-    genericSetJoinPermissions(user, res, permission);
-    return res;
+  private T setJoinPermissions(User user, T group) {
+    UserToGroupPermission<T> permission = getUserToGroupPermissionTyped(user, group);
+    genericSetJoinPermissions(user, group, permission);
+    return group;
   }
 
-  protected void genericSetJoinPermissions(User user, Group res, UserToGroupPermission permission){
-    res.setCanEdit(permission.canUpdate());
+  protected void genericSetJoinPermissions(User user, Group group, UserToGroupPermission permission){
+    group.setCanEdit(permission.canUpdate());
     switch (permission.canJoin()) {
       case OK:
-        res.setCanJoin(true);
-        res.setCanApply(false);
+        group.setCanJoin(true);
+        group.setCanApply(false);
         break;
       case HAS_INVITE:
-        res.setCanJoin(true);
-        res.setCanApply(false);
+        group.setCanJoin(true);
+        group.setCanApply(false);
         break;
       case NEED_INVITE:
-        res.setCanJoin(false);
-        res.setCanApply(true);
+        group.setCanJoin(false);
+        group.setCanApply(true);
         break;
       case ALREADY_JOINED:
       case ERROR:
       default:
-        res.setCanJoin(false);
-        res.setCanApply(false);
+        group.setCanJoin(false);
+        group.setCanApply(false);
     }
   }
 
