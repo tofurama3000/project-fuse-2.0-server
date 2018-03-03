@@ -241,7 +241,7 @@ public class FriendController {
     try {
       notificationController.sendNotification(receiver, sender.getName() + " wants to be your friend!",
           "Friend", "Friend:Request",
-          sender.getId()
+          friend.getId()
       );
     } catch (Exception e) {
       logger.error(e.getMessage(), e);

@@ -187,14 +187,10 @@ public class NotificationController<T extends Group> {
   }
 
   @CrossOrigin
-  @PutMapping(path = "/{id}/{action}")
+  @PutMapping(path = "/{id}/done")
   @ResponseBody
-  public GeneralResponse actionDone(@PathVariable(value = "id") Long id, @PathVariable(value = "action") String action, HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public GeneralResponse actionDone(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) throws Exception {
     List<String> errors = new ArrayList<>();
-    if (!Notification.isValidAction(action)) {
-      errors.add("Invalid action type '" + action + "'");
-      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
-    }
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
@@ -205,7 +201,27 @@ public class NotificationController<T extends Group> {
       errors.add(INSUFFICIENT_PRIVELAGES);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
-    notification.setAction_done(action.equals("done"));
+    notification.setAction_done(true);
+    notificationRepository.save(notification);
+    return new GeneralResponse(response, OK);
+  }
+
+  @CrossOrigin
+  @PutMapping(path = "/{id}/not-done")
+  @ResponseBody
+  public GeneralResponse actionNotDone(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) throws Exception {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
+    }
+    Notification notification = notificationRepository.findOne(id);
+    if (!Objects.equals(notification.getReceiver().getId(), session.get().getUser().getId())) {
+      errors.add(INSUFFICIENT_PRIVELAGES);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
+    }
+    notification.setAction_done(false);
     notificationRepository.save(notification);
     return new GeneralResponse(response, OK);
   }
