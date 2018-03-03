@@ -436,7 +436,7 @@ public class UserController {
     User user = userRepository.findOne(id);
 
     List<Organization> list = membersOfGroupController.getOrganizationsUserIsPartOf(user);
-    List<Organization> returnList = new ArrayList<Organization>();
+    List<Organization> returnList = new ArrayList<>();
     for (int i = page * pageSize; i < (page * pageSize) + pageSize; i++) {
       if (i >= list.size()) {
         break;
@@ -469,7 +469,7 @@ public class UserController {
     User user = userRepository.findOne(id);
 
     List<Project> list = membersOfGroupController.getProjectsUserIsPartOf(user);
-    List<Project> returnList = new ArrayList<Project>();
+    List<Project> returnList = new ArrayList<>();
     for (int i = page * pageSize; i < (page * pageSize) + pageSize; i++) {
       if (i >= list.size()) {
         break;
@@ -784,7 +784,8 @@ public class UserController {
   @ResponseBody
   @ApiOperation(value = "Uploads a new thumbnail",
       notes = "Max file size is 5MB")
-  public TypedResponse<UploadFile> uploadThumbnail(@RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public TypedResponse<UploadFile> uploadThumbnail(@RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request,
+                                                   HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -796,9 +797,12 @@ public class UserController {
       return new TypedResponse<>(response, BAD_DATA, errors);
     }
 
-    UploadFile uploadFile = fileController.saveFile(fileToUpload, "avatar", errors, session.get().getUser());
-    if (uploadFile == null) {
-      return new TypedResponse<>(response, ERROR, errors);
+    UploadFile uploadFile;
+    try {
+      uploadFile = fileController.saveFile(fileToUpload, "avatar", session.get().getUser());
+    } catch (Exception e) {
+      logger.error(e.getMessage(), e);
+      return new TypedResponse<>(response, ERROR, e.getMessage());
     }
 
     User user = session.get().getUser();
@@ -818,7 +822,8 @@ public class UserController {
   @ResponseBody
   @ApiOperation(value = "Uploads a new background",
       notes = "Max file size is 5MB")
-  public TypedResponse<UploadFile> uploadBackground(@RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public TypedResponse<UploadFile> uploadBackground(@RequestParam("file") MultipartFile fileToUpload,
+                                                    HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -831,8 +836,11 @@ public class UserController {
       return new TypedResponse<>(response, BAD_DATA, errors);
     }
 
-    UploadFile uploadFile = fileController.saveFile(fileToUpload, "background", errors, session.get().getUser());
-    if (uploadFile == null) {
+    UploadFile uploadFile;
+    try {
+      uploadFile = fileController.saveFile(fileToUpload, "background", session.get().getUser());
+    } catch (Exception e) {
+      logger.error(e.getMessage(), e);
       return new TypedResponse<>(response, ERROR, errors);
     }
 
