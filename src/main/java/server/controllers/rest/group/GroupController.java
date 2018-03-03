@@ -1182,11 +1182,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
 
   private T setJoinPermissions(User user, T res) {
     UserToGroupPermission<T> permission = getUserToGroupPermissionTyped(user, res);
-    mapJoinPermissions(user, res, permission);
+    genericSetJoinPermissions(user, res, permission);
     return res;
   }
 
-  protected void mapJoinPermissions(User user, Group res, UserToGroupPermission permission){
+  protected void genericSetJoinPermissions(User user, Group res, UserToGroupPermission permission){
     res.setCanEdit(permission.canUpdate());
     switch (permission.canJoin()) {
       case OK:

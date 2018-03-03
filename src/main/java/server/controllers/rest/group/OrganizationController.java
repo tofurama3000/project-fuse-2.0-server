@@ -54,7 +54,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 @Controller
 @RequestMapping(value = "/organizations")
@@ -314,7 +313,7 @@ public class OrganizationController extends GroupController<Organization, Organi
 
   private Project setJoinPermissionsForProject(User user, Project res) {
     UserToGroupPermission permission = permissionFactory.createUserToProjectPermission(user, res);
-    mapJoinPermissions(user, res, permission);
+    genericSetJoinPermissions(user, res, permission);
     return res;
   }
 }
