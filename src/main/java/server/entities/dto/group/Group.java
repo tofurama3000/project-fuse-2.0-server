@@ -41,6 +41,12 @@ public abstract class Group<Profile extends GroupProfile> extends BaseIndexable 
   @Transient
   private Boolean canEdit;
 
+  @Transient
+  private Boolean canJoin;
+
+  @Transient
+  private Boolean canApply;
+
   public Restriction getRestriction() {
     if (restrictionString != null && restrictionString.equals("INVITE")) {
       return INVITE;

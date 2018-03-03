@@ -83,6 +83,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 @SuppressWarnings("unused")
 public abstract class GroupController<T extends Group, R extends GroupMember<T>, I extends GroupInvitation<T>> {
@@ -306,11 +307,6 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
 
     T group = getGroupRepository().findOne(id);
     User user = session.get().getUser();
-
-    PossibleError possibleError = validateGroup(user, group);
-    if (possibleError.hasError()) {
-      return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
-    }
 
     switch (getUserToGroupPermission(user, group).canJoin()) {
       case OK:
@@ -680,8 +676,21 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @GetMapping
   @ResponseBody
   @ApiOperation("Gets all of the groups of this type")
-  protected TypedResponse<Iterable<T>> getAll(HttpServletResponse response) {
-    return new TypedResponse<>(response, OK, null, getGroupRepository().findAll());
+  protected TypedResponse<Iterable<T>> getAll(HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new TypedResponse<>(response, DENIED, errors);
+    }
+    User user = session.get().getUser();
+
+    return new TypedResponse<>(response, OK, null,
+            StreamSupport.stream(getGroupRepository().findAll().spliterator(), false)
+              .map(item -> this.setJoinPermissions(user, item))
+              .collect(Collectors.toList())
+    );
   }
 
   @GetMapping(path = "/{id}")
@@ -701,9 +710,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     T res = getGroupRepository().findOne(id);
     if (res != null) {
       User user = session.get().getUser();
-      T groupToFindRestriction = getGroupRepository().findOne(id);
-      UserToGroupPermission permission = getUserToGroupPermission(user, groupToFindRestriction);
-      res.setCanEdit(permission.canUpdate());
+      res = setJoinPermissions(user, res);
 
       return new TypedResponse<>(response, OK, null, res);
     }
@@ -1178,6 +1185,36 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     roles.forEach(integer -> removeRelationship(user, group, integer));
 
     return new GeneralResponse(response, OK);
+  }
+
+
+  private T setJoinPermissions(User user, T group) {
+    UserToGroupPermission<T> permission = getUserToGroupPermissionTyped(user, group);
+    genericSetJoinPermissions(user, group, permission);
+    return group;
+  }
+
+  protected void genericSetJoinPermissions(User user, Group group, UserToGroupPermission permission){
+    group.setCanEdit(permission.canUpdate());
+    switch (permission.canJoin()) {
+      case OK:
+        group.setCanJoin(true);
+        group.setCanApply(false);
+        break;
+      case HAS_INVITE:
+        group.setCanJoin(true);
+        group.setCanApply(false);
+        break;
+      case NEED_INVITE:
+        group.setCanJoin(false);
+        group.setCanApply(true);
+        break;
+      case ALREADY_JOINED:
+      case ERROR:
+      default:
+        group.setCanJoin(false);
+        group.setCanApply(false);
+    }
   }
 
   protected abstract GroupApplicant<T> getApplication();
