@@ -4,7 +4,6 @@ import static server.controllers.rest.response.BaseResponse.Status.OK;
 import static server.controllers.rest.response.CannedResponse.FRIEND_FOUND;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
-
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -242,7 +241,7 @@ public class FriendController {
     try {
       notificationController.sendNotification(receiver, sender.getName() + " wants to be your friend!",
           "Friend", "Friend:Request",
-          sender.getId()
+          friend.getId()
       );
     } catch (Exception e) {
       logger.error(e.getMessage(), e);

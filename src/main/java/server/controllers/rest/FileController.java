@@ -1,18 +1,14 @@
 package server.controllers.rest;
 
-import static server.constants.ImageSize.BACKGROUND_HEIGHT;
-import static server.constants.ImageSize.BACKGROUND_WIDTH;
-import static server.constants.ImageSize.THUMBNAIL_DIM;
 import static server.controllers.rest.response.BaseResponse.Status.BAD_DATA;
-import static server.controllers.rest.response.BaseResponse.Status.ERROR;
 import static server.controllers.rest.response.BaseResponse.Status.OK;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import com.google.common.hash.Hashing;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
@@ -37,15 +33,13 @@ import server.entities.dto.UploadFile;
 import server.entities.dto.user.User;
 import server.repositories.FileRepository;
 import server.repositories.group.FileDownloadRepository;
-import server.utility.ElasticsearchReindexService;
+import server.utility.ImageResizer;
 
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -79,9 +73,9 @@ public class FileController {
   @ApiOperation(value = "Uploads a new file",
       notes = "Max file size is 5MB")
   public TypedResponse<UploadFile> fileUpload(
-      @ApiParam(value = "file to upoload")
+      @ApiParam(value = "file to upload")
       @RequestParam("file") MultipartFile fileToUpload,
-      HttpServletRequest request, HttpServletResponse response) throws Exception {
+      HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -92,15 +86,17 @@ public class FileController {
     User currentUser = session.get().getUser();
     if (fileToUpload != null) {
       if (fileToUpload.getSize() > 0 && fileToUpload.getName().equals("file")) {
-        UploadFile savedResult = saveFile(fileToUpload,"" ,errors, currentUser);
-        if (savedResult == null) {
-          return new TypedResponse<>(response, ERROR, errors);
+        UploadFile savedResult = null;
+        try {
+          savedResult = saveFile(fileToUpload, "", currentUser);
+        } catch (Exception e) {
+          logger.error(e.getMessage(), e);
+          return new TypedResponse<>(response, BaseResponse.Status.ERROR, e.getMessage());
         }
         return new TypedResponse<>(response, OK, null, savedResult);
       }
     }
-    errors.add("Invalid file, unable to save");
-    return new TypedResponse<>(response, BAD_DATA, errors);
+    return new TypedResponse<>(response, BAD_DATA, "Invalid file, unable to save");
   }
 
   @GetMapping(path = "/download/{id}")
@@ -146,7 +142,7 @@ public class FileController {
     return new TypedResponse<>(response, OK, null, fileRepository.getUploadedFiles(session.get().getUser()));
   }
 
-  public UploadFile saveFile(MultipartFile fileToUpload, String type, List<String> errors, User currentUser) throws IOException {
+  public UploadFile saveFile(MultipartFile fileToUpload, String type, User currentUser) throws Exception {
     UploadFile uploadFile = new UploadFile();
     String hash = Hashing.sha256()
         .hashString(fileToUpload.getOriginalFilename(), StandardCharsets.UTF_8)
@@ -156,43 +152,39 @@ public class FileController {
     String fileName = hash + "." + timestamp + "." + currentUser.getId().toString();
     File fileToSave = new File(fileUploadPath, fileName);
     if (!fileToSave.createNewFile()) {
-      errors.add("Unable to create file.");
-      return null;
+      // should delete image and retry
+      throw new Exception("Could not save image");
     }
     String[] fileType = fileToUpload.getContentType().split("/");
     fileToUpload.transferTo(fileToSave);
-    String path = fileUploadPath+ "/" + fileName;
-    Graphics2D g = null;
-    BufferedImage resizedImage = null;
-    if(fileType[0].equals("image")) {
-        try {
-            BufferedImage originalImage = ImageIO.read(new File(path));
-            if(type.equals("avatar")) {
-                resizedImage = new BufferedImage(THUMBNAIL_DIM, THUMBNAIL_DIM, originalImage.getType());
-                g = resizedImage.createGraphics();
-                g.drawImage(originalImage, 0, 0, THUMBNAIL_DIM, THUMBNAIL_DIM, null);
-            }
-            else if(type.equals("background")){
-                resizedImage = new BufferedImage(BACKGROUND_WIDTH, BACKGROUND_HEIGHT, originalImage.getType());
-                g = resizedImage.createGraphics();
-                g.drawImage(originalImage, 0, 0, BACKGROUND_WIDTH, BACKGROUND_HEIGHT, null);
-            }
-            g.setComposite(AlphaComposite.Src);
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-            g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            ImageIO.write(resizedImage, fileType[1], new File(path));
-        } catch (IOException e) {
-           logger.error("Cannot resize image");
-        }
+
+    String path = fileUploadPath + "/" + fileName;
+
+    BufferedImage originalImage = ImageIO.read(new File(path));
+
+    BufferedImage resizedImage;
+    if (fileType[0].equals("image")) {
+      switch (type) {
+        case "avatar":
+          resizedImage = ImageResizer.resizeToAvatarImage(originalImage);
+          break;
+        case "background":
+          resizedImage = ImageResizer.resizeToBackgroundImage(originalImage);
+          break;
+        default:
+          resizedImage = originalImage;
+      }
+      ImageIO.write(resizedImage, fileType[1], new File(path));
     }
-    Long size = (Long)new File(path).length();
+
+    Long size = new File(path).length();
     uploadFile.setHash(hash);
     uploadFile.setUpload_time(new Timestamp(timestamp));
     uploadFile.setFile_size(size);
     uploadFile.setFileName(fileToUpload.getOriginalFilename());
     uploadFile.setMime_type(fileToUpload.getContentType());
     uploadFile.setUser(currentUser);
+
     return fileRepository.save(uploadFile);
   }
 }

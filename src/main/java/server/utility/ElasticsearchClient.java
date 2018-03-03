@@ -15,7 +15,6 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import server.Application;
 import server.entities.Indexable;
 import server.entities.dto.PagedResults;
 
@@ -32,6 +31,7 @@ import java.util.stream.Collectors;
 public class ElasticsearchClient {
   private static String use_elasticsearch = "true";
   private static Logger logger = LoggerFactory.getLogger(ElasticsearchClient.class);
+
   private ElasticsearchClient() throws UnknownHostException, InvalidObjectException {
     // Spring is not initialized when this is ran, so we need to get properties ourselves
     String rootPath = Thread.currentThread().getContextClassLoader().getResource("").getPath();

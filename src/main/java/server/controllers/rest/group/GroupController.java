@@ -2,7 +2,11 @@ package server.controllers.rest.group;
 
 import static server.constants.Availability.AVAILABLE;
 import static server.constants.InvitationStatus.PENDING;
-import static server.constants.RoleValue.*;
+import static server.constants.RoleValue.ADMIN;
+import static server.constants.RoleValue.DEFAULT_USER;
+import static server.constants.RoleValue.INVITED_TO_INTERVIEW;
+import static server.constants.RoleValue.INVITED_TO_JOIN;
+import static server.constants.RoleValue.OWNER;
 import static server.controllers.rest.response.BaseResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.BaseResponse.Status.DENIED;
 import static server.controllers.rest.response.BaseResponse.Status.ERROR;
@@ -79,6 +83,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 @SuppressWarnings("unused")
 public abstract class GroupController<T extends Group, R extends GroupMember<T>, I extends GroupInvitation<T>> {
@@ -188,7 +193,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     return new GeneralResponse(response);
   }
 
-  protected GeneralResponse generalApply(Long id, HttpServletRequest request, HttpServletResponse response) {
+  private GeneralResponse generalApply(Long id, HttpServletRequest request, HttpServletResponse response) {
 
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -206,9 +211,9 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
         errors.add(ALREADY_JOINED_MSG);
         return new GeneralResponse(response, ERROR, errors);
     }
-    List<GroupApplicant> list = getGroupApplicantRepository().getApplicantsBySender(session.get().getUser());
-    for (GroupApplicant a : list) {
-      if (a.getGroup().getId() == id) {
+    List<GroupApplicant> applicants = getGroupApplicantRepository().getApplicantsBySender(session.get().getUser());
+    for (GroupApplicant applicant : applicants) {
+      if (applicant.getGroup().getId().equals(id)) {
         errors.add("Already applied");
         return new GeneralResponse(response, ERROR, errors);
       }
@@ -302,7 +307,6 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
 
     T group = getGroupRepository().findOne(id);
     User user = session.get().getUser();
-
 
     switch (getUserToGroupPermission(user, group).canJoin()) {
       case OK:
@@ -602,11 +606,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @PostMapping(path = "/{id}/members/{member_id}/kick")
   @ResponseBody
   public BaseResponse kickMemberAccess(
-          @ApiParam("The id of the group to grant access for")
-          @PathVariable(value = "id") Long id,
-          @ApiParam("The id of the user to grant access to")
-          @PathVariable(value = "member_id") Long memberId,
-          HttpServletRequest request, HttpServletResponse response
+      @ApiParam("The id of the group to grant access for")
+      @PathVariable(value = "id") Long id,
+      @ApiParam("The id of the user to grant access to")
+      @PathVariable(value = "member_id") Long memberId,
+      HttpServletRequest request, HttpServletResponse response
   ) {
     return kickMember(id, memberId, ADMIN, response, request);
   }
@@ -628,11 +632,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @PostMapping(path = "/{id}/members/{member_id}/revoke/admin")
   @ResponseBody
   public BaseResponse revokeAdminAccess(
-          @ApiParam("The id of the group to grant access for")
-          @PathVariable(value = "id") Long id,
-          @ApiParam("The id of the user to grant access to")
-          @PathVariable(value = "member_id") Long memberId,
-          HttpServletRequest request, HttpServletResponse response
+      @ApiParam("The id of the group to grant access for")
+      @PathVariable(value = "id") Long id,
+      @ApiParam("The id of the user to grant access to")
+      @PathVariable(value = "member_id") Long memberId,
+      HttpServletRequest request, HttpServletResponse response
   ) {
     return revokeAccessForMember(id, memberId, ADMIN, response, request);
   }
@@ -659,11 +663,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       returnList.add(list.get(i));
     }
 
-    Stream<MemberRelationship> stream = returnList.stream().map(u -> {
-      UserToGroupPermission permission = getUserToGroupPermission(u, group);
-      MemberRelationship relationsihp = new MemberRelationship(u);
-      relationsihp.setPermissions(permission);
-      return relationsihp;
+    Stream<MemberRelationship> stream = returnList.stream().map(user -> {
+      UserToGroupPermission permission = getUserToGroupPermission(user, group);
+      MemberRelationship relationship = new MemberRelationship(user);
+      relationship.setPermissions(permission);
+      return relationship;
     });
 
     return new TypedResponse<>(response, BaseResponse.Status.OK, null, stream.collect(Collectors.toList()));
@@ -672,8 +676,21 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @GetMapping
   @ResponseBody
   @ApiOperation("Gets all of the groups of this type")
-  protected TypedResponse<Iterable<T>> getAll(HttpServletResponse response) {
-    return new TypedResponse<>(response, OK, null, getGroupRepository().findAll());
+  protected TypedResponse<Iterable<T>> getAll(HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new TypedResponse<>(response, DENIED, errors);
+    }
+    User user = session.get().getUser();
+
+    return new TypedResponse<>(response, OK, null,
+            StreamSupport.stream(getGroupRepository().findAll().spliterator(), false)
+              .map(item -> this.setJoinPermissions(user, item))
+              .collect(Collectors.toList())
+    );
   }
 
   @GetMapping(path = "/{id}")
@@ -693,9 +710,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     T res = getGroupRepository().findOne(id);
     if (res != null) {
       User user = session.get().getUser();
-      T groupToFindRestriction = getGroupRepository().findOne(id);
-      UserToGroupPermission permission = getUserToGroupPermission(user, groupToFindRestriction);
-      res.setCanEdit(permission.canUpdate());
+      res = setJoinPermissions(user, res);
 
       return new TypedResponse<>(response, OK, null, res);
     }
@@ -871,7 +886,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @ResponseBody
   @ApiOperation(value = "Uploads a new thumbnail",
       notes = "Max file size is 128KB")
-  public TypedResponse<UploadFile> uploadThumbnail(@PathVariable(value = "id") Long id, @RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public TypedResponse<UploadFile> uploadThumbnail(@PathVariable(value = "id") Long id, @RequestParam("file")
+      MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -883,12 +899,14 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     if (!fileType.equals("image")) {
       return new TypedResponse<>(response, ERROR, errors);
     }
-    UploadFile uploadFile = fileController.saveFile(fileToUpload, "avatar", errors, session.get().getUser());
-    if(uploadFile == null)
-    {
-      errors.add("Invalid file, unable to save");
+    UploadFile uploadFile;
+    try {
+      uploadFile = fileController.saveFile(fileToUpload, "avatar", session.get().getUser());
+    } catch (Exception e) {
+      logger.error(e.getMessage(), e);
       return new TypedResponse<>(response, ERROR, errors);
     }
+
     T group = getGroupRepository().findOne(id);
     group.getProfile().setThumbnail_id(uploadFile.getId());
     getGroupApplicantRepository().save(group.getProfile());
@@ -899,7 +917,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @ResponseBody
   @ApiOperation(value = "Uploads a new background",
       notes = "Max file size is 128KB")
-  public TypedResponse<UploadFile> uploadBackground(@PathVariable(value = "id") Long id, @RequestParam("file") MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) throws Exception {
+  public TypedResponse<UploadFile> uploadBackground(@PathVariable(value = "id") Long id, @RequestParam("file")
+      MultipartFile fileToUpload, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -911,12 +930,14 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     if (!fileType.equals("image")) {
       return new TypedResponse<>(response, BAD_DATA, errors);
     }
-    UploadFile uploadFile = fileController.saveFile(fileToUpload, "background", errors, session.get().getUser());
-    if(uploadFile == null)
-    {
-      errors.add("Invalid file, unable to save");
-      return new TypedResponse<>(response, BAD_DATA, errors);
+    UploadFile uploadFile;
+    try {
+      uploadFile = fileController.saveFile(fileToUpload, "background", session.get().getUser());
+    } catch (Exception e) {
+      logger.error(e.getMessage(), e);
+      return new TypedResponse<>(response, BAD_DATA, e.getMessage());
     }
+
     T group = getGroupRepository().findOne(id);
     group.getProfile().setBackground_id(uploadFile.getId());
     getGroupApplicantRepository().save(group.getProfile());
@@ -950,18 +971,18 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new TypedResponse<>(response, GeneralResponse.Status.DENIED, errors);
     }
     T group = getGroupRepository().findOne(id);
     long f_id = group.getProfile().getThumbnail_id();
     if (f_id == 0) {
       errors.add(FILE_NOT_FOUND);
-      return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new TypedResponse<>(response, GeneralResponse.Status.DENIED, errors);
     }
-    return new TypedResponse(response, OK, null, f_id);
+    return new TypedResponse<>(response, OK, null, f_id);
   }
 
-  protected boolean validFieldsForCreate(T entity) {
+  private boolean validFieldsForCreate(T entity) {
     return entity.getName() != null;
   }
 
@@ -1048,7 +1069,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     User curUser = session.get().getUser();
     UserToGroupPermission curPermissions = getUserToGroupPermission(curUser, group);
 
-    if(!curPermissions.canUpdate()) {
+    if (!curPermissions.canUpdate()) {
       errors.add("Permission denied");
       return new TypedResponse<>(response, DENIED, errors);
     }
@@ -1059,12 +1080,12 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     }
 
     Optional<User> userOptional = new ArrayList<>(getMembersOf(group))
-            .stream()
-            .filter(u -> u.getId().equals(memberId))
-            .limit(1)
-            .reduce((a, u) -> u);
+        .stream()
+        .filter(u -> u.getId().equals(memberId))
+        .limit(1)
+        .reduce((a, u) -> u);
 
-    if(!userOptional.isPresent()) {
+    if (!userOptional.isPresent()) {
       errors.add("User is not part of the group!");
       return new GeneralResponse(response, BAD_DATA, errors);
     }
@@ -1092,7 +1113,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     User curUser = session.get().getUser();
     UserToGroupPermission curPermissions = getUserToGroupPermission(curUser, group);
 
-    if(!curPermissions.canUpdate()) {
+    if (!curPermissions.canUpdate()) {
       errors.add("Permission denied");
       return new TypedResponse<>(response, DENIED, errors);
     }
@@ -1103,12 +1124,12 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     }
 
     Optional<User> userOptional = new ArrayList<>(getMembersOf(group))
-            .stream()
-            .filter(u -> u.getId().equals(memberId))
-            .limit(1)
-            .reduce((a, u) -> u);
+        .stream()
+        .filter(u -> u.getId().equals(memberId))
+        .limit(1)
+        .reduce((a, u) -> u);
 
-    if(!userOptional.isPresent()) {
+    if (!userOptional.isPresent()) {
       errors.add("User is not part of the group!");
       return new GeneralResponse(response, BAD_DATA, errors);
     }
@@ -1136,7 +1157,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     User curUser = session.get().getUser();
     UserToGroupPermission curPermissions = getUserToGroupPermission(curUser, group);
 
-    if(!curPermissions.canUpdate()) {
+    if (!curPermissions.canUpdate()) {
       errors.add("Permission denied");
       return new TypedResponse<>(response, DENIED, errors);
     }
@@ -1147,12 +1168,12 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     }
 
     Optional<User> userOptional = new ArrayList<>(getMembersOf(group))
-            .stream()
-            .filter(u -> u.getId().equals(memberId))
-            .limit(1)
-            .reduce((a, u) -> u);
+        .stream()
+        .filter(u -> u.getId().equals(memberId))
+        .limit(1)
+        .reduce((a, u) -> u);
 
-    if(!userOptional.isPresent()) {
+    if (!userOptional.isPresent()) {
       errors.add("User is not part of the group!");
       return new GeneralResponse(response, BAD_DATA, errors);
     }
@@ -1164,6 +1185,36 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     roles.forEach(integer -> removeRelationship(user, group, integer));
 
     return new GeneralResponse(response, OK);
+  }
+
+
+  private T setJoinPermissions(User user, T group) {
+    UserToGroupPermission<T> permission = getUserToGroupPermissionTyped(user, group);
+    genericSetJoinPermissions(user, group, permission);
+    return group;
+  }
+
+  protected void genericSetJoinPermissions(User user, Group group, UserToGroupPermission permission){
+    group.setCanEdit(permission.canUpdate());
+    switch (permission.canJoin()) {
+      case OK:
+        group.setCanJoin(true);
+        group.setCanApply(false);
+        break;
+      case HAS_INVITE:
+        group.setCanJoin(true);
+        group.setCanApply(false);
+        break;
+      case NEED_INVITE:
+        group.setCanJoin(false);
+        group.setCanApply(true);
+        break;
+      case ALREADY_JOINED:
+      case ERROR:
+      default:
+        group.setCanJoin(false);
+        group.setCanApply(false);
+    }
   }
 
   protected abstract GroupApplicant<T> getApplication();

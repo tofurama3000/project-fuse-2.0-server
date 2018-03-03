@@ -2,7 +2,6 @@ package server.entities.dto.group;
 
 import static server.entities.Restriction.INVITE;
 import static server.entities.Restriction.NONE;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import server.entities.BaseIndexable;
@@ -41,6 +40,12 @@ public abstract class Group<Profile extends GroupProfile> extends BaseIndexable 
 
   @Transient
   private Boolean canEdit;
+
+  @Transient
+  private Boolean canJoin;
+
+  @Transient
+  private Boolean canApply;
 
   public Restriction getRestriction() {
     if (restrictionString != null && restrictionString.equals("INVITE")) {

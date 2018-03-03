@@ -15,5 +15,5 @@ public interface ProjectApplicantRepository extends GroupApplicantRepository<Pro
   List<ProjectApplicant> getApplicants(@Param("project") Project project, @Param("status") String status);
 
   @Query("FROM ProjectApplicant a where a.status = :status ")
-  List<ProjectApplicant> getApplicantsByStatus( @Param("status") String status);
+  List<ProjectApplicant> getApplicantsByStatus(@Param("status") String status);
 }

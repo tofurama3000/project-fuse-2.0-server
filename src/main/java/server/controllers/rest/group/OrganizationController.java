@@ -50,6 +50,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping(value = "/organizations")
@@ -147,7 +148,11 @@ public class OrganizationController extends GroupController<Organization, Organi
       return new TypedResponse<>(response, errors);
     }
 
-    return new TypedResponse<>(response, OK, errors, organizationRepository.getAllProjectsByOrganization(organization));
+    return new TypedResponse<>(response, OK, errors,
+            organizationRepository.getAllProjectsByOrganization(organization).stream()
+              .map(item -> setJoinPermissionsForProject(loggedInUser, item))
+              .collect(Collectors.toList())
+    );
   }
 
   @PostMapping("/{id}/grantProjectCreatePermission/{user_id}")
@@ -345,4 +350,9 @@ public class OrganizationController extends GroupController<Organization, Organi
     organizationInvitationRepository.save(invitation);
   }
 
+  private Project setJoinPermissionsForProject(User user, Project res) {
+    UserToGroupPermission permission = permissionFactory.createUserToProjectPermission(user, res);
+    genericSetJoinPermissions(user, res, permission);
+    return res;
+  }
 }
