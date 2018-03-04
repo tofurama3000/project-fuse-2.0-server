@@ -10,6 +10,7 @@ import server.entities.dto.user.User;
 import server.repositories.group.organization.OrganizationMemberRepository;
 
 import java.util.HashSet;
+import java.util.Set;
 
 public class UserToOrganizationPermission extends UserToGroupPermission<Organization> {
 
@@ -39,7 +40,7 @@ public class UserToOrganizationPermission extends UserToGroupPermission<Organiza
   }
 
   public boolean canCreateProjectsInOrganization() {
-    HashSet<Integer> roles = new HashSet<>(repository.getRoles(group, user));
+    Set<Integer> roles = new HashSet<>(repository.getRoles(group, user));
     return roles.contains(CREATE_PROJECT_IN_ORGANIZATION) || roles.contains(ADMIN) || roles.contains(OWNER);
   }
 }
