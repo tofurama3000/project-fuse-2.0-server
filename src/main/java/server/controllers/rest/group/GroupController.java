@@ -21,6 +21,7 @@ import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS_FOR
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import static server.controllers.rest.response.CannedResponse.NO_GROUP_FOUND;
 import static server.controllers.rest.response.CannedResponse.SERVER_ERROR;
+import static server.utility.JoinPermissionsUtil.genericSetJoinPermissions;
 import static server.utility.PagingUtil.getPagedResults;
 import static server.utility.RolesUtility.getRoleFromInvitationType;
 import io.swagger.annotations.ApiOperation;
@@ -66,6 +67,7 @@ import server.repositories.group.GroupMemberRepository;
 import server.repositories.group.GroupProfileRepository;
 import server.repositories.group.GroupRepository;
 import server.repositories.group.InterviewRepository;
+import server.utility.InterviewUtil;
 import server.utility.UserFindHelper;
 import springfox.documentation.annotations.ApiIgnore;
 
@@ -1021,33 +1023,13 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   private boolean isValidInterviewSlots(List<Interview> interviews, User user, long groupId) {
     LocalDateTime currentDateTime = ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime();
 
-    if (interviews.size() <= 0) {
-      return false;
-    }
-
     T group = getGroupRepository().findOne(groupId);
     if (group == null) {
       return false;
     }
 
     UserToGroupPermission permission = getUserToGroupPermission(user, group);
-    if (!permission.canUpdate()) {
-      return false;
-    }
-
-    for (Interview interview : interviews) {
-      if (interview.getStartDateTime() == null || interview.getEndDateTime() == null) {
-        return false;
-      }
-      if (interview.getStartDateTime().isAfter(interview.getEndDateTime())) {
-        return false;
-      }
-      if (interview.getStartDateTime().isBefore(currentDateTime)) {
-        return false;
-      }
-    }
-
-    return true;
+    return InterviewUtil.isValidInterviewSlots(interviews, currentDateTime, permission);
   }
 
   protected BaseResponse grantAccessForMember(Long id, Long memberId, int access, HttpServletResponse response, HttpServletRequest request) {
@@ -1181,34 +1163,10 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     return new GeneralResponse(response, OK);
   }
 
-
   private T setJoinPermissions(User user, T group) {
     UserToGroupPermission<T> permission = getUserToGroupPermissionTyped(user, group);
     genericSetJoinPermissions(user, group, permission);
     return group;
-  }
-
-  protected void genericSetJoinPermissions(User user, Group group, UserToGroupPermission permission) {
-    group.setCanEdit(permission.canUpdate());
-    switch (permission.canJoin()) {
-      case OK:
-        group.setCanJoin(true);
-        group.setCanApply(false);
-        break;
-      case HAS_INVITE:
-        group.setCanJoin(true);
-        group.setCanApply(false);
-        break;
-      case NEED_INVITE:
-        group.setCanJoin(false);
-        group.setCanApply(true);
-        break;
-      case ALREADY_JOINED:
-      case ERROR:
-      default:
-        group.setCanJoin(false);
-        group.setCanApply(false);
-    }
   }
 
   protected abstract GroupApplicant<T> getApplication();
