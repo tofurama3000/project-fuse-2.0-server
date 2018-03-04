@@ -20,6 +20,7 @@ import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import static server.controllers.rest.response.CannedResponse.NO_INTERVIEW_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_INVITATION_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
+
 import com.google.common.collect.Lists;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

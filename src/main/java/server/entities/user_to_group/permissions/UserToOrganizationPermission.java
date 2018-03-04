@@ -6,9 +6,11 @@ import static server.constants.RoleValue.OWNER;
 
 import lombok.Setter;
 import org.hibernate.Session;
+import org.springframework.beans.factory.annotation.Autowired;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.user.User;
 import server.repositories.group.organization.OrganizationMemberRepository;
+import server.repositories.group.organization.OrganizationRepository;
 
 import java.util.HashSet;
 
@@ -16,6 +18,9 @@ public class UserToOrganizationPermission extends UserToGroupPermission<Organiza
 
   @Setter
   private OrganizationMemberRepository repository;
+
+  @Autowired
+  private OrganizationRepository organizationRepository;
 
   @Setter
   private Session session;
@@ -41,6 +46,7 @@ public class UserToOrganizationPermission extends UserToGroupPermission<Organiza
 
   public boolean canCreateProjectsInOrganization() {
     HashSet<Integer> roles = new HashSet<>(repository.getRoles(group, user));
+
     if (group.get_everyone_can_create())
       return true;
     return roles.contains(CREATE_PROJECT_IN_ORGANIZATION) || roles.contains(ADMIN) || roles.contains(OWNER);

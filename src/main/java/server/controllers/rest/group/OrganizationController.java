@@ -149,9 +149,9 @@ public class OrganizationController extends GroupController<Organization, Organi
     }
 
     return new TypedResponse<>(response, OK, errors,
-            organizationRepository.getAllProjectsByOrganization(organization).stream()
-              .map(item -> setJoinPermissionsForProject(loggedInUser, item))
-              .collect(Collectors.toList())
+        organizationRepository.getAllProjectsByOrganization(organization).stream()
+            .map(item -> setJoinPermissionsForProject(loggedInUser, item))
+            .collect(Collectors.toList())
     );
   }
 
@@ -206,10 +206,10 @@ public class OrganizationController extends GroupController<Organization, Organi
     return new GeneralResponse(response, OK);
   }
 
+  @ApiOperation("Grants everyone to be able to create projects with in organization")
   @CrossOrigin
   @PutMapping("/{id}/grantEveryoneCreatePermission/{action}")
   @ResponseBody
-  @ApiOperation("Grants everyone to be able to create projects with in organization")
   public BaseResponse grantEveryonePermissionToCreateProjectsInOrganization(@ApiParam("ID of the organization")
                                                                             @PathVariable(value = "id") Long id,
                                                                             @ApiParam("Action: can be true or false")

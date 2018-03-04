@@ -22,6 +22,7 @@ import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import static server.controllers.rest.response.CannedResponse.NO_GROUP_FOUND;
 import static server.controllers.rest.response.CannedResponse.SERVER_ERROR;
 import static server.utility.RolesUtility.getRoleFromInvitationType;
+
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.hibernate.Session;
@@ -687,9 +688,9 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     User user = session.get().getUser();
 
     return new TypedResponse<>(response, OK, null,
-            StreamSupport.stream(getGroupRepository().findAll().spliterator(), false)
-              .map(item -> this.setJoinPermissions(user, item))
-              .collect(Collectors.toList())
+        StreamSupport.stream(getGroupRepository().findAll().spliterator(), false)
+            .map(item -> this.setJoinPermissions(user, item))
+            .collect(Collectors.toList())
     );
   }
 
@@ -757,7 +758,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @CrossOrigin
   @PutMapping(path = "/{id}/applicants/{appId}/{status}")
   @ResponseBody
-  public BaseResponse setApplicantsStatus(@ApiParam("ID of entity")
+  public BaseResponse setApplicantsStatus(@ApiParam("ID of gorup")
                                           @PathVariable(value = "id") Long id,
                                           @ApiParam("Applicant status (one of 'accepted', 'declined', 'pending' 'interviewed', 'interview_scheduled')")
                                           @PathVariable(value = "status") String status,
@@ -1194,7 +1195,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     return group;
   }
 
-  protected void genericSetJoinPermissions(User user, Group group, UserToGroupPermission permission){
+  protected void genericSetJoinPermissions(User user, Group group, UserToGroupPermission permission) {
     group.setCanEdit(permission.canUpdate());
     switch (permission.canJoin()) {
       case OK:
