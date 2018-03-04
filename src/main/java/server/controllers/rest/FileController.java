@@ -3,7 +3,6 @@ package server.controllers.rest;
 import static server.controllers.rest.response.BaseResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.BaseResponse.Status.OK;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
-
 import com.google.common.hash.Hashing;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

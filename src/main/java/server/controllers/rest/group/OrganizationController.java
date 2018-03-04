@@ -8,7 +8,6 @@ import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import static server.controllers.rest.response.CannedResponse.NO_GROUP_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
-
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;

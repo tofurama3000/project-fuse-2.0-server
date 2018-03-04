@@ -2,7 +2,6 @@ package server.controllers;
 
 import static server.constants.RoleValue.ADMIN;
 import static server.constants.RoleValue.DEFAULT_USER;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import server.entities.dto.group.organization.Organization;

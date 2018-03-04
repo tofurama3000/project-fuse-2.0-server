@@ -22,7 +22,6 @@ import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import static server.controllers.rest.response.CannedResponse.NO_GROUP_FOUND;
 import static server.controllers.rest.response.CannedResponse.SERVER_ERROR;
 import static server.utility.RolesUtility.getRoleFromInvitationType;
-
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.hibernate.Session;
@@ -50,7 +49,6 @@ import server.controllers.rest.response.TypedResponse;
 import server.entities.MemberRelationship;
 import server.entities.PossibleError;
 import server.entities.dto.FuseSession;
-import server.entities.dto.Notification;
 import server.entities.dto.UploadFile;
 import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupApplicant;

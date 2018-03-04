@@ -6,7 +6,6 @@ import static server.controllers.rest.response.BaseResponse.Status.OK;
 import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
-
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -126,10 +125,10 @@ public class NotificationController<T extends Group> {
       List<User> usersByGroup = teamMemberRepository.getUsersByGroup((Team) group);
       Set<User> s = new HashSet<>(usersByGroup);
       for (User u : s) {
-        List<Integer> roleList = teamMemberRepository.getRoles((Team) group, u);
+        List<Integer> roles = teamMemberRepository.getRoles((Team) group, u);
 
-        for (int i : roleList) {
-          if (i == ADMIN || i == OWNER) {
+        for (int role : roles) {
+          if (role == ADMIN || role == OWNER) {
             sendNotification(u, message, dataType, notificationType, id);
             break;
           }
@@ -140,9 +139,9 @@ public class NotificationController<T extends Group> {
       List<User> usersByGroup = projectMemberRepository.getUsersByGroup((Project) group);
       Set<User> s = new HashSet<>(usersByGroup);
       for (User user : s) {
-        List<Integer> roleList = projectMemberRepository.getRoles((Project) group, user);
-        for (int i : roleList) {
-          if (i == ADMIN || i == OWNER) {
+        List<Integer> roles = projectMemberRepository.getRoles((Project) group, user);
+        for (int role : roles) {
+          if (role == ADMIN || role == OWNER) {
             sendNotification(user, message, dataType, notificationType, id);
             break;
           }
@@ -152,9 +151,9 @@ public class NotificationController<T extends Group> {
       List<User> usersByGroup = organizationMemberRepository.getUsersByGroup((Organization) group);
       Set<User> s = new HashSet<>(usersByGroup);
       for (User user : s) {
-        List<Integer> roleList = organizationMemberRepository.getRoles((Organization) group, user);
-        for (int i : roleList) {
-          if (i == ADMIN || i == OWNER) {
+        List<Integer> roles = organizationMemberRepository.getRoles((Organization) group, user);
+        for (int role : roles) {
+          if (role == ADMIN || role == OWNER) {
             sendNotification(user, message, dataType, notificationType, id);
             break;
           }
