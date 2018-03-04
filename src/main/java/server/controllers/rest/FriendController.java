@@ -4,6 +4,7 @@ import static server.controllers.rest.response.BaseResponse.Status.OK;
 import static server.controllers.rest.response.CannedResponse.FRIEND_FOUND;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
+import static server.utility.PagingUtil.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -28,6 +29,7 @@ import server.entities.dto.user.Friend;
 import server.entities.dto.user.User;
 import server.repositories.FriendRepository;
 import server.repositories.UserRepository;
+import server.utility.PagingUtil;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -71,16 +73,9 @@ public class FriendController {
       return new TypedResponse<>(response, BaseResponse.Status.DENIED, errors);
     }
 
-    List<Friend> list = friendRepository.getFriends(session.get().getUser());
-    List<Friend> returnList = new ArrayList<>();
-    for (int i = page * pageSize; i < (page * pageSize) + pageSize; i++) {
-      if (i >= list.size()) {
-        break;
-      }
-      returnList.add(list.get(i));
-    }
+    List<Friend> allFriends = friendRepository.getFriends(session.get().getUser());
 
-    return new TypedResponse<>(response, BaseResponse.Status.OK, null, returnList);
+    return new TypedResponse<>(response, BaseResponse.Status.OK, null, getPagedResults(allFriends, page, pageSize));
   }
 
   @ApiOperation("Get all friends")
@@ -114,16 +109,7 @@ public class FriendController {
     }
     List<Friend> friendRequests = friendRepository.getFriendApplicant(session.get().getUser());
 
-    int startIndex = page * pageSize;
-    List<Friend> friendRequestsForPage;
-    if (friendRequests.size() < startIndex) {
-      friendRequestsForPage = new ArrayList<>();
-    } else {
-      int endIndex = Math.min(startIndex + pageSize, friendRequests.size());
-      friendRequestsForPage = friendRequests.subList(startIndex, endIndex);
-    }
-
-    return new TypedResponse<>(response, BaseResponse.Status.OK, null, friendRequestsForPage);
+    return new TypedResponse<>(response, BaseResponse.Status.OK, null, getPagedResults(friendRequests, page, pageSize));
   }
 
   @CrossOrigin

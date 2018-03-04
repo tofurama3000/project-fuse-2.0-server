@@ -20,6 +20,7 @@ import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import static server.controllers.rest.response.CannedResponse.NO_INTERVIEW_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_INVITATION_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
+import static server.utility.PagingUtil.getPagedResults;
 import com.google.common.collect.Lists;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -91,6 +92,7 @@ import server.repositories.group.project.ProjectRepository;
 import server.repositories.group.team.TeamApplicantRepository;
 import server.repositories.group.team.TeamInvitationRepository;
 import server.repositories.group.team.TeamRepository;
+import server.utility.PagingUtil;
 import server.utility.RolesUtility;
 import server.utility.StreamUtil;
 import springfox.documentation.annotations.ApiIgnore;
@@ -435,16 +437,9 @@ public class UserController {
     }
     User user = userRepository.findOne(id);
 
-    List<Organization> list = membersOfGroupController.getOrganizationsUserIsPartOf(user);
-    List<Organization> returnList = new ArrayList<>();
-    for (int i = page * pageSize; i < (page * pageSize) + pageSize; i++) {
-      if (i >= list.size()) {
-        break;
-      }
-      returnList.add(list.get(i));
-    }
+    List<Organization> organizationsUserIsPartOf = membersOfGroupController.getOrganizationsUserIsPartOf(user);
 
-    return new TypedResponse<>(response, OK, null, returnList);
+    return new TypedResponse<>(response, OK, null, getPagedResults(organizationsUserIsPartOf, page, pageSize));
   }
 
 
@@ -468,15 +463,9 @@ public class UserController {
 
     User user = userRepository.findOne(id);
 
-    List<Project> list = membersOfGroupController.getProjectsUserIsPartOf(user);
-    List<Project> returnList = new ArrayList<>();
-    for (int i = page * pageSize; i < (page * pageSize) + pageSize; i++) {
-      if (i >= list.size()) {
-        break;
-      }
-      returnList.add(list.get(i));
-    }
-    return new TypedResponse<>(response, OK, null, returnList);
+    List<Project> projectsUserIsPartOf = membersOfGroupController.getProjectsUserIsPartOf(user);
+
+    return new TypedResponse<>(response, OK, null, getPagedResults(projectsUserIsPartOf, page, pageSize));
   }
 
   @GetMapping(path = "/{id}/projects/applications")

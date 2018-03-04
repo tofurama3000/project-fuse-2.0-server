@@ -21,6 +21,7 @@ import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS_FOR
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import static server.controllers.rest.response.CannedResponse.NO_GROUP_FOUND;
 import static server.controllers.rest.response.CannedResponse.SERVER_ERROR;
+import static server.utility.PagingUtil.getPagedResults;
 import static server.utility.RolesUtility.getRoleFromInvitationType;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -65,6 +66,7 @@ import server.repositories.group.GroupMemberRepository;
 import server.repositories.group.GroupProfileRepository;
 import server.repositories.group.GroupRepository;
 import server.repositories.group.InterviewRepository;
+import server.utility.PagingUtil;
 import server.utility.UserFindHelper;
 import springfox.documentation.annotations.ApiIgnore;
 
@@ -341,7 +343,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     }
   }
 
-  protected GeneralResponse generalInvite(I groupInvitation, HttpServletRequest request, HttpServletResponse response) {
+  private GeneralResponse generalInvite(I groupInvitation, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -654,16 +656,9 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       HttpServletRequest request, HttpServletResponse response) {
 
     T group = getGroupRepository().findOne(id);
-    List<User> list = new ArrayList<>(getMembersOf(group));
-    List<User> returnList = new ArrayList<>();
-    for (int i = page * pageSize; i < (page * pageSize) + pageSize; i++) {
-      if (i >= list.size()) {
-        break;
-      }
-      returnList.add(list.get(i));
-    }
+    List<User> allMembers = new ArrayList<>(getMembersOf(group));
 
-    Stream<MemberRelationship> stream = returnList.stream().map(user -> {
+    Stream<MemberRelationship> stream = getPagedResults(allMembers, page, pageSize).stream().map(user -> {
       UserToGroupPermission permission = getUserToGroupPermission(user, group);
       MemberRelationship relationship = new MemberRelationship(user);
       relationship.setPermissions(permission);
