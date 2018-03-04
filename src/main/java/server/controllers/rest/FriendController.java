@@ -112,15 +112,18 @@ public class FriendController {
       errors.add(INVALID_SESSION);
       return new TypedResponse<>(response, BaseResponse.Status.DENIED, errors);
     }
-    List<Friend> list = friendRepository.getFriendApplicant(session.get().getUser());
-    List<Friend> returnList = new ArrayList<>();
-    for (int i = page * pageSize; i < (page * pageSize) + pageSize; i++) {
-      if (i >= list.size()) {
-        break;
-      }
-      returnList.add(list.get(i));
+    List<Friend> friendRequests = friendRepository.getFriendApplicant(session.get().getUser());
+
+    int startIndex = page * pageSize;
+    List<Friend> friendRequestsForPage;
+    if (friendRequests.size() < startIndex) {
+      friendRequestsForPage = new ArrayList<>();
+    } else {
+      int endIndex = Math.min(startIndex + pageSize, friendRequests.size());
+      friendRequestsForPage = friendRequests.subList(startIndex, endIndex);
     }
-    return new TypedResponse<>(response, BaseResponse.Status.OK, null, returnList);
+
+    return new TypedResponse<>(response, BaseResponse.Status.OK, null, friendRequestsForPage);
   }
 
   @CrossOrigin
@@ -181,6 +184,8 @@ public class FriendController {
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     friend.setStatus("declined");
+    friendRepository.save(friend);
+
     return new GeneralResponse(response, OK);
   }
 
@@ -216,7 +221,7 @@ public class FriendController {
   @ApiOperation("Send a friend invite")
   @PostMapping(path = "/{id}")
   @ResponseBody
-  public BaseResponse applyFriend(@ApiParam(name = "ID of user to send a request to") @PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response) {
+  public BaseResponse sendFriendInvite(@ApiParam(name = "ID of user to send a request to") @PathVariable("id") Long id, HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -250,10 +255,10 @@ public class FriendController {
   }
 
   private boolean isFriend(User user, long id) {
-    List<Friend> list = friendRepository.getFriends(user);
-    for (Friend f : list) {
-      if (f.getReceiver().getId() == id || f.getSender().getId() == id) {
-        if (f.getStatus().equals("accepted")) {
+    List<Friend> friends = friendRepository.getFriends(user);
+    for (Friend friend : friends) {
+      if (friend.getReceiver().getId() == id || friend.getSender().getId() == id) {
+        if (friend.getStatus().equals("accepted")) {
           return true;
         }
       }

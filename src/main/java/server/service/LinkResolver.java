@@ -7,11 +7,12 @@ import server.entities.dto.Link;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashSet;
+import java.util.Set;
 
 public class LinkResolver {
 
   private static Logger logger = LoggerFactory.getLogger(LinkResolver.class);
-  private static final HashSet<String> validReferenceTypes = new HashSet<>();
+  private static final Set<String> validReferenceTypes = new HashSet<>();
 
   static {
     validReferenceTypes.add("Project");
