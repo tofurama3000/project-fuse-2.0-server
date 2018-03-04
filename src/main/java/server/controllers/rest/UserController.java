@@ -20,6 +20,7 @@ import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import static server.controllers.rest.response.CannedResponse.NO_INTERVIEW_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_INVITATION_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
+
 import com.google.common.collect.Lists;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -50,6 +51,7 @@ import server.controllers.rest.response.TypedResponse;
 import server.email.StandardEmailSender;
 import server.entities.PossibleError;
 import server.entities.dto.FuseSession;
+import server.entities.dto.Notification;
 import server.entities.dto.UploadFile;
 import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupApplicant;
@@ -78,6 +80,7 @@ import server.entities.user_to_group.relationships.UserToGroupRelationship;
 import server.entities.user_to_group.relationships.UserToOrganizationRelationship;
 import server.entities.user_to_group.relationships.UserToProjectRelationship;
 import server.entities.user_to_group.relationships.UserToTeamRelationship;
+import server.repositories.NotificationRepository;
 import server.repositories.UnregisteredUserRepository;
 import server.repositories.UserProfileRepository;
 import server.repositories.UserRepository;
@@ -128,6 +131,9 @@ public class UserController {
 
   @Autowired
   private PermissionFactory permissionFactory;
+
+  @Autowired
+  private NotificationRepository notificationRepository;
 
   @Autowired
   private TeamInvitationRepository teamInvitationRepository;
@@ -738,11 +744,15 @@ public class UserController {
 
       projectInvitationRepository.save(savedInvitation);
       try {
-        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has declined" + savedInvitation.getType() + " invitation from " + group.getGroupType() + ": " + group.getName(),
+        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has declined " + savedInvitation.getType() + " invitation from " + group.getGroupType() + ": " + group.getName(),
             "ProjectInvitation", "ProjectInvitation:Declined", group.getId());
       } catch (Exception e) {
         logger.error(e.getMessage(), e);
       }
+      Notification notification = projectInvitationRepository.getNotification(savedInvitation.getId(), "ProjectInvitation:Invite");
+      notification.setHasRead(true);
+      notification.setAction_done(true);
+      notificationRepository.save(notification);
       return new GeneralResponse(response);
     }
 
@@ -771,12 +781,16 @@ public class UserController {
       projectInvitationRepository.save(savedInvitation);
 
       try {
-        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted" + savedInvitation.getType() + " invitation from " + group.getGroupType() + ": " + group.getName(),
+        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted " + savedInvitation.getType() + " invitation from " + group.getGroupType() + ": " + group.getName(),
             "ProjectInvitation", "ProjectInvitation:Accepted", group.getId());
       } catch (Exception e) {
         logger.error(e.getMessage(), e);
       }
     }
+    Notification notification = projectInvitationRepository.getNotification(savedInvitation.getId(), "ProjectInvitation:Invite");
+    notification.setHasRead(true);
+    notification.setAction_done(true);
+    notificationRepository.save(notification);
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
   }
 
@@ -900,6 +914,10 @@ public class UserController {
         errors.add("Can't send notification");
         return new GeneralResponse(response, ERROR, errors);
       }
+      Notification notification = organizationInvitationRepository.getNotification(savedInvitation.getId(), "OrganizationInvitation:Invite");
+      notification.setHasRead(true);
+      notification.setAction_done(true);
+      notificationRepository.save(notification);
       return new GeneralResponse(response);
     }
     UserToOrganizationPermission permission = permissionFactory.createUserToOrganizationPermission(user, group);
@@ -927,6 +945,10 @@ public class UserController {
         logger.error(e.getMessage(), e);
       }
     }
+    Notification notification = organizationInvitationRepository.getNotification(savedInvitation.getId(), "OrganizationInvitation:Invite");
+    notification.setHasRead(true);
+    notification.setAction_done(true);
+    notificationRepository.save(notification);
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
   }
 

@@ -22,6 +22,7 @@ import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import static server.controllers.rest.response.CannedResponse.NO_GROUP_FOUND;
 import static server.controllers.rest.response.CannedResponse.SERVER_ERROR;
 import static server.utility.RolesUtility.getRoleFromInvitationType;
+
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.hibernate.Session;
@@ -49,6 +50,7 @@ import server.controllers.rest.response.TypedResponse;
 import server.entities.MemberRelationship;
 import server.entities.PossibleError;
 import server.entities.dto.FuseSession;
+import server.entities.dto.Notification;
 import server.entities.dto.UploadFile;
 import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupApplicant;
@@ -687,9 +689,9 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     User user = session.get().getUser();
 
     return new TypedResponse<>(response, OK, null,
-            StreamSupport.stream(getGroupRepository().findAll().spliterator(), false)
-              .map(item -> this.setJoinPermissions(user, item))
-              .collect(Collectors.toList())
+        StreamSupport.stream(getGroupRepository().findAll().spliterator(), false)
+            .map(item -> this.setJoinPermissions(user, item))
+            .collect(Collectors.toList())
     );
   }
 
@@ -1194,7 +1196,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     return group;
   }
 
-  protected void genericSetJoinPermissions(User user, Group group, UserToGroupPermission permission){
+  protected void genericSetJoinPermissions(User user, Group group, UserToGroupPermission permission) {
     group.setCanEdit(permission.canUpdate());
     switch (permission.canJoin()) {
       case OK:

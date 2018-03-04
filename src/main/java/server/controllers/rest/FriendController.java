@@ -4,6 +4,7 @@ import static server.controllers.rest.response.BaseResponse.Status.OK;
 import static server.controllers.rest.response.CannedResponse.FRIEND_FOUND;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -24,9 +25,11 @@ import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
 import server.entities.dto.FuseSession;
+import server.entities.dto.Notification;
 import server.entities.dto.user.Friend;
 import server.entities.dto.user.User;
 import server.repositories.FriendRepository;
+import server.repositories.NotificationRepository;
 import server.repositories.UserRepository;
 
 import javax.servlet.http.HttpServletRequest;
@@ -46,6 +49,9 @@ public class FriendController {
 
   @Autowired
   private FriendRepository friendRepository;
+
+  @Autowired
+  private NotificationRepository notificationRepository;
 
   @Autowired
   private UserRepository userRepository;
@@ -153,6 +159,10 @@ public class FriendController {
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
     }
+    Notification notification = friendRepository.getNotification(id);
+    notification.setAction_done(true);
+    notification.setHasRead(true);
+    notificationRepository.save(notification);
     return new GeneralResponse(response, OK);
   }
 

@@ -3,6 +3,7 @@ package server.utility;
 import static server.constants.ImageSize.BACKGROUND_HEIGHT;
 import static server.constants.ImageSize.BACKGROUND_WIDTH;
 import static server.constants.ImageSize.THUMBNAIL_DIM;
+
 import org.imgscalr.Scalr;
 
 import java.awt.*;

@@ -8,6 +8,7 @@ import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import static server.controllers.rest.response.CannedResponse.NO_GROUP_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -152,9 +153,9 @@ public class OrganizationController extends GroupController<Organization, Organi
     }
 
     return new TypedResponse<>(response, OK, errors,
-            organizationRepository.getAllProjectsByOrganization(organization).stream()
-              .map(item -> setJoinPermissionsForProject(loggedInUser, item))
-              .collect(Collectors.toList())
+        organizationRepository.getAllProjectsByOrganization(organization).stream()
+            .map(item -> setJoinPermissionsForProject(loggedInUser, item))
+            .collect(Collectors.toList())
     );
   }
 

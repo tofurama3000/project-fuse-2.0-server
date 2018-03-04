@@ -1,6 +1,7 @@
 package server.controllers.rest.group;
 
 import static server.controllers.rest.response.BaseResponse.Status.OK;
+
 import io.swagger.annotations.Api;
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
