@@ -25,8 +25,10 @@ import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
 import server.entities.dto.FuseSession;
+import server.entities.dto.Notification;
 import server.entities.dto.user.Friend;
 import server.entities.dto.user.User;
+import server.handlers.NotificationHandler;
 import server.repositories.FriendRepository;
 import server.repositories.UserRepository;
 
@@ -47,6 +49,9 @@ public class FriendController {
 
   @Autowired
   private FriendRepository friendRepository;
+
+  @Autowired
+  private NotificationHandler notificationHandler;
 
   @Autowired
   private UserRepository userRepository;
@@ -141,6 +146,9 @@ public class FriendController {
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
     }
+    Notification notification = friendRepository.getNotification(id);
+    notificationHandler.markNotificationDone(notification);
+
     return new GeneralResponse(response, OK);
   }
 

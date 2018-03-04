@@ -3,6 +3,7 @@ package server.repositories;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import server.entities.dto.Notification;
 import server.entities.dto.user.Friend;
 import server.entities.dto.user.User;
 
@@ -17,5 +18,8 @@ public interface FriendRepository extends CrudRepository<Friend, Long> {
 
   @Query("FROM Friend a where a.receiver = :user or a.sender = :user")
   List<Friend> getAllFriends(@Param("user") User user);
+
+  @Query("FROM Notification n where n.objectId = :id and n.notification_type = " + "'" + "Friend:Request" + "'")
+  Notification getNotification(@Param("id") Long id);
 }
 
