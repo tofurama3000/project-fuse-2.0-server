@@ -28,8 +28,8 @@ import server.entities.dto.FuseSession;
 import server.entities.dto.Notification;
 import server.entities.dto.user.Friend;
 import server.entities.dto.user.User;
+import server.handlers.NotificationHandler;
 import server.repositories.FriendRepository;
-import server.repositories.NotificationRepository;
 import server.repositories.UserRepository;
 
 import javax.servlet.http.HttpServletRequest;
@@ -51,7 +51,7 @@ public class FriendController {
   private FriendRepository friendRepository;
 
   @Autowired
-  private NotificationRepository notificationRepository;
+  private NotificationHandler notificationHandler;
 
   @Autowired
   private UserRepository userRepository;
@@ -147,9 +147,8 @@ public class FriendController {
       logger.error(e.getMessage(), e);
     }
     Notification notification = friendRepository.getNotification(id);
-    notification.setAction_done(true);
-    notification.setHasRead(true);
-    notificationRepository.save(notification);
+    notificationHandler.markNotificationDone(notification);
+
     return new GeneralResponse(response, OK);
   }
 
