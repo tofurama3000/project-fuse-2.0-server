@@ -152,9 +152,9 @@ public class OrganizationController extends GroupController<Organization, Organi
     }
 
     return new TypedResponse<>(response, OK, errors,
-            organizationRepository.getAllProjectsByOrganization(organization).stream()
-              .map(item -> setJoinPermissionsForProject(loggedInUser, item))
-              .collect(Collectors.toList())
+        organizationRepository.getAllProjectsByOrganization(organization).stream()
+            .map(item -> setJoinPermissionsForProject(loggedInUser, item))
+            .collect(Collectors.toList())
     );
   }
 
