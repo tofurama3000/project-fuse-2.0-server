@@ -66,7 +66,6 @@ import server.repositories.group.GroupMemberRepository;
 import server.repositories.group.GroupProfileRepository;
 import server.repositories.group.GroupRepository;
 import server.repositories.group.InterviewRepository;
-import server.utility.PagingUtil;
 import server.utility.UserFindHelper;
 import springfox.documentation.annotations.ApiIgnore;
 
@@ -682,9 +681,9 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     User user = session.get().getUser();
 
     return new TypedResponse<>(response, OK, null,
-            StreamSupport.stream(getGroupRepository().findAll().spliterator(), false)
-              .map(item -> this.setJoinPermissions(user, item))
-              .collect(Collectors.toList())
+        StreamSupport.stream(getGroupRepository().findAll().spliterator(), false)
+            .map(item -> this.setJoinPermissions(user, item))
+            .collect(Collectors.toList())
     );
   }
 
@@ -1189,7 +1188,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     return group;
   }
 
-  protected void genericSetJoinPermissions(User user, Group group, UserToGroupPermission permission){
+  protected void genericSetJoinPermissions(User user, Group group, UserToGroupPermission permission) {
     group.setCanEdit(permission.canUpdate());
     switch (permission.canJoin()) {
       case OK:

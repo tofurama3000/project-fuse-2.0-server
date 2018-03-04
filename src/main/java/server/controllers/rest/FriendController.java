@@ -4,7 +4,7 @@ import static server.controllers.rest.response.BaseResponse.Status.OK;
 import static server.controllers.rest.response.CannedResponse.FRIEND_FOUND;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
-import static server.utility.PagingUtil.*;
+import static server.utility.PagingUtil.getPagedResults;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -29,7 +29,6 @@ import server.entities.dto.user.Friend;
 import server.entities.dto.user.User;
 import server.repositories.FriendRepository;
 import server.repositories.UserRepository;
-import server.utility.PagingUtil;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
