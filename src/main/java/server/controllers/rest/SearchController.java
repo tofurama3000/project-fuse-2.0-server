@@ -5,14 +5,17 @@ import static server.controllers.rest.response.BaseResponse.Status.OK;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import server.controllers.FuseSessionController;
 import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.TypedResponse;
+import server.entities.dto.FuseSession;
 import server.entities.dto.PagedResults;
 import server.entities.dto.SearchParams;
 import server.entities.dto.group.organization.Organization;
@@ -20,9 +23,11 @@ import server.entities.dto.group.project.Project;
 import server.entities.dto.user.User;
 import server.utility.ElasticsearchClient;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 
 @Controller
@@ -30,6 +35,9 @@ import java.util.List;
 @Api(tags = "Search")
 @SuppressWarnings("unused")
 public class SearchController {
+
+  @Autowired
+  private FuseSessionController fuseSessionController;
 
   @ApiOperation(value = "Searches all searchable entities")
   @PostMapping
@@ -58,7 +66,10 @@ public class SearchController {
       types = SearchParams.allTypes();
     }
 
-    return doSearch(params,
+//    Optional<FuseSession> session = fuseSessionController.getSession(request);
+//    User user = session.get().getUser();
+    return doSearch(null,
+        params,
         response,
         indices.stream().toArray(String[]::new),
         types.stream().toArray(String[]::new),
@@ -77,8 +88,11 @@ public class SearchController {
       @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
       @ApiParam(value = "The number of results per page")
       @RequestParam(value = "size", required = false, defaultValue = "15") Integer pageSize,
-      HttpServletResponse response) {
+      HttpServletResponse response , HttpServletRequest request) {
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    User user = session.get().getUser();
     return doSearch(
+        user,
         params,
         response,
         new String[]{User.esIndex()},
@@ -98,7 +112,10 @@ public class SearchController {
       @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
       @ApiParam(value = "The number of results per page")
       @RequestParam(value = "size", required = false, defaultValue = "15") Integer pageSize, HttpServletResponse response) {
+//    Optional<FuseSession> session = fuseSessionController.getSession(request);
+//    User user = session.get().getUser();
     return doSearch(
+        null,
         params,
         response,
         new String[]{Project.esIndex()},
@@ -118,7 +135,9 @@ public class SearchController {
       @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
       @ApiParam(value = "The number of results per page")
       @RequestParam(value = "size", required = false, defaultValue = "15") Integer pageSize, HttpServletResponse response) {
-    return doSearch(
+//    Optional<FuseSession> session = fuseSessionController.getSession(request);
+//    User user = session.get().getUser();
+    return doSearch(null,
         params,
         response,
         new String[]{Organization.esIndex()},
@@ -128,7 +147,7 @@ public class SearchController {
     );
   }
 
-  private static TypedResponse<PagedResults> doSearch(SearchParams params, HttpServletResponse response,
+  private static TypedResponse<PagedResults> doSearch(User user,SearchParams params, HttpServletResponse response,
                                                       String[] indices, String[] types, int page, int pageSize) {
     List<String> errors = new ArrayList<>();
 
@@ -140,6 +159,7 @@ public class SearchController {
     try {
       return new TypedResponse<>(response, OK, errors,
           ElasticsearchClient.instance().searchSimpleQuery(
+              user,
               indices,
               types,
               params.getSearchString(),

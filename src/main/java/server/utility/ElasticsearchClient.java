@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.entities.Indexable;
 import server.entities.dto.PagedResults;
+import server.entities.dto.user.User;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -138,11 +139,11 @@ public class ElasticsearchClient {
   private static ElasticsearchClient inst = null;
   private RestHighLevelClient elasticsearch_client;
 
-  public PagedResults searchSimpleQuery(String[] indices, String[] types, String searchString) {
-    return searchSimpleQuery(indices, types, searchString, 0, 15);
+  public PagedResults searchSimpleQuery(User curUser, String[] indices, String[] types, String searchString) {
+    return searchSimpleQuery(curUser,indices, types, searchString, 0, 15);
   }
 
-  public PagedResults searchSimpleQuery(String[] indices, String[] types, String searchString, Integer page, Integer pageSize) {
+  public PagedResults searchSimpleQuery(User curUser, String[] indices, String[] types, String searchString, Integer page, Integer pageSize) {
     SearchRequest req = new SearchRequest(indices);
     req.types(types);
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
