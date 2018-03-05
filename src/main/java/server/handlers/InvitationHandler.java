@@ -24,6 +24,7 @@ import server.entities.user_to_group.permissions.UserToProjectPermission;
 import server.entities.user_to_group.relationships.RelationshipFactory;
 import server.entities.user_to_group.relationships.UserToOrganizationRelationship;
 import server.entities.user_to_group.relationships.UserToProjectRelationship;
+import server.repositories.NotificationRepository;
 import server.repositories.group.InterviewRepository;
 import server.repositories.group.organization.OrganizationApplicantRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
@@ -45,6 +46,7 @@ public class InvitationHandler {
   private final ProjectInvitationRepository projectInvitationRepository;
   private final OrganizationApplicantRepository organizationApplicantRepository;
   private final OrganizationInvitationRepository organizationInvitationRepository;
+  private final NotificationRepository notificationRepository;
 
   private final Logger logger = LoggerFactory.getLogger(InvitationHandler.class);
 
@@ -53,7 +55,8 @@ public class InvitationHandler {
                            RelationshipFactory relationshipFactory, UserToGroupRelationshipHandler userToGroupRelationshipHandler,
                            NotificationHandler notificationHandler,
                            ProjectApplicantRepository projectApplicantRepository, ProjectInvitationRepository projectInvitationRepository,
-                           OrganizationApplicantRepository organizationApplicantRepository, OrganizationInvitationRepository organizationInvitationRepository) {
+                           OrganizationApplicantRepository organizationApplicantRepository, OrganizationInvitationRepository organizationInvitationRepository,
+                           NotificationRepository notificationRepository) {
 
     this.permissionFactory = permissionFactory;
     this.interviewRepository = interviewRepository;
@@ -64,6 +67,7 @@ public class InvitationHandler {
     this.projectInvitationRepository = projectInvitationRepository;
     this.organizationApplicantRepository = organizationApplicantRepository;
     this.organizationInvitationRepository = organizationInvitationRepository;
+    this.notificationRepository = notificationRepository;
   }
 
   public BaseResponse acceptProjectInvitation(ProjectInvitation projectInvitation, HttpServletResponse response,
@@ -85,6 +89,9 @@ public class InvitationHandler {
       ProjectApplicant applicant = projectApplicantRepository.findOne(savedInvitation.getApplicant().getId());
       if (savedInvitation.getType().equals("join")) {
         applicant.setStatus("accepted");
+        List<Notification> list = notificationRepository.getNotifications(applicant.getId(), "ProjectApplicant");
+        for(Notification n: list)
+          notificationHandler.markNotificationDone(n);
       } else {
         applicant.setStatus("interview_scheduled");
         applicant.setInterview(interviewRepository.findOne(savedInvitation.getInterview().getId()));
@@ -100,8 +107,9 @@ public class InvitationHandler {
         logger.error(e.getMessage(), e);
       }
     }
-    Notification notification = projectInvitationRepository.getNotification(savedInvitation.getId(), "ProjectInvitation:Invite");
-    notificationHandler.markNotificationDone(notification);
+    List<Notification> list = notificationRepository.getNotifications(savedInvitation.getId(), "ProjectInvitation:Invite");
+    for(Notification n: list)
+    notificationHandler.markNotificationDone(n);
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
   }
 
@@ -110,6 +118,9 @@ public class InvitationHandler {
     if (savedInvitation.getType().equals("join")) {
       ProjectApplicant applicant = projectApplicantRepository.findOne(savedInvitation.getApplicant().getId());
       applicant.setStatus("declined");
+      List<Notification> list = notificationRepository.getNotifications(applicant.getId(), "ProjectApplicant");
+      for(Notification n: list)
+        notificationHandler.markNotificationDone(n);
       projectApplicantRepository.save(applicant);
     }
 
@@ -120,8 +131,9 @@ public class InvitationHandler {
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
     }
-    Notification notification = projectInvitationRepository.getNotification(savedInvitation.getId(), "ProjectInvitation:Invite");
-    notificationHandler.markNotificationDone(notification);
+    List<Notification> list= notificationRepository.getNotifications(savedInvitation.getId(), "ProjectInvitation:Invite");
+    for(Notification n: list)
+    notificationHandler.markNotificationDone(n);
 
     return new GeneralResponse(response);
   }
@@ -140,6 +152,9 @@ public class InvitationHandler {
       OrganizationApplicant applicant = organizationApplicantRepository.findOne(savedInvitation.getApplicant().getId());
       if (savedInvitation.getType().equals("join")) {
         applicant.setStatus("accepted");
+        List<Notification> list = notificationRepository.getNotifications(applicant.getId(), "OrganizationApplicant");
+        for(Notification n: list)
+          notificationHandler.markNotificationDone(n);
       } else {
         applicant.setStatus("interview_scheduled");
         applicant.setInterview(interviewRepository.findOne(savedInvitation.getInterview().getId()));
@@ -153,8 +168,9 @@ public class InvitationHandler {
         logger.error(e.getMessage(), e);
       }
     }
-    Notification notification = organizationInvitationRepository.getNotification(savedInvitation.getId(), "OrganizationInvitation:Invite");
-    notificationHandler.markNotificationDone(notification);
+    List<Notification> list = notificationRepository.getNotifications(savedInvitation.getId(), "OrganizationInvitation:Invite");
+    for(Notification n: list)
+    notificationHandler.markNotificationDone(n);
 
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
   }
@@ -164,6 +180,9 @@ public class InvitationHandler {
     if (savedInvitation.getType().equals("join")) {
       OrganizationApplicant applicant = organizationApplicantRepository.findOne(savedInvitation.getApplicant().getId());
       applicant.setStatus("declined");
+      List<Notification> list = notificationRepository.getNotifications(applicant.getId(), "OrganizationApplicant");
+      for(Notification n: list)
+        notificationHandler.markNotificationDone(n);
       organizationApplicantRepository.save(applicant);
     }
     organizationInvitationRepository.save(savedInvitation);
@@ -174,8 +193,9 @@ public class InvitationHandler {
       errors.add("Can't send notification");
       return new GeneralResponse(response, ERROR, errors);
     }
-    Notification notification = organizationInvitationRepository.getNotification(savedInvitation.getId(), "OrganizationInvitation:Invite");
-    notificationHandler.markNotificationDone(notification);
+    List<Notification> list = notificationRepository.getNotifications(savedInvitation.getId(), "OrganizationInvitation:Invite");
+    for(Notification n: list)
+    notificationHandler.markNotificationDone(n);
 
     return new GeneralResponse(response);
   }

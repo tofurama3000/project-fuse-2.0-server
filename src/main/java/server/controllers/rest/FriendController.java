@@ -30,6 +30,7 @@ import server.entities.dto.user.Friend;
 import server.entities.dto.user.User;
 import server.handlers.NotificationHandler;
 import server.repositories.FriendRepository;
+import server.repositories.NotificationRepository;
 import server.repositories.UserRepository;
 
 import javax.servlet.http.HttpServletRequest;
@@ -52,6 +53,9 @@ public class FriendController {
 
   @Autowired
   private NotificationHandler notificationHandler;
+
+  @Autowired
+  private NotificationRepository notificationRepository;
 
   @Autowired
   private UserRepository userRepository;
@@ -146,8 +150,9 @@ public class FriendController {
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
     }
-    Notification notification = friendRepository.getNotification(id);
-    notificationHandler.markNotificationDone(notification);
+    List<Notification> list = notificationRepository.getNotifications(id,"Friend:Request");
+    for(Notification n : list)
+    notificationHandler.markNotificationDone(n);
 
     return new GeneralResponse(response, OK);
   }
