@@ -17,29 +17,29 @@ import java.util.List;
 public class ApplicantUpdateService {
 
   @Autowired
-  ProjectApplicantRepository projectApplicantRepository;
+  private ProjectApplicantRepository projectApplicantRepository;
 
   @Autowired
-  OrganizationApplicantRepository organizationApplicantRepository;
+  private OrganizationApplicantRepository organizationApplicantRepository;
 
   @Scheduled(fixedDelay = 5L * 60L * 1000L) // runs once every 5 minutes; in milliseconds
-  public void StatusChanger() throws InterruptedException {
-    List<ProjectApplicant> list = projectApplicantRepository.getApplicantsByStatus("interview_scheduled");
-    for (ProjectApplicant a : list) {
-      Interview interview = a.getInterview();
+  public void interviewScheduleUpdater() throws InterruptedException {
+    List<ProjectApplicant> projectApplicants = projectApplicantRepository.getApplicantsByStatus("interview_scheduled");
+    for (ProjectApplicant projectApplicant : projectApplicants) {
+      Interview interview = projectApplicant.getInterview();
       ZonedDateTime now = ZonedDateTime.now();
       if (now.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime().isAfter(interview.getEndDateTime())) {
-        a.setStatus("interviewed");
-        projectApplicantRepository.save(a);
+        projectApplicant.setStatus("interviewed");
+        projectApplicantRepository.save(projectApplicant);
       }
     }
-    List<OrganizationApplicant> oList = organizationApplicantRepository.getApplicantsByStatus("interview_scheduled");
-    for (OrganizationApplicant a : oList) {
-      Interview interview = a.getInterview();
+    List<OrganizationApplicant> organizationApplicants = organizationApplicantRepository.getApplicantsByStatus("interview_scheduled");
+    for (OrganizationApplicant organizationApplicant : organizationApplicants) {
+      Interview interview = organizationApplicant.getInterview();
       ZonedDateTime now = ZonedDateTime.now();
       if (now.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime().isAfter(interview.getEndDateTime())) {
-        a.setStatus("interviewed");
-        organizationApplicantRepository.save(a);
+        organizationApplicant.setStatus("interviewed");
+        organizationApplicantRepository.save(organizationApplicant);
       }
     }
   }

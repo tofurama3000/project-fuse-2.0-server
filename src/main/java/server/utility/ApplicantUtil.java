@@ -21,4 +21,13 @@ public class ApplicantUtil {
         .filter(StreamUtil.uniqueByFunction(projectApplicant -> projectApplicant.getGroup().getId()))
         .collect(Collectors.toList());
   }
+
+  public static <T extends GroupApplicant> boolean applicantsContainId(List<T> applicants, Long id) {
+    for (GroupApplicant applicant : applicants) {
+      if (applicant.getGroup().getId().equals(id)) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
