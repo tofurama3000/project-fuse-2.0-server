@@ -234,7 +234,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     result.put("applied", true);
     try {
       notificationController.sendGroupNotificationToAdmins(group, session.get().getUser().getName() + " has applied to " + group.getName(),
-          group.getGroupType() + "Applicant", group.getGroupType() + "Applicant", session.get().getUser().getId());
+          group.getGroupType() + "Applicant", group.getGroupType() + "Applicant", application.getId());
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
 

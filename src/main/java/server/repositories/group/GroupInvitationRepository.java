@@ -9,6 +9,4 @@ import server.entities.dto.Notification;
 
 @NoRepositoryBean
 public interface GroupInvitationRepository<T> extends CrudRepository<T, Long> {
-  @Query("FROM Notification n where n.objectId = :id and n.notification_type = :notificationType")
-  Notification getNotification(@Param("id") Long id, @Param("notificationType") String notificationType);
 }
