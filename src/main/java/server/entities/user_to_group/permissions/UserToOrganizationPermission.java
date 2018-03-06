@@ -47,7 +47,7 @@ public class UserToOrganizationPermission extends UserToGroupPermission<Organiza
   public boolean canCreateProjectsInOrganization() {
     HashSet<Integer> roles = new HashSet<>(repository.getRoles(group, user));
 
-    if (group.get_everyone_can_create())
+    if (group.getCanEveryoneCreate())
       return true;
     return roles.contains(CREATE_PROJECT_IN_ORGANIZATION) || roles.contains(ADMIN) || roles.contains(OWNER);
   }

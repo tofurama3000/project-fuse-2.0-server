@@ -758,7 +758,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @CrossOrigin
   @PutMapping(path = "/{id}/applicants/{appId}/{status}")
   @ResponseBody
-  public BaseResponse setApplicantsStatus(@ApiParam("ID of gorup")
+  public BaseResponse setApplicantsStatus(@ApiParam("ID of entity")
                                           @PathVariable(value = "id") Long id,
                                           @ApiParam("Applicant status (one of 'accepted', 'declined', 'pending' 'interviewed', 'interview_scheduled')")
                                           @PathVariable(value = "status") String status,

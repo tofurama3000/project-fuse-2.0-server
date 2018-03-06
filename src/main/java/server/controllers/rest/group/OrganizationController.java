@@ -243,7 +243,7 @@ public class OrganizationController extends GroupController<Organization, Organi
       return new GeneralResponse(response, BaseResponse.Status.DENIED, INSUFFICIENT_PRIVELAGES);
     }
 
-    organization.set_everyone_can_create(action.equals("true"));
+    organization.setCanEveryoneCreate(action.equals("true"));
     organizationRepository.save(organization);
     return new GeneralResponse(response, OK);
   }
