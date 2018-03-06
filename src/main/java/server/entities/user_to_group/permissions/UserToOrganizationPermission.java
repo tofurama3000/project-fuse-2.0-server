@@ -3,7 +3,6 @@ package server.entities.user_to_group.permissions;
 import static server.constants.RoleValue.ADMIN;
 import static server.constants.RoleValue.CREATE_PROJECT_IN_ORGANIZATION;
 import static server.constants.RoleValue.OWNER;
-
 import lombok.Setter;
 import org.hibernate.Session;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +12,7 @@ import server.repositories.group.organization.OrganizationMemberRepository;
 import server.repositories.group.organization.OrganizationRepository;
 
 import java.util.HashSet;
+import java.util.Set;
 
 public class UserToOrganizationPermission extends UserToGroupPermission<Organization> {
 
@@ -45,7 +45,8 @@ public class UserToOrganizationPermission extends UserToGroupPermission<Organiza
   }
 
   public boolean canCreateProjectsInOrganization() {
-    HashSet<Integer> roles = new HashSet<>(repository.getRoles(group, user));
+    Set<Integer> roles = new HashSet<>(repository.getRoles(group, user));
+
 
     if (group.getCanEveryoneCreate())
       return true;

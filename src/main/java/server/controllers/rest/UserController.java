@@ -1,14 +1,7 @@
 package server.controllers.rest;
 
-import static server.constants.Availability.NOT_AVAILABLE;
-import static server.constants.InvitationStatus.ACCEPTED;
-import static server.constants.InvitationStatus.DECLINED;
 import static server.constants.RegistrationStatus.REGISTERED;
 import static server.constants.RegistrationStatus.UNREGISTERED;
-import static server.constants.RoleValue.DEFAULT_USER;
-import static server.constants.RoleValue.INVITED_TO_INTERVIEW;
-import static server.constants.RoleValue.INVITED_TO_JOIN;
-import static server.constants.RoleValue.TO_INTERVIEW;
 import static server.controllers.rest.response.BaseResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.BaseResponse.Status.DENIED;
 import static server.controllers.rest.response.BaseResponse.Status.ERROR;
@@ -17,10 +10,10 @@ import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVE
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_REGISTRATION_KEY;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
-import static server.controllers.rest.response.CannedResponse.NO_INTERVIEW_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_INVITATION_FOUND;
 import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
-
+import static server.utility.ApplicantUtil.filterApplicants;
+import static server.utility.PagingUtil.getPagedResults;
 import com.google.common.collect.Lists;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -49,64 +42,40 @@ import server.controllers.rest.response.BaseResponse.Status;
 import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
 import server.email.StandardEmailSender;
-import server.entities.PossibleError;
 import server.entities.dto.FuseSession;
 import server.entities.dto.UploadFile;
-import server.entities.dto.group.Group;
-import server.entities.dto.group.GroupApplicant;
-import server.entities.dto.group.GroupInvitation;
-import server.entities.dto.group.interview.Interview;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.organization.OrganizationApplicant;
 import server.entities.dto.group.organization.OrganizationInvitation;
 import server.entities.dto.group.project.Project;
 import server.entities.dto.group.project.ProjectApplicant;
 import server.entities.dto.group.project.ProjectInvitation;
-import server.entities.dto.group.team.Team;
-import server.entities.dto.group.team.TeamInvitation;
 import server.entities.dto.user.UnregisteredUser;
 import server.entities.dto.user.User;
 import server.entities.dto.user.UserProfile;
 import server.entities.user_to_group.permissions.PermissionFactory;
 import server.entities.user_to_group.permissions.UserPermission;
-import server.entities.user_to_group.permissions.UserToGroupPermission;
-import server.entities.user_to_group.permissions.UserToOrganizationPermission;
-import server.entities.user_to_group.permissions.UserToProjectPermission;
-import server.entities.user_to_group.permissions.UserToTeamPermission;
-import server.entities.user_to_group.permissions.results.JoinResult;
-import server.entities.user_to_group.relationships.RelationshipFactory;
-import server.entities.user_to_group.relationships.UserToGroupRelationship;
-import server.entities.user_to_group.relationships.UserToOrganizationRelationship;
-import server.entities.user_to_group.relationships.UserToProjectRelationship;
-import server.entities.user_to_group.relationships.UserToTeamRelationship;
+import server.handlers.InvitationHandler;
+import server.handlers.NotificationHandler;
+import server.handlers.UserToGroupRelationshipHandler;
 import server.repositories.UnregisteredUserRepository;
 import server.repositories.UserProfileRepository;
 import server.repositories.UserRepository;
-import server.repositories.group.InterviewRepository;
 import server.repositories.group.organization.OrganizationApplicantRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
 import server.repositories.group.organization.OrganizationRepository;
 import server.repositories.group.project.ProjectApplicantRepository;
 import server.repositories.group.project.ProjectInvitationRepository;
 import server.repositories.group.project.ProjectRepository;
-import server.repositories.group.team.TeamApplicantRepository;
-import server.repositories.group.team.TeamInvitationRepository;
-import server.repositories.group.team.TeamRepository;
-import server.utility.RolesUtility;
-import server.utility.StreamUtil;
 import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.websocket.server.PathParam;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 
 @Controller
@@ -129,15 +98,6 @@ public class UserController {
 
   @Autowired
   private PermissionFactory permissionFactory;
-
-  @Autowired
-  private TeamInvitationRepository teamInvitationRepository;
-
-  @Autowired
-  private TeamApplicantRepository teamApplicantRepository;
-
-  @Autowired
-  private TeamRepository teamRepository;
 
   @Autowired
   private ProjectApplicantRepository projectApplicantRepository;
@@ -164,13 +124,16 @@ public class UserController {
   private UnregisteredUserRepository unregisteredUserRepository;
 
   @Autowired
-  private InterviewRepository interviewRepository;
-
-  @Autowired
-  private RelationshipFactory relationshipFactory;
-
-  @Autowired
   private MembersOfGroupController membersOfGroupController;
+
+  @Autowired
+  private UserToGroupRelationshipHandler userToGroupRelationshipHandler;
+
+  @Autowired
+  private InvitationHandler invitationHandler;
+
+  @Autowired
+  private NotificationHandler notificationHandler;
 
   @Value("${fuse.fileUploadPath}")
   private String fileUploadPath;
@@ -399,24 +362,6 @@ public class UserController {
     return new TypedResponse<>(response, OK, null, Lists.newArrayList(userRepository.findAll()));
   }
 
-  @GetMapping(path = "/{id}/joined/teams")
-  @ResponseBody
-  @ApiIgnore
-  public GeneralResponse getAllTeamsOfUser(
-      @PathVariable Long id,
-      HttpServletRequest request, HttpServletResponse response) {
-    List<String> errors = new ArrayList<>();
-
-    Optional<FuseSession> session = fuseSessionController.getSession(request);
-    if (!session.isPresent()) {
-      errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, Status.DENIED, errors);
-    }
-    User user = userRepository.findOne(id);
-
-    return new GeneralResponse(response, OK, null, membersOfGroupController.getTeamsUserIsPartOf(user));
-  }
-
   @GetMapping(path = "/{id}/joined/organizations")
   @ResponseBody
   @ApiOperation(value = "Get all organizations for the specified user")
@@ -436,16 +381,9 @@ public class UserController {
     }
     User user = userRepository.findOne(id);
 
-    List<Organization> list = membersOfGroupController.getOrganizationsUserIsPartOf(user);
-    List<Organization> returnList = new ArrayList<>();
-    for (int i = page * pageSize; i < (page * pageSize) + pageSize; i++) {
-      if (i >= list.size()) {
-        break;
-      }
-      returnList.add(list.get(i));
-    }
+    List<Organization> organizationsUserIsPartOf = membersOfGroupController.getOrganizationsUserIsPartOf(user);
 
-    return new TypedResponse<>(response, OK, null, returnList);
+    return new TypedResponse<>(response, OK, null, getPagedResults(organizationsUserIsPartOf, page, pageSize));
   }
 
 
@@ -469,21 +407,15 @@ public class UserController {
 
     User user = userRepository.findOne(id);
 
-    List<Project> list = membersOfGroupController.getProjectsUserIsPartOf(user);
-    List<Project> returnList = new ArrayList<>();
-    for (int i = page * pageSize; i < (page * pageSize) + pageSize; i++) {
-      if (i >= list.size()) {
-        break;
-      }
-      returnList.add(list.get(i));
-    }
-    return new TypedResponse<>(response, OK, null, returnList);
+    List<Project> projectsUserIsPartOf = membersOfGroupController.getProjectsUserIsPartOf(user);
+
+    return new TypedResponse<>(response, OK, null, getPagedResults(projectsUserIsPartOf, page, pageSize));
   }
 
   @GetMapping(path = "/{id}/projects/applications")
   @ResponseBody
   @ApiOperation(value = "Get all project applications for the user")
-  public TypedResponse<List<ProjectApplicant>> getAllApplicationsOfUserProjs(
+  public TypedResponse<List<ProjectApplicant>> getAllApplicationsOfUserProjects(
       @PathVariable Long id,
       @PathParam("status") String status,
       @PathParam("not_status") String not_status,
@@ -516,7 +448,7 @@ public class UserController {
   @GetMapping(path = "/{id}/organizations/applications")
   @ResponseBody
   @ApiOperation(value = "Get all organization applications for the user")
-  public TypedResponse<List<OrganizationApplicant>> getAllApplicationsOfUserOrgs(
+  public TypedResponse<List<OrganizationApplicant>> getAllApplicationsOfUserOrganizations(
       @PathVariable Long id,
       @PathParam("status") String status,
       @PathParam("not_status") String not_status,
@@ -544,22 +476,6 @@ public class UserController {
     }
 
     return new TypedResponse<>(response, OK, errors, filterApplicants(applicants, not_status == null ? "" : not_status));
-  }
-
-  private <T extends GroupApplicant> List<T> filterApplicants(List<T> applicants, final String not_status) {
-    return applicants.stream()
-        .filter(projectApplicant -> projectApplicant.getStatus().compareToIgnoreCase(not_status) != 0)
-        .sorted((o1, o2) -> {
-          final Integer status1 = GroupApplicant.GetStatusOrder(o1.getStatus());
-          final Integer status2 = GroupApplicant.GetStatusOrder(o2.getStatus());
-          final int statusComp = status1.compareTo(status2);
-          if (statusComp != 0) {
-            return statusComp;
-          }
-          return o1.getGroup().getId().compareTo(o2.getGroup().getId());
-        })
-        .filter(StreamUtil.uniqueByFunction(projectApplicant -> projectApplicant.getGroup().getId()))
-        .collect(Collectors.toList());
   }
 
   @GetMapping(path = "/register/{registrationKey}")
@@ -633,77 +549,10 @@ public class UserController {
         organizationInvitationRepository.findByReceiver(user));
   }
 
-
-  @GetMapping(path = "/incoming/invites/team")
-  @ResponseBody
-  @ApiIgnore
-  public GeneralResponse getTeamInvites(HttpServletRequest request, HttpServletResponse response) {
-    List<String> errors = new ArrayList<>();
-
-    Optional<FuseSession> session = fuseSessionController.getSession(request);
-    if (!session.isPresent()) {
-      errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, DENIED, errors);
-    }
-
-    User user = session.get().getUser();
-
-    return new GeneralResponse(response, OK, null,
-        teamInvitationRepository.findByReceiver(user));
-  }
-
-  @PostMapping(path = "/accept/invite/team")
-  @ResponseBody
-  @ApiIgnore
-  public GeneralResponse acceptTeamInvite(
-      @ApiParam(value = "The team invitation information to accept")
-      @RequestBody TeamInvitation teamInvitation, HttpServletRequest request, HttpServletResponse response) {
-    List<String> errors = new ArrayList<>();
-
-    Optional<FuseSession> session = fuseSessionController.getSession(request);
-    if (!session.isPresent()) {
-      errors.add(INVALID_SESSION);
-      return new GeneralResponse(response, DENIED, errors);
-    }
-
-    TeamInvitation savedInvitation = teamInvitationRepository.findOne(teamInvitation.getId());
-    if (savedInvitation == null) {
-      errors.add(NO_INVITATION_FOUND);
-      return new GeneralResponse(response, BAD_DATA, errors);
-    }
-
-    User user = session.get().getUser();
-    if (!user.getId().equals(savedInvitation.getReceiver().getId())) {
-      errors.add(INSUFFICIENT_PRIVELAGES);
-      return new GeneralResponse(response, DENIED, errors);
-    }
-
-    Team group = savedInvitation.getGroup();
-    UserToTeamPermission permission = permissionFactory.createUserToTeamPermission(user, group);
-
-    UserToTeamRelationship userToTeamRelationship = relationshipFactory.createUserToTeamRelationship(user, group);
-
-    savedInvitation.setInterview(teamInvitation.getInterview());
-    PossibleError possibleError = addRelationshipsIfNotError(savedInvitation, permission, userToTeamRelationship);
-
-    if (!possibleError.hasError()) {
-      savedInvitation.setStatus(ACCEPTED);
-      teamInvitationRepository.save(savedInvitation);
-    }
-
-    try {
-      notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted invitation from " + group.getGroupType() + ": " + group.getName(),
-          "TeamInvitation", "TeamInvitation:Accepted", group.getId());
-    } catch (Exception e) {
-      logger.error(e.getMessage(), e);
-    }
-    return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
-  }
-
   @PostMapping(path = "/{action}/invite/project")
   @ResponseBody
   @ApiOperation(value = "Accept or decline project invite")
-  public BaseResponse acceptProjectInvite(
+  public BaseResponse acceptOrDeclineProjectInvite(
       @ApiParam(value = "The action to perform", example = "accept,decline")
       @PathVariable(value = "action") String action,
       @ApiParam(value = "The project invitation information to accept")
@@ -727,58 +576,13 @@ public class UserController {
       errors.add(INSUFFICIENT_PRIVELAGES);
       return new GeneralResponse(response, DENIED, errors);
     }
-    Project group = savedInvitation.getGroup();
 
+    Project project = savedInvitation.getGroup();
     if (action.equalsIgnoreCase("decline")) {
-      savedInvitation.setStatus(DECLINED);
-      if (savedInvitation.getType().equals("join")) {
-        ProjectApplicant applicant = projectApplicantRepository.findOne(savedInvitation.getApplicant().getId());
-        applicant.setStatus("declined");
-        projectApplicantRepository.save(applicant);
-      }
-
-      projectInvitationRepository.save(savedInvitation);
-      try {
-        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has declined" + savedInvitation.getType() + " invitation from " + group.getGroupType() + ": " + group.getName(),
-            "ProjectInvitation", "ProjectInvitation:Declined", group.getId());
-      } catch (Exception e) {
-        logger.error(e.getMessage(), e);
-      }
-      return new GeneralResponse(response);
-    }
-
-    UserToProjectPermission permission = permissionFactory.createUserToProjectPermission(user, group);
-
-    UserToProjectRelationship userToTeamRelationship = relationshipFactory.createUserToProjectRelationship(user, group);
-
-    if (projectInvitation.getInterview() != null) {
-      savedInvitation.setInterview(interviewRepository.findOne(projectInvitation.getInterview().getId()));
+      return invitationHandler.declineProjectInvitation(response, savedInvitation, user, project);
     } else {
-      savedInvitation.setInterview(null);
+      return invitationHandler.acceptProjectInvitation(projectInvitation, response, savedInvitation, user, project);
     }
-
-    PossibleError possibleError = addRelationshipsIfNotError(savedInvitation, permission, userToTeamRelationship);
-
-    if (!possibleError.hasError()) {
-      savedInvitation.setStatus(ACCEPTED);
-      ProjectApplicant applicant = projectApplicantRepository.findOne(savedInvitation.getApplicant().getId());
-      if (savedInvitation.getType().equals("join")) {
-        applicant.setStatus("accepted");
-      } else {
-        applicant.setStatus("interview_scheduled");
-        applicant.setInterview(interviewRepository.findOne(savedInvitation.getInterview().getId()));
-      }
-      projectApplicantRepository.save(applicant);
-      projectInvitationRepository.save(savedInvitation);
-
-      try {
-        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted" + savedInvitation.getType() + " invitation from " + group.getGroupType() + ": " + group.getName(),
-            "ProjectInvitation", "ProjectInvitation:Accepted", group.getId());
-      } catch (Exception e) {
-        logger.error(e.getMessage(), e);
-      }
-    }
-    return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
   }
 
   @PostMapping(path = "/upload/thumbnail")
@@ -887,107 +691,10 @@ public class UserController {
     Organization group = savedInvitation.getGroup();
 
     if (action.equalsIgnoreCase("decline")) {
-      savedInvitation.setStatus(DECLINED);
-      if (savedInvitation.getType().equals("join")) {
-        OrganizationApplicant applicant = organizationApplicantRepository.findOne(savedInvitation.getApplicant().getId());
-        applicant.setStatus("declined");
-        organizationApplicantRepository.save(applicant);
-      }
-      organizationInvitationRepository.save(savedInvitation);
-      try {
-        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has declined " + savedInvitation.getType() + " invitation from " + group.getGroupType() + ": " + group.getName(),
-            "OrganizationInvitation", "OrganizationInvitation:Declined", group.getId());
-      } catch (Exception e) {
-        errors.add("Can't send notification");
-        return new GeneralResponse(response, ERROR, errors);
-      }
-      return new GeneralResponse(response);
+      return invitationHandler.declineOrganizationInvitation(response, errors, savedInvitation, user, group);
+    } else {
+      return invitationHandler.acceptOrganizationInvitation(organizationInvitation, response, savedInvitation, user, group);
     }
-    UserToOrganizationPermission permission = permissionFactory.createUserToOrganizationPermission(user, group);
-
-    UserToOrganizationRelationship userToTeamRelationship = relationshipFactory.createUserToOrganizationRelationship(user, group);
-
-    savedInvitation.setInterview(organizationInvitation.getInterview());
-    PossibleError possibleError = addRelationshipsIfNotError(savedInvitation, permission, userToTeamRelationship);
-
-    if (!possibleError.hasError()) {
-      savedInvitation.setStatus(ACCEPTED);
-      OrganizationApplicant applicant = organizationApplicantRepository.findOne(savedInvitation.getApplicant().getId());
-      if (savedInvitation.getType().equals("join")) {
-        applicant.setStatus("accepted");
-      } else {
-        applicant.setStatus("interview_scheduled");
-        applicant.setInterview(interviewRepository.findOne(savedInvitation.getInterview().getId()));
-      }
-      organizationApplicantRepository.save(applicant);
-      organizationInvitationRepository.save(savedInvitation);
-      try {
-        notificationController.sendGroupNotificationToAdmins(group, user.getName() + " has accepted " + savedInvitation.getType() + " invitation from " + group.getGroupType() + ": " + group.getName()
-            , "OrganizationInvitation", "OrganizationInvitation:Accepted", group.getId());
-      } catch (Exception e) {
-        logger.error(e.getMessage(), e);
-      }
-    }
-    return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
-  }
-
-
-  private PossibleError addRelationshipsIfNotError(GroupInvitation invitation, UserToGroupPermission permission,
-                                                   UserToGroupRelationship relationship) {
-
-    List<String> errors = new ArrayList<>();
-
-    User user = invitation.getReceiver();
-    Optional<Integer> roleFromInvitationType = RolesUtility.getRoleFromInvitationType(invitation.getType());
-    if (!roleFromInvitationType.isPresent()) {
-      errors.add(INVALID_FIELDS);
-      return new PossibleError(errors);
-    }
-
-    switch (roleFromInvitationType.get()) {
-      case INVITED_TO_INTERVIEW:
-        Interview interview = invitation.getInterview();
-        if (interview == null) {
-          errors.add(INVALID_FIELDS);
-          return new PossibleError(errors);
-        }
-        Group group = invitation.getGroup();
-        LocalDateTime currentDateTime = ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime();
-
-        List<Interview> availableInterviewsAfterDate = interviewRepository
-            .getAvailableInterviewsAfterDate(group.getId(), group.getGroupType(), currentDateTime);
-
-        long count = availableInterviewsAfterDate.stream().map(Interview::getId)
-            .filter(id -> Objects.equals(id, interview.getId())).count();
-
-        if (count < 1) {
-          errors.add(NO_INTERVIEW_FOUND);
-          return new PossibleError(errors);
-        }
-
-        if (!permission.hasRole(INVITED_TO_INTERVIEW)) {
-          errors.add(INSUFFICIENT_PRIVELAGES);
-          return new PossibleError(errors);
-        }
-
-        relationship.addRelationship(TO_INTERVIEW);
-        relationship.removeRelationship(INVITED_TO_INTERVIEW);
-
-        interview.setUser(user);
-        interview.setAvailability(NOT_AVAILABLE);
-        interviewRepository.save(interview);
-        break;
-      case INVITED_TO_JOIN:
-        if (permission.canJoin() != JoinResult.HAS_INVITE) {
-          errors.add(INSUFFICIENT_PRIVELAGES);
-          return new PossibleError(errors);
-        }
-        relationship.addRelationship(DEFAULT_USER);
-        relationship.removeRelationship(INVITED_TO_JOIN);
-        break;
-    }
-
-    return new PossibleError(Status.OK);
   }
 
   private boolean logoutIfLoggedIn(User user, HttpServletRequest request) {

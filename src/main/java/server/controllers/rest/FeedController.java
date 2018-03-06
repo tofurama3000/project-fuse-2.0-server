@@ -17,6 +17,7 @@ import server.controllers.rest.response.TypedResponse;
 import server.entities.dto.FuseSession;
 import server.entities.dto.Notification;
 import server.repositories.NotificationRepository;
+import server.utility.PagingUtil;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -33,7 +34,7 @@ public class FeedController {
   private FuseSessionController fuseSessionController;
 
   @Autowired
-  NotificationRepository notificationRepository;
+  private NotificationRepository notificationRepository;
 
 
   @GetMapping
@@ -49,15 +50,10 @@ public class FeedController {
       errors.add(INVALID_SESSION);
       return new TypedResponse<>(response, BaseResponse.Status.DENIED, errors);
     }
-    List<Notification> list = notificationRepository.getNotifications(session.get().getUser());
-    List<Notification> returnList = new ArrayList<Notification>();
-    for (int i = page * pageSize; i < (page * pageSize) + pageSize; i++) {
-      if (i >= list.size()) {
-        break;
-      }
-      returnList.add(list.get(i));
-    }
-    return new TypedResponse<>(response, BaseResponse.Status.OK, null, returnList);
+    List<Notification> allNotifications = notificationRepository.getNotifications(session.get().getUser());
+
+    return new TypedResponse<>(response, BaseResponse.Status.OK, null,
+        PagingUtil.getPagedResults(allNotifications, page, pageSize));
   }
 
 }
