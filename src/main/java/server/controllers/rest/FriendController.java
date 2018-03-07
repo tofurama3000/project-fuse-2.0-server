@@ -200,17 +200,17 @@ public class FriendController {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
-    Friendship Friendship = friendRepository.findOne(id);
-    if (Friendship == null) {
+    Friendship friendship = friendRepository.findOne(id);
+    if (friendship == null) {
       errors.add(INVALID_FIELDS);
       return new GeneralResponse(response, BaseResponse.Status.DENIED);
     }
-    if (!Friendship.getStatus().equals("accepted")) {
+    if (!friendship.getStatus().equals("accepted")) {
       errors.add(INVALID_FIELDS);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
-    Friendship.setStatus("deleted");
-    friendRepository.save(Friendship);
+    friendship.setStatus("deleted");
+    friendRepository.save(friendship);
     return new GeneralResponse(response, OK);
   }
 
