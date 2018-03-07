@@ -27,6 +27,9 @@ public class ApplicantUpdateService {
     List<ProjectApplicant> projectApplicants = projectApplicantRepository.getApplicantsByStatus("interview_scheduled");
     for (ProjectApplicant projectApplicant : projectApplicants) {
       Interview interview = projectApplicant.getInterview();
+      if (interview == null) {
+        continue;
+      }
       ZonedDateTime now = ZonedDateTime.now();
       if (now.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime().isAfter(interview.getEndDateTime())) {
         projectApplicant.setStatus("interviewed");
@@ -36,6 +39,9 @@ public class ApplicantUpdateService {
     List<OrganizationApplicant> organizationApplicants = organizationApplicantRepository.getApplicantsByStatus("interview_scheduled");
     for (OrganizationApplicant organizationApplicant : organizationApplicants) {
       Interview interview = organizationApplicant.getInterview();
+      if (interview == null) {
+        continue;
+      }
       ZonedDateTime now = ZonedDateTime.now();
       if (now.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime().isAfter(interview.getEndDateTime())) {
         organizationApplicant.setStatus("interviewed");

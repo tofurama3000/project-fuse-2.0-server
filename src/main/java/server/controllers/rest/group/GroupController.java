@@ -809,7 +809,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
         interviewInvitation.setGroup(group);
         interviewInvitation.setReceiver(applicantToSave.getSender());
         interviewInvitation.setType("interview");
-        setInviteFieldsAndSave(interviewInvitation, session.get().getUser(), INVITED_TO_INTERVIEW, applicantToSave.getSender(), group);
+        errors.addAll(setInviteFieldsAndSave(interviewInvitation, session.get().getUser(), INVITED_TO_INTERVIEW, applicantToSave.getSender(), group));
+        if (errors.size() > 0) {
+          break;
+        }
+
         interviewInvitation.setStatus(PENDING);
         interviewInvitation = getGroupInvitationRepository().save(interviewInvitation);
 
