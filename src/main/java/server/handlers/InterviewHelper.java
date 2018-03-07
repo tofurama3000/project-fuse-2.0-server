@@ -1,5 +1,6 @@
 package server.handlers;
 
+import static server.constants.Availability.AVAILABLE;
 import static server.constants.Availability.NOT_AVAILABLE;
 import static server.constants.RoleValue.INVITED_TO_INTERVIEW;
 import static server.constants.RoleValue.TO_INTERVIEW;
@@ -65,4 +66,23 @@ public class InterviewHelper {
     interviewRepository.save(interview);
     return false;
   }
+
+  public void saveNewInterviewsForGroup(List<Interview> interviews, Group group) {
+    for (Interview interview : interviews) {
+      interview.setGroupType(group.getGroupType());
+      interview.setAvailability(AVAILABLE);
+      interview.setGroupId(group.getId());
+    }
+
+    interviewRepository.save(interviews);
+  }
+
+  public void setInterviewsAvailableAndSave(List<Interview> interviews) {
+    for (Interview interview : interviews) {
+      interview.setUser(null);
+      interview.setAvailability(AVAILABLE);
+    }
+    interviewRepository.save(interviews);
+  }
+
 }

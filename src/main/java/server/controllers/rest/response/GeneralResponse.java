@@ -1,6 +1,7 @@
 package server.controllers.rest.response;
 
 import lombok.Data;
+import server.entities.PossibleError;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.Collections;
@@ -11,6 +12,9 @@ public class GeneralResponse extends BaseResponse {
 
   private Object data;
 
+  public GeneralResponse(HttpServletResponse httpServletResponse, PossibleError possibleError) {
+    this(httpServletResponse, possibleError.getStatus(), possibleError.getErrors());
+  }
 
   public GeneralResponse(HttpServletResponse response, Status status, List<String> errors, Object data) {
     super(response, status, errors);

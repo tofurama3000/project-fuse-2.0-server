@@ -1,6 +1,5 @@
 package server.controllers.rest.group;
 
-import static server.constants.Availability.AVAILABLE;
 import static server.constants.InvitationStatus.PENDING;
 import static server.constants.RoleValue.ADMIN;
 import static server.constants.RoleValue.DEFAULT_USER;
@@ -60,6 +59,7 @@ import server.entities.dto.group.GroupProfile;
 import server.entities.dto.group.interview.Interview;
 import server.entities.dto.user.User;
 import server.entities.user_to_group.permissions.UserToGroupPermission;
+import server.handlers.InterviewHelper;
 import server.repositories.UserRepository;
 import server.repositories.group.GroupApplicantRepository;
 import server.repositories.group.GroupInvitationRepository;
@@ -67,6 +67,7 @@ import server.repositories.group.GroupMemberRepository;
 import server.repositories.group.GroupProfileRepository;
 import server.repositories.group.GroupRepository;
 import server.repositories.group.InterviewRepository;
+import server.utility.ApplicantUtil;
 import server.utility.InterviewUtil;
 import server.utility.UserFindHelper;
 import springfox.documentation.annotations.ApiIgnore;
@@ -107,6 +108,9 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   private InterviewRepository interviewRepository;
 
   @Autowired
+  private InterviewHelper interviewHelper;
+
+  @Autowired
   private UserFindHelper userFindHelper;
 
   @Autowired
@@ -126,9 +130,10 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
-    if (!session.isPresent()) {
-      errors.add(INVALID_SESSION);
-      return new TypedResponse<>(response, DENIED, errors);
+
+    PossibleError possibleError = fuseSessionController.validateSession(request);
+    if (possibleError.hasError()) {
+      return new TypedResponse<>(response, possibleError);
     }
 
     if (!validFieldsForCreate(entity)) {
@@ -143,10 +148,10 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
 
     User user = session.get().getUser();
 
-    PossibleError possibleError = validateGroup(user, entity);
+    PossibleError possibleValidationError = validateGroup(user, entity);
 
-    if (possibleError.hasError()) {
-      return new TypedResponse<>(response, possibleError.getStatus(), possibleError.getErrors());
+    if (possibleValidationError.hasError()) {
+      return new TypedResponse<>(response, possibleValidationError);
     }
 
     List<T> entities = getGroupsWith(user, entity);
@@ -168,7 +173,6 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @ResponseBody
   @ApiOperation("Delete an entity")
   @ApiIgnore
-  // TODO: Fix this; it doesn't work due to foreign key constraints with the profile entity
   public GeneralResponse delete(
       @ApiParam("ID of the entity to delete")
       @PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response) {
@@ -205,33 +209,31 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
 
-    GroupApplicant<T> application = getApplication();
+    GroupApplicant<T> applicant = getApplication();
     T group = getGroupRepository().findOne(id);
-    application.setGroup(group);
+    if (group == null) {
+      errors.add(NO_GROUP_FOUND);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
+    }
 
-    switch (getUserToGroupPermission(session.get().getUser(), application.getGroup()).canJoin()) {
+    applicant.setGroup(group);
+
+    switch (getUserToGroupPermission(session.get().getUser(), applicant.getGroup()).canJoin()) {
       case ALREADY_JOINED:
         errors.add(ALREADY_JOINED_MSG);
         return new GeneralResponse(response, ERROR, errors);
     }
     List<GroupApplicant> applicants = getGroupApplicantRepository().getApplicantsBySender(session.get().getUser());
-    for (GroupApplicant applicant : applicants) {
-      if (applicant.getGroup().getId().equals(id)) {
-        errors.add("Already applied");
-        return new GeneralResponse(response, ERROR, errors);
-      }
+    if (ApplicantUtil.applicantsContainId(applicants, id)) {
+      return new GeneralResponse(response, ERROR, "Already applied");
     }
-    application.setSender(session.get().getUser());
-    application.setStatus(PENDING);
-    if (group == null) {
-      errors.add(NO_GROUP_FOUND);
-      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
-    }
+    applicant.setSender(session.get().getUser());
+    applicant.setStatus(PENDING);
+
     ZonedDateTime now = ZonedDateTime.now();
-    application.setTime(now.toString());
-    getGroupApplicantRepository().save(application);
-    Map<String, Object> result = new HashMap<>();
-    result.put("applied", true);
+    applicant.setTime(now.toString());
+    getGroupApplicantRepository().save(applicant);
+
     try {
       notificationController.sendGroupNotificationToAdmins(group, session.get().getUser().getName() + " has applied to " + group.getName(),
           group.getGroupType() + "Applicant", group.getGroupType() + "Applicant", application.getId());
@@ -240,6 +242,9 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
 
       return new GeneralResponse(response, BaseResponse.Status.ERROR, "Could not send notification");
     }
+
+    Map<String, Object> result = new HashMap<>();
+    result.put("applied", true);
     return new GeneralResponse(response, BaseResponse.Status.OK, errors, result);
   }
 
@@ -272,12 +277,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     }
 
     // Merging instead of direct copying ensures we're very clear about what can be edited, and it provides easy checks
-    if (groupData.getName() != null)
+    if (groupData.getName() != null) {
       groupToSave.setName(groupData.getName());
+    }
 
     if (groupData.getProfile() != null) {
-
-
       if (groupToSave.getProfile() == null) {
         groupData.getProfile().setGroup(groupToSave);
         GroupProfile profile = saveProfile(groupData);
@@ -382,11 +386,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       return new GeneralResponse(response, DENIED, errors);
     }
 
-    errors = setInviteFields(groupInvitation, sessionUser, role.get(), receiver.get(), group);
+    errors = setInviteFieldsAndSave(groupInvitation, sessionUser, role.get(), receiver.get(), group);
     return new GeneralResponse(response, errors);
   }
 
-  private List<String> setInviteFields(I groupInvitation, User sessionUser, Integer role, User receiver, T group) {
+  private List<String> setInviteFieldsAndSave(I groupInvitation, User sessionUser, Integer role, User receiver, T group) {
     List<String> errors = new ArrayList<>();
 
     groupInvitation.setStatus(PENDING);
@@ -426,8 +430,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     I invite = getInvitation();
     List<String> errors = new ArrayList<>();
     invite.setGroup(getGroupRepository().findOne(id));
-    GroupApplicantRepository applicantRespo = getGroupApplicantRepository();
-    GroupApplicant<T> applicant = (GroupApplicant) applicantRespo.findOne(applicantId);
+    GroupApplicantRepository applicantRepository = getGroupApplicantRepository();
+    GroupApplicant<T> applicant = (GroupApplicant) applicantRepository.findOne(applicantId);
     if (applicant == null) {
       errors.add("Applicant not found");
       return new GeneralResponse(response, errors);
@@ -462,13 +466,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     }
 
     T group = getGroupRepository().findOne(id);
-    for (Interview interview : interviews) {
-      interview.setGroupType(group.getGroupType());
-      interview.setAvailability(AVAILABLE);
-      interview.setGroupId(id);
-    }
-
-    interviewRepository.save(interviews);
+    interviewHelper.saveNewInterviewsForGroup(interviews, group);
     return new GeneralResponse(response, OK);
   }
 
@@ -531,8 +529,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, DENIED, errors);
     }
-    Interview interviewTosave = interviewRepository.findOne(id);
-    if (interviewTosave == null) {
+    Interview interviewToSave = interviewRepository.findOne(id);
+    if (interviewToSave == null) {
       errors.add(INVALID_FIELDS);
       return new GeneralResponse(response, BAD_DATA, errors);
     }
@@ -568,7 +566,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
         interview.setEnd(interview.getEnd());
       }
     }
-    interviewRepository.save(interviewTosave);
+    interviewRepository.save(interviewToSave);
     return new GeneralResponse(response, OK);
   }
 
@@ -703,12 +701,12 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       return new TypedResponse<>(response, DENIED, errors);
     }
 
-    T res = getGroupRepository().findOne(id);
-    if (res != null) {
+    T group = getGroupRepository().findOne(id);
+    if (group != null) {
       User user = session.get().getUser();
-      res = setJoinPermissions(user, res);
+      group = setJoinPermissions(user, group);
 
-      return new TypedResponse<>(response, OK, null, res);
+      return new TypedResponse<>(response, OK, null, group);
     }
     errors.add("Invalid ID! Object does not exist!");
 
@@ -790,65 +788,71 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
 
     ZonedDateTime now = ZonedDateTime.now();
 
-    if (status.equals("declined")) {
-      try {
-        notificationController.sendNotification(applicantToSave.getSender(), applicantToSave.getGroup().getName() + "'s admin rejected your application",
-            applicantToSave.getGroup().getGroupType() + "Applicant", applicantToSave.getGroup().getGroupType() + "Applicant:Declined", applicantToSave.getId());
-      } catch (Exception e) {
-        logger.error(e.getMessage(), e);
-      }
-    }
-
     if (!status.equals("interview_scheduled")) {
+      // Not sure why this is here, but im leaving it in
       List<Interview> interviews = interviewRepository.getAllByUserAndGroupTypeAndGroup(applicantToSave.getSender(), applicantToSave.getGroup().getGroupType(), applicantToSave.getGroup().getId());
-      for (Interview interview : interviews) {
-        interview.setUser(null);
-        interview.setAvailability(AVAILABLE);
-      }
-      interviewRepository.save(interviews);
-    } else {
-      // Runs if status set to interview_scheduled
-      T g = getGroupRepository().findOne(applicantToSave.getGroup().getId());
-      I invite = getInvitation();
-      invite.setGroup(g);
-      invite.setReceiver(applicantToSave.getSender());
-      invite.setType("interview");
-      setInviteFields(invite, session.get().getUser(), INVITED_TO_INTERVIEW, applicantToSave.getSender(), g);
-      invite.setStatus(PENDING);
-      invite = getGroupInvitationRepository().save(invite);
-
-      try {
-        notificationController.sendNotification(applicantToSave.getSender(),
-            "You have been invited to interview with " + applicantToSave.getGroup().getName() + "!",
-            applicantToSave.getGroup().getGroupType() + "Invitation", applicantToSave.getGroup().getGroupType() + "Invitation:Invite",
-            invite.getId()
-        );
-      } catch (Exception e) {
-        logger.error(e.getMessage(), e);
-      }
+      interviewHelper.setInterviewsAvailableAndSave(interviews);
     }
 
-    if (status.equals("invited")) {
-      I invite = getInvitation();
-      invite.setGroup(getGroupRepository().findOne(id));
-      invite.setReceiver(userRepository.findOne(applicantToSave.getSender().getId()));
-      invite.setType("join");
+    switch (status) {
+      case "declined":
+        try {
+          notificationController.sendNotification(applicantToSave.getSender(), applicantToSave.getGroup().getName() + "'s admin rejected your application",
+              applicantToSave.getGroup().getGroupType() + "Applicant", applicantToSave.getGroup().getGroupType() + "Applicant:Declined", applicantToSave.getId());
+        } catch (Exception e) {
+          logger.error(e.getMessage(), e);
+        }
+        break;
+      case "interview_scheduled":
+        T group = getGroupRepository().findOne(applicantToSave.getGroup().getId());
+        I interviewInvitation = getInvitation();
+        interviewInvitation.setGroup(group);
+        interviewInvitation.setReceiver(applicantToSave.getSender());
+        interviewInvitation.setType("interview");
+        errors.addAll(setInviteFieldsAndSave(interviewInvitation, session.get().getUser(), INVITED_TO_INTERVIEW, applicantToSave.getSender(), group));
+        if (errors.size() > 0) {
+          break;
+        }
 
-      Optional<Integer> role = getRoleFromInvitationType(invite.getType());
+        interviewInvitation.setStatus(PENDING);
+        interviewInvitation = getGroupInvitationRepository().save(interviewInvitation);
 
-      if (!role.isPresent()) {
-        errors.add("Unrecognized type");
-        return new GeneralResponse(response, BAD_DATA, errors);
-      }
+        try {
+          notificationController.sendNotification(applicantToSave.getSender(),
+              "You have been invited to interview with " + applicantToSave.getGroup().getName() + "!",
+              applicantToSave.getGroup().getGroupType() + "Invitation", applicantToSave.getGroup().getGroupType() + "Invitation:Invite",
+              interviewInvitation.getId()
+          );
+        } catch (Exception e) {
+          logger.error(e.getMessage(), e);
+        }
+        break;
+      case "invited":
+        I invitationToJoin = getInvitation();
+        invitationToJoin.setGroup(getGroupRepository().findOne(id));
+        invitationToJoin.setReceiver(userRepository.findOne(applicantToSave.getSender().getId()));
+        invitationToJoin.setType("join");
 
-      errors = setInviteFields(invite,
-          session.get().getUser(),
-          role.get(),
-          applicantToSave.getSender(),
-          getGroupRepository().findOne(applicantToSave.getGroup().getId()));
-      if (errors.size() > 0) {
-        return new GeneralResponse(response, ERROR, errors);
-      }
+        Optional<Integer> role = getRoleFromInvitationType(invitationToJoin.getType());
+
+        if (!role.isPresent()) {
+          errors.add("Unrecognized type");
+          return new GeneralResponse(response, BAD_DATA, errors);
+        }
+
+        errors = setInviteFieldsAndSave(invitationToJoin,
+            session.get().getUser(),
+            role.get(),
+            applicantToSave.getSender(),
+            getGroupRepository().findOne(applicantToSave.getGroup().getId()));
+
+        break;
+      default:
+        return new GeneralResponse(response, BAD_DATA, "Invalid status");
+    }
+
+    if (errors.size() > 0) {
+      return new GeneralResponse(response, ERROR, errors);
     }
 
     return new GeneralResponse(response, OK);
@@ -948,15 +952,17 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
-      return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new TypedResponse<>(response, GeneralResponse.Status.DENIED, errors);
     }
     T group = getGroupRepository().findOne(id);
-    long f_id = group.getProfile().getBackground_id();
-    if (f_id == 0) {
+    long backgroundId = group.getProfile().getBackground_id();
+
+    //TODO this appears to not be doing anything
+    if (backgroundId == 0) {
       errors.add(FILE_NOT_FOUND);
-      return new TypedResponse(response, GeneralResponse.Status.DENIED, errors);
+      return new TypedResponse<>(response, GeneralResponse.Status.DENIED, errors);
     }
-    return new TypedResponse<>(response, OK, null, f_id);
+    return new TypedResponse<>(response, OK, null, backgroundId);
   }
 
   @GetMapping(path = "/{id}/download/thumbnail")
@@ -970,12 +976,12 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       return new TypedResponse<>(response, GeneralResponse.Status.DENIED, errors);
     }
     T group = getGroupRepository().findOne(id);
-    long f_id = group.getProfile().getThumbnail_id();
-    if (f_id == 0) {
+    long thumbnailId = group.getProfile().getThumbnail_id();
+    if (thumbnailId == 0) {
       errors.add(FILE_NOT_FOUND);
       return new TypedResponse<>(response, GeneralResponse.Status.DENIED, errors);
     }
-    return new TypedResponse<>(response, OK, null, f_id);
+    return new TypedResponse<>(response, OK, null, thumbnailId);
   }
 
   private boolean validFieldsForCreate(T entity) {

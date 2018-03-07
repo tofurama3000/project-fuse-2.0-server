@@ -1,6 +1,7 @@
 package server.controllers.rest.response;
 
 import lombok.Data;
+import server.entities.PossibleError;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.Collections;
@@ -8,8 +9,8 @@ import java.util.List;
 
 @Data
 public class TypedResponse<T> extends BaseResponse {
-  private T data;
 
+  private T data;
 
   public TypedResponse(HttpServletResponse response, Status status, List<String> errors, T data) {
     super(response, status, errors);
@@ -18,6 +19,10 @@ public class TypedResponse<T> extends BaseResponse {
 
   public TypedResponse(HttpServletResponse response, Status status, List<String> errors) {
     this(response, status, errors, null);
+  }
+
+  public TypedResponse(HttpServletResponse response, PossibleError possibleError) {
+    this(response, possibleError.getStatus(), possibleError.getErrors(), null);
   }
 
   public TypedResponse(HttpServletResponse response, Status status, String error) {

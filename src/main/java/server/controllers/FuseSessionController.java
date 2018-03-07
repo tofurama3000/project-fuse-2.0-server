@@ -1,9 +1,13 @@
 package server.controllers;
 
+import static server.controllers.rest.response.BaseResponse.Status.DENIED;
+import static server.controllers.rest.response.BaseResponse.Status.OK;
+import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.AlternativeJdkIdGenerator;
 import org.springframework.util.IdGenerator;
+import server.entities.PossibleError;
 import server.entities.dto.FuseSession;
 import server.entities.dto.user.User;
 import server.repositories.SessionRepository;
@@ -29,9 +33,18 @@ public class FuseSessionController {
     sessionRepository.delete(fuseSession);
   }
 
+  public PossibleError validateSession(HttpServletRequest request) {
+    Optional<FuseSession> session = getSession(request);
+    if (!session.isPresent()) {
+      return new PossibleError(INVALID_SESSION, DENIED);
+    } else {
+      return new PossibleError(OK);
+    }
+  }
+
   public boolean isSessionValid(User user, String sessionId) {
     FuseSession fuseSession = sessionRepository.findOne(sessionId);
-    return fuseSession != null && fuseSession.getUser().getId() == user.getId();
+    return fuseSession != null && fuseSession.getUser().getId().equals(user.getId());
   }
 
   public boolean isSessionValid(HttpServletRequest servletRequest) {
