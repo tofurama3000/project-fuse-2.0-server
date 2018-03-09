@@ -235,8 +235,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     getGroupApplicantRepository().save(applicant);
 
     try {
-      notificationController.sendGroupNotificationToAdmins(group, session.get().getUser().getName() + " has applied to " + group.getName(),
-          group.getGroupType() + "Applicant", group.getGroupType() + "Applicant", applicant.getId());
+      try {
+        notificationController.sendUserAppliedNotification(session.get().getUser(), group);
+      } catch (Exception e) {
+        logger.error(e.getMessage(), e);
+      }
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
 
@@ -319,8 +322,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       case OK:
         addRelationship(user, group, DEFAULT_USER);
         try {
-          notificationController.sendGroupNotificationToAdmins(group, user.getName() + " joined " + group.getName(),
-              group.getGroupType() + "Applicant", group.getGroupType() + "Applicant:Accepted", group.getId());
+          notificationController.sendUserJoinedNotification(user, group);
         } catch (Exception e) {
           logger.error(e.getMessage(), e);
         }
@@ -329,8 +331,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
         addRelationship(user, group, DEFAULT_USER);
         removeRelationship(user, group, INVITED_TO_JOIN);
         try {
-          notificationController.sendGroupNotificationToAdmins(group, user.getName() + " joined " + group.getName(),
-              group.getGroupType() + "Invitation", group.getGroupType() + "Invitation:Accepted", group.getId());
+          notificationController.sendUserJoinedNotification(user, group);
         } catch (Exception e) {
           logger.error(e.getMessage(), e);
         }
@@ -414,7 +415,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     }
 
     try {
-      notificationController.sendNotification(groupInvitation.getReceiver(), "You have been invited to join " + group.getName(), group.getGroupType() + "Invitation", group.getGroupType() + "Invitation:Invite", groupInvitation.getId());
+      notificationController.sendJoinInvitationNotification(groupInvitation);
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
     }
@@ -779,58 +780,58 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     }
 
     GroupApplicantRepository groupApplicantRepository = getGroupApplicantRepository();
-    GroupApplicant applicantToSave = (GroupApplicant) groupApplicantRepository.findOne(appId);
-    if (applicantToSave.getStatus().equals(status)) {
+    GroupApplicant applicationToSave = (GroupApplicant) groupApplicantRepository.findOne(appId);
+    if (applicationToSave.getStatus().equals(status)) {
       return new GeneralResponse(response, OK);
     }
-    applicantToSave.setStatus(status);
-    groupApplicantRepository.save(applicantToSave);
+    applicationToSave.setStatus(status);
+    groupApplicantRepository.save(applicationToSave);
 
     ZonedDateTime now = ZonedDateTime.now();
 
     if (!status.equals("interview_scheduled")) {
       // Not sure why this is here, but im leaving it in
-      List<Interview> interviews = interviewRepository.getAllByUserAndGroupTypeAndGroup(applicantToSave.getSender(), applicantToSave.getGroup().getGroupType(), applicantToSave.getGroup().getId());
+      List<Interview> interviews = interviewRepository.getAllByUserAndGroupTypeAndGroup(applicationToSave.getSender(), applicationToSave.getGroup().getGroupType(), applicationToSave.getGroup().getId());
       interviewHelper.setInterviewsAvailableAndSave(interviews);
     }
 
     switch (status) {
       case "declined":
         try {
-          notificationController.sendNotification(applicantToSave.getSender(), applicantToSave.getGroup().getName() + "'s admin rejected your application",
-              applicantToSave.getGroup().getGroupType() + "Applicant", applicantToSave.getGroup().getGroupType() + "Applicant:Declined", applicantToSave.getId());
+          notificationController.sendApplicationRejectedNotification(applicationToSave);
         } catch (Exception e) {
           logger.error(e.getMessage(), e);
+          errors.add(e.getMessage());
+          return new GeneralResponse(response, ERROR, errors);
         }
         break;
       case "interview_scheduled":
-        T group = getGroupRepository().findOne(applicantToSave.getGroup().getId());
+        T group = getGroupRepository().findOne(applicationToSave.getGroup().getId());
         I interviewInvitation = getInvitation();
         interviewInvitation.setGroup(group);
-        interviewInvitation.setReceiver(applicantToSave.getSender());
+        interviewInvitation.setReceiver(applicationToSave.getSender());
         interviewInvitation.setType("interview");
-        errors.addAll(setInviteFieldsAndSave(interviewInvitation, session.get().getUser(), INVITED_TO_INTERVIEW, applicantToSave.getSender(), group));
+        errors.addAll(setInviteFieldsAndSave(interviewInvitation, session.get().getUser(), INVITED_TO_INTERVIEW, applicationToSave.getSender(), group));
         if (errors.size() > 0) {
           break;
         }
 
         interviewInvitation.setStatus(PENDING);
-        interviewInvitation = getGroupInvitationRepository().save(interviewInvitation);
 
+        interviewInvitation = getGroupInvitationRepository().save(interviewInvitation);
         try {
-          notificationController.sendNotification(applicantToSave.getSender(),
-              "You have been invited to interview with " + applicantToSave.getGroup().getName() + "!",
-              applicantToSave.getGroup().getGroupType() + "Invitation", applicantToSave.getGroup().getGroupType() + "Invitation:Invite",
-              interviewInvitation.getId()
-          );
+          notificationController.sendInterviewInvitation(interviewInvitation, applicationToSave);
         } catch (Exception e) {
           logger.error(e.getMessage(), e);
+          errors.add(e.getMessage());
+          getGroupInvitationRepository().delete(interviewInvitation);
+          return new GeneralResponse(response, ERROR, errors);
         }
         break;
       case "invited":
         I invitationToJoin = getInvitation();
         invitationToJoin.setGroup(getGroupRepository().findOne(id));
-        invitationToJoin.setReceiver(userRepository.findOne(applicantToSave.getSender().getId()));
+        invitationToJoin.setReceiver(userRepository.findOne(applicationToSave.getSender().getId()));
         invitationToJoin.setType("join");
 
         Optional<Integer> role = getRoleFromInvitationType(invitationToJoin.getType());
@@ -843,8 +844,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
         errors = setInviteFieldsAndSave(invitationToJoin,
             session.get().getUser(),
             role.get(),
-            applicantToSave.getSender(),
-            getGroupRepository().findOne(applicantToSave.getGroup().getId()));
+            applicationToSave.getSender(),
+            getGroupRepository().findOne(applicationToSave.getGroup().getId()));
 
         break;
       default:

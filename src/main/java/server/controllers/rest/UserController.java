@@ -56,7 +56,6 @@ import server.entities.dto.user.UserProfile;
 import server.entities.user_to_group.permissions.PermissionFactory;
 import server.entities.user_to_group.permissions.UserPermission;
 import server.handlers.InvitationHandler;
-import server.handlers.NotificationHandler;
 import server.handlers.UserToGroupRelationshipHandler;
 import server.repositories.UnregisteredUserRepository;
 import server.repositories.UserProfileRepository;
@@ -131,9 +130,6 @@ public class UserController {
 
   @Autowired
   private InvitationHandler invitationHandler;
-
-  @Autowired
-  private NotificationHandler notificationHandler;
 
   @Value("${fuse.fileUploadPath}")
   private String fileUploadPath;

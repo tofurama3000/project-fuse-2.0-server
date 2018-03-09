@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import server.controllers.rest.NotificationController;
 import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.PossibleError;
@@ -24,7 +25,6 @@ import server.entities.user_to_group.permissions.UserToProjectPermission;
 import server.entities.user_to_group.relationships.RelationshipFactory;
 import server.entities.user_to_group.relationships.UserToOrganizationRelationship;
 import server.entities.user_to_group.relationships.UserToProjectRelationship;
-import server.repositories.NotificationRepository;
 import server.repositories.group.InterviewRepository;
 import server.repositories.group.organization.OrganizationApplicantRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
@@ -41,33 +41,30 @@ public class InvitationHandler {
   private final InterviewRepository interviewRepository;
   private final RelationshipFactory relationshipFactory;
   private final UserToGroupRelationshipHandler userToGroupRelationshipHandler;
-  private final NotificationHandler notificationHandler;
   private final ProjectApplicantRepository projectApplicantRepository;
   private final ProjectInvitationRepository projectInvitationRepository;
   private final OrganizationApplicantRepository organizationApplicantRepository;
   private final OrganizationInvitationRepository organizationInvitationRepository;
-  private final NotificationRepository notificationRepository;
+  private final NotificationController notificationController;
 
   private final Logger logger = LoggerFactory.getLogger(InvitationHandler.class);
 
   @Autowired
   public InvitationHandler(PermissionFactory permissionFactory, InterviewRepository interviewRepository,
                            RelationshipFactory relationshipFactory, UserToGroupRelationshipHandler userToGroupRelationshipHandler,
-                           NotificationHandler notificationHandler,
                            ProjectApplicantRepository projectApplicantRepository, ProjectInvitationRepository projectInvitationRepository,
                            OrganizationApplicantRepository organizationApplicantRepository, OrganizationInvitationRepository organizationInvitationRepository,
-                           NotificationRepository notificationRepository) {
+                           NotificationController notificationController) {
 
     this.permissionFactory = permissionFactory;
     this.interviewRepository = interviewRepository;
     this.relationshipFactory = relationshipFactory;
     this.userToGroupRelationshipHandler = userToGroupRelationshipHandler;
-    this.notificationHandler = notificationHandler;
     this.projectApplicantRepository = projectApplicantRepository;
     this.projectInvitationRepository = projectInvitationRepository;
     this.organizationApplicantRepository = organizationApplicantRepository;
     this.organizationInvitationRepository = organizationInvitationRepository;
-    this.notificationRepository = notificationRepository;
+    this.notificationController = notificationController;
   }
 
   public BaseResponse acceptProjectInvitation(ProjectInvitation projectInvitation, HttpServletResponse response,
@@ -89,9 +86,8 @@ public class InvitationHandler {
       ProjectApplicant applicant = projectApplicantRepository.findOne(savedInvitation.getApplicant().getId());
       if (savedInvitation.getType().equals("join")) {
         applicant.setStatus("accepted");
-        List<Notification> list = notificationRepository.getNotifications(applicant.getId(), "ProjectApplicant");
-        for(Notification n: list)
-          notificationHandler.markNotificationDone(n);
+        notificationController.markAsDoneForApplicant(applicant);
+        notificationController.markInvitationsAsDoneFor(savedInvitation);
       } else {
         applicant.setStatus("interview_scheduled");
         applicant.setInterview(interviewRepository.findOne(savedInvitation.getInterview().getId()));
@@ -100,16 +96,11 @@ public class InvitationHandler {
       projectInvitationRepository.save(savedInvitation);
 
       try {
-        notificationHandler.sendGroupNotificationToAdmins(group, user.getName() + " has accepted " +
-                savedInvitation.getType() + " invitation from " + group.getGroupType() + ": " + group.getName(),
-            "ProjectInvitation", "ProjectInvitation:Accepted", group.getId());
+        notificationController.sendUserJoinedNotification(user, group);
       } catch (Exception e) {
         logger.error(e.getMessage(), e);
       }
     }
-    List<Notification> list = notificationRepository.getNotifications(savedInvitation.getId(), "ProjectInvitation:Invite");
-    for(Notification n: list)
-    notificationHandler.markNotificationDone(n);
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
   }
 
@@ -118,22 +109,18 @@ public class InvitationHandler {
     if (savedInvitation.getType().equals("join")) {
       ProjectApplicant applicant = projectApplicantRepository.findOne(savedInvitation.getApplicant().getId());
       applicant.setStatus("declined");
-      List<Notification> list = notificationRepository.getNotifications(applicant.getId(), "ProjectApplicant");
-      for(Notification n: list)
-        notificationHandler.markNotificationDone(n);
+      notificationController.markAsDoneForApplicant(applicant);
+      notificationController.markInvitationsAsDoneFor(savedInvitation);
       projectApplicantRepository.save(applicant);
     }
 
     projectInvitationRepository.save(savedInvitation);
     try {
-      notificationHandler.sendGroupNotificationToAdmins(group, user.getName() + " has declined " + savedInvitation.getType() + " invitation from " + group.getGroupType() + ": " + group.getName(),
-          "ProjectInvitation", "ProjectInvitation:Declined", group.getId());
+      notificationController.sendUserDeclinedJoinInvite(user, group);
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
     }
-    List<Notification> list= notificationRepository.getNotifications(savedInvitation.getId(), "ProjectInvitation:Invite");
-    for(Notification n: list)
-    notificationHandler.markNotificationDone(n);
+    notificationController.markInvitationsAsDoneFor(savedInvitation);
 
     return new GeneralResponse(response);
   }
@@ -152,25 +139,16 @@ public class InvitationHandler {
       OrganizationApplicant applicant = organizationApplicantRepository.findOne(savedInvitation.getApplicant().getId());
       if (savedInvitation.getType().equals("join")) {
         applicant.setStatus("accepted");
-        List<Notification> list = notificationRepository.getNotifications(applicant.getId(), "OrganizationApplicant");
-        for(Notification n: list)
-          notificationHandler.markNotificationDone(n);
+        notificationController.markAsDoneForApplicant(applicant);
+        notificationController.markInvitationsAsDoneFor(savedInvitation);
       } else {
         applicant.setStatus("interview_scheduled");
         applicant.setInterview(interviewRepository.findOne(savedInvitation.getInterview().getId()));
       }
       organizationApplicantRepository.save(applicant);
       organizationInvitationRepository.save(savedInvitation);
-      try {
-        notificationHandler.sendGroupNotificationToAdmins(group, user.getName() + " has accepted " + savedInvitation.getType() + " invitation from " + group.getGroupType() + ": " + group.getName()
-            , "OrganizationInvitation", "OrganizationInvitation:Accepted", group.getId());
-      } catch (Exception e) {
-        logger.error(e.getMessage(), e);
-      }
+      notificationController.sendUserJoinedNotification(user, group);
     }
-    List<Notification> list = notificationRepository.getNotifications(savedInvitation.getId(), "OrganizationInvitation:Invite");
-    for(Notification n: list)
-    notificationHandler.markNotificationDone(n);
 
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
   }
@@ -180,22 +158,12 @@ public class InvitationHandler {
     if (savedInvitation.getType().equals("join")) {
       OrganizationApplicant applicant = organizationApplicantRepository.findOne(savedInvitation.getApplicant().getId());
       applicant.setStatus("declined");
-      List<Notification> list = notificationRepository.getNotifications(applicant.getId(), "OrganizationApplicant");
-      for(Notification n: list)
-        notificationHandler.markNotificationDone(n);
+      notificationController.markAsDoneForApplicant(applicant);
+      notificationController.markInvitationsAsDoneFor(savedInvitation);
       organizationApplicantRepository.save(applicant);
     }
     organizationInvitationRepository.save(savedInvitation);
-    try {
-      notificationHandler.sendGroupNotificationToAdmins(group, user.getName() + " has declined " + savedInvitation.getType() + " invitation from " + group.getGroupType() + ": " + group.getName(),
-          "OrganizationInvitation", "OrganizationInvitation:Declined", group.getId());
-    } catch (Exception e) {
-      errors.add("Can't send notification");
-      return new GeneralResponse(response, ERROR, errors);
-    }
-    List<Notification> list = notificationRepository.getNotifications(savedInvitation.getId(), "OrganizationInvitation:Invite");
-    for(Notification n: list)
-    notificationHandler.markNotificationDone(n);
+    notificationController.sendUserDeclinedJoinInvite(user, group);
 
     return new GeneralResponse(response);
   }

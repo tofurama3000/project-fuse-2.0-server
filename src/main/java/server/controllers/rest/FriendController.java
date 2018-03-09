@@ -1,5 +1,6 @@
 package server.controllers.rest;
 
+import static server.controllers.rest.response.BaseResponse.Status.ERROR;
 import static server.controllers.rest.response.BaseResponse.Status.OK;
 import static server.controllers.rest.response.CannedResponse.FRIEND_FOUND;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
@@ -28,7 +29,6 @@ import server.entities.dto.FuseSession;
 import server.entities.dto.Notification;
 import server.entities.dto.user.Friendship;
 import server.entities.dto.user.User;
-import server.handlers.NotificationHandler;
 import server.repositories.FriendRepository;
 import server.repositories.NotificationRepository;
 import server.repositories.UserRepository;
@@ -50,9 +50,6 @@ public class FriendController {
 
   @Autowired
   private FriendRepository friendRepository;
-
-  @Autowired
-  private NotificationHandler notificationHandler;
 
   @Autowired
   private NotificationRepository notificationRepository;
@@ -150,13 +147,13 @@ public class FriendController {
     }
     friendship.setStatus("accepted");
     try {
-      notificationController.sendNotification(friendship.getSender(), friendship.getReceiver().getName() + " has accepted your friend request", "Friend", "Friend:Accepted", friendship.getId());
+      notificationController.sendFriendshipAcceptedNotification(friendship);
+      friendRepository.save(friendship);
     } catch (Exception e) {
-      logger.error(e.getMessage(), e);
+      errors.add(e.getMessage());
+      return new GeneralResponse(response, ERROR, errors);
     }
-    List<Notification> list = notificationRepository.getNotifications(id,"Friend:Request");
-    for(Notification n : list)
-    notificationHandler.markNotificationDone(n);
+    notificationController.updateFriendshipRequestNotificationsFor(friendship);
 
     return new GeneralResponse(response, OK);
   }
@@ -252,14 +249,12 @@ public class FriendController {
     friendship.setSender(sender);
     friendship.setStatus("applied");
     friendship.setReceiver(receiver);
-    friendRepository.save(friendship);
     try {
-      notificationController.sendNotification(receiver, sender.getName() + " wants to be your friend!",
-          "Friend", "Friend:Request",
-          friendship.getId()
-      );
+      notificationController.sendFriendshipRequestNotification(friendship);
+      friendRepository.save(friendship);
     } catch (Exception e) {
-      logger.error(e.getMessage(), e);
+      errors.add(e.getMessage());
+      return new GeneralResponse(response, ERROR, errors);
     }
     return new GeneralResponse(response, OK);
   }
