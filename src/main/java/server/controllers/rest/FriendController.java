@@ -249,12 +249,11 @@ public class FriendController {
     friendship.setSender(sender);
     friendship.setStatus("applied");
     friendship.setReceiver(receiver);
+    friendRepository.save(friendship);
     try {
       notificationController.sendFriendshipRequestNotification(friendship);
-      friendRepository.save(friendship);
     } catch (Exception e) {
-      errors.add(e.getMessage());
-      return new GeneralResponse(response, ERROR, errors);
+      logger.error(e.getMessage());
     }
     return new GeneralResponse(response, OK);
   }

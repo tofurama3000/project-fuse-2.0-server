@@ -227,17 +227,19 @@ public class Notification {
             "OrganizationJoined:Info",
 
             "FriendRequest:Pending",
-            "FriendRequset:Accepted"
+            "FriendRequest:Accepted"
     );
 
     private static List<String> validDataTypes = Arrays.asList(
             "ProjectInvitation",
             "ProjectInterview",
             "ProjectApplicant",
+            "ProjectJoined",
 
             "OrganizationInvitation",
             "OrganizationApplicant",
             "OrganizationInterview",
+            "OrganizationJoined",
 
             "FriendRequest"
     );

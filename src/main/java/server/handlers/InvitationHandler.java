@@ -2,7 +2,7 @@ package server.handlers;
 
 import static server.constants.InvitationStatus.ACCEPTED;
 import static server.constants.InvitationStatus.DECLINED;
-import static server.controllers.rest.response.BaseResponse.Status.ERROR;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +11,6 @@ import server.controllers.rest.NotificationController;
 import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.PossibleError;
-import server.entities.dto.Notification;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.organization.OrganizationApplicant;
 import server.entities.dto.group.organization.OrganizationInvitation;
@@ -78,8 +77,8 @@ public class InvitationHandler {
       savedInvitation.setInterview(null);
     }
 
-    UserToProjectRelationship userToTeamRelationship = relationshipFactory.createUserToProjectRelationship(user, group);
-    PossibleError possibleError = userToGroupRelationshipHandler.addRelationshipsIfNotError(savedInvitation, permission, userToTeamRelationship);
+    UserToProjectRelationship userToGroupRelationship = relationshipFactory.createUserToProjectRelationship(user, group);
+    PossibleError possibleError = userToGroupRelationshipHandler.addRelationshipsIfNotError(savedInvitation, permission, userToGroupRelationship);
 
     if (!possibleError.hasError()) {
       savedInvitation.setStatus(ACCEPTED);
@@ -87,7 +86,7 @@ public class InvitationHandler {
       if (savedInvitation.getType().equals("join")) {
         applicant.setStatus("accepted");
         notificationController.markAsDoneForApplicant(applicant);
-        notificationController.markInvitationsAsDoneFor(savedInvitation);
+        notificationController.markInvitationsAsDoneFor(applicant);
       } else {
         applicant.setStatus("interview_scheduled");
         applicant.setInterview(interviewRepository.findOne(savedInvitation.getInterview().getId()));
@@ -106,11 +105,11 @@ public class InvitationHandler {
 
   public BaseResponse declineProjectInvitation(HttpServletResponse response, ProjectInvitation savedInvitation, User user, Project group) {
     savedInvitation.setStatus(DECLINED);
-    if (savedInvitation.getType().equals("join")) {
+    if (savedInvitation.getApplicant() != null) {
       ProjectApplicant applicant = projectApplicantRepository.findOne(savedInvitation.getApplicant().getId());
       applicant.setStatus("declined");
       notificationController.markAsDoneForApplicant(applicant);
-      notificationController.markInvitationsAsDoneFor(savedInvitation);
+      notificationController.markInvitationsAsDoneFor(applicant);
       projectApplicantRepository.save(applicant);
     }
 
@@ -120,7 +119,7 @@ public class InvitationHandler {
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
     }
-    notificationController.markInvitationsAsDoneFor(savedInvitation);
+    notificationController.markInvitationNotificationsAsDone(savedInvitation);
 
     return new GeneralResponse(response);
   }
@@ -129,10 +128,14 @@ public class InvitationHandler {
                                                    OrganizationInvitation savedInvitation, User user, Organization group) {
     UserToOrganizationPermission permission = permissionFactory.createUserToOrganizationPermission(user, group);
 
-    UserToOrganizationRelationship userToTeamRelationship = relationshipFactory.createUserToOrganizationRelationship(user, group);
+    if (organizationInvitation.getInterview() != null) {
+      savedInvitation.setInterview(interviewRepository.findOne(organizationInvitation.getInterview().getId()));
+    } else {
+      savedInvitation.setInterview(null);
+    }
 
-    savedInvitation.setInterview(organizationInvitation.getInterview());
-    PossibleError possibleError = userToGroupRelationshipHandler.addRelationshipsIfNotError(savedInvitation, permission, userToTeamRelationship);
+    UserToOrganizationRelationship userToGroupRelationship = relationshipFactory.createUserToOrganizationRelationship(user, group);
+    PossibleError possibleError = userToGroupRelationshipHandler.addRelationshipsIfNotError(savedInvitation, permission, userToGroupRelationship);
 
     if (!possibleError.hasError()) {
       savedInvitation.setStatus(ACCEPTED);
@@ -140,30 +143,40 @@ public class InvitationHandler {
       if (savedInvitation.getType().equals("join")) {
         applicant.setStatus("accepted");
         notificationController.markAsDoneForApplicant(applicant);
-        notificationController.markInvitationsAsDoneFor(savedInvitation);
+        notificationController.markInvitationsAsDoneFor(applicant);
       } else {
         applicant.setStatus("interview_scheduled");
         applicant.setInterview(interviewRepository.findOne(savedInvitation.getInterview().getId()));
       }
       organizationApplicantRepository.save(applicant);
       organizationInvitationRepository.save(savedInvitation);
-      notificationController.sendUserJoinedNotification(user, group);
-    }
 
+      try {
+        notificationController.sendUserJoinedNotification(user, group);
+      } catch (Exception e) {
+        logger.error(e.getMessage(), e);
+      }
+    }
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
   }
 
-  public BaseResponse declineOrganizationInvitation(HttpServletResponse response, List<String> errors, OrganizationInvitation savedInvitation, User user, Organization group) {
+  public BaseResponse declineOrganizationInvitation(HttpServletResponse response, OrganizationInvitation savedInvitation, User user, Organization group) {
     savedInvitation.setStatus(DECLINED);
-    if (savedInvitation.getType().equals("join")) {
+    if (savedInvitation.getApplicant() != null) {
       OrganizationApplicant applicant = organizationApplicantRepository.findOne(savedInvitation.getApplicant().getId());
       applicant.setStatus("declined");
       notificationController.markAsDoneForApplicant(applicant);
-      notificationController.markInvitationsAsDoneFor(savedInvitation);
+      notificationController.markInvitationsAsDoneFor(applicant);
       organizationApplicantRepository.save(applicant);
     }
+
     organizationInvitationRepository.save(savedInvitation);
-    notificationController.sendUserDeclinedJoinInvite(user, group);
+    try {
+      notificationController.sendUserDeclinedJoinInvite(user, group);
+    } catch (Exception e) {
+      logger.error(e.getMessage(), e);
+    }
+    notificationController.markInvitationNotificationsAsDone(savedInvitation);
 
     return new GeneralResponse(response);
   }

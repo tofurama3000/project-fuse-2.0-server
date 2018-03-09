@@ -28,7 +28,7 @@ import server.entities.dto.group.GroupApplicant;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
-import server.entities.dto.group.project.ProjectApplicant;
+import server.entities.dto.group.project.ProjectInvitation;
 import server.entities.dto.user.Friendship;
 import server.entities.dto.user.User;
 import server.repositories.FriendRepository;
@@ -36,9 +36,11 @@ import server.repositories.NotificationRepository;
 import server.repositories.group.organization.OrganizationApplicantRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
 import server.repositories.group.organization.OrganizationMemberRepository;
+import server.repositories.group.organization.OrganizationRepository;
 import server.repositories.group.project.ProjectApplicantRepository;
 import server.repositories.group.project.ProjectInvitationRepository;
 import server.repositories.group.project.ProjectMemberRepository;
+import server.repositories.group.project.ProjectRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -55,6 +57,12 @@ import java.util.stream.Collectors;
 @RequestMapping(value = "/notifications")
 @Api(tags = "notification")
 public class NotificationController {
+
+  @Autowired
+  private OrganizationRepository organizationRepository;
+
+  @Autowired
+  private ProjectRepository projectRepository;
 
   @Autowired
   private FuseSessionController fuseSessionController;
@@ -138,9 +146,11 @@ public class NotificationController {
     );
   }
 
-  public <T extends Group, I extends GroupInvitation<T>> void sendInterviewInvitation(I interviewInvitation, GroupApplicant application) {
+  public <T extends Group, I extends GroupInvitation<T>> void sendInterviewInvitation(I interviewInvitation) {
+    GroupApplicant application = interviewInvitation.getApplicant();
     User applicant = application.getSender();
     Group group = application.getGroup();
+
     String msg = "You have been invited to interview with " + group.getName();
     sendNotification(
             applicant,
@@ -191,7 +201,9 @@ public class NotificationController {
     );
   }
 
-  public <T extends Group> void sendUserAppliedNotification(User user, T group) {
+  public void sendUserAppliedNotification(GroupApplicant application) {
+    User user = application.getSender();
+    Group group = application.getGroup();
     String msg = user.getName() + " has applied to the " + group.getGroupType().toLowerCase() + " " + group.getName();
     sendGroupNotificationToAdmins(
             group,
@@ -199,7 +211,7 @@ public class NotificationController {
             getNotificationEntityType(group),
             Notification.NotificationType.APPLICATION,
             Notification.NotificationStatus.INFO,
-            group.getId()
+            application.getId()
     );
   }
 
@@ -207,16 +219,29 @@ public class NotificationController {
     String[] notificationInfo = Notification.getNotificationEntities(
             getNotificationEntityType(application.getGroup()),
             Notification.NotificationType.APPLICATION,
-            Notification.NotificationStatus.PENDING_INVITE
+            Notification.NotificationStatus.INFO
     );
-    notificationRepository.getNotificationsByDataAndType(
+    notificationRepository.getNotificationsByData(
             application.getId(),
-            notificationInfo[0], // dataType
-            notificationInfo[1]  // notificationType
+            notificationInfo[0] // dataType
     ).forEach(this::markNotificationDone);
   }
 
-  public <T extends Group, I extends GroupInvitation<T>> void markInvitationsAsDoneFor(I invitation) {
+  public <T extends Group, A extends GroupApplicant<T>> void markInvitationsAsDoneFor(A application) {
+    Group group = application.getGroup();
+    User applicant = application.getSender();
+    if (isGroupProject(group)) {
+      projectInvitationRepository.findByReceiver(applicant).stream()
+              .filter(p -> p.getApplicant() != null && p.getApplicant().getId() == application.getId())
+              .forEach(this::markInvitationNotificationsAsDone);
+    } else if (isGroupOrganzization(group)) {
+      organizationInvitationRepository.findByReceiver(applicant).stream()
+              .filter(o -> o.getApplicant() != null && o.getApplicant().getId() == application.getId())
+              .forEach(this::markInvitationNotificationsAsDone);
+    }
+  }
+
+  public <T extends Group, I extends GroupInvitation<T>> void markInvitationNotificationsAsDone(I invitation) {
     String[] notificationInfo = Notification.getNotificationEntities(
             getNotificationEntityType(invitation.getGroup()),
             Notification.NotificationType.JOIN_INVITATION,
@@ -442,6 +467,9 @@ public class NotificationController {
             case "ProjectInterview":
               notification.setData(projectInvitationRepository.findOne(notification.getObjectId()));
               break;
+            case "ProjectJoined":
+              notification.setData(projectRepository.findOne(notification.getObjectId()));
+              break;
 
             case "OrganizationApplicant":
               notification.setData(organizationApplicantRepository.findOne(notification.getObjectId()));
@@ -449,6 +477,9 @@ public class NotificationController {
             case "OrganizationInvitation":
             case "OrganizationInterview":
               notification.setData(organizationInvitationRepository.findOne(notification.getObjectId()));
+              break;
+            case "OrganizationJoined":
+              notification.setData(organizationRepository.findOne(notification.getObjectId()));
               break;
 
             case "FriendRequest":

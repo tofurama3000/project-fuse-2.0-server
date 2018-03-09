@@ -687,7 +687,7 @@ public class UserController {
     Organization group = savedInvitation.getGroup();
 
     if (action.equalsIgnoreCase("decline")) {
-      return invitationHandler.declineOrganizationInvitation(response, errors, savedInvitation, user, group);
+      return invitationHandler.declineOrganizationInvitation(response, savedInvitation, user, group);
     } else {
       return invitationHandler.acceptOrganizationInvitation(organizationInvitation, response, savedInvitation, user, group);
     }
