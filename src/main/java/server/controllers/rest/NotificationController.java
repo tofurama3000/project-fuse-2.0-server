@@ -23,6 +23,9 @@ import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
 import server.entities.dto.FuseSession;
 import server.entities.dto.Notification;
+import server.entities.dto.Notification.NotificationEntity;
+import server.entities.dto.Notification.NotificationStatus;
+import server.entities.dto.Notification.NotificationType;
 import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupApplicant;
 import server.entities.dto.group.GroupInvitation;
@@ -41,6 +44,7 @@ import server.repositories.group.project.ProjectApplicantRepository;
 import server.repositories.group.project.ProjectInvitationRepository;
 import server.repositories.group.project.ProjectMemberRepository;
 import server.repositories.group.project.ProjectRepository;
+import server.utility.NotificationEntityNames;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -98,9 +102,9 @@ public class NotificationController {
     sendNotification(
             reciever,
             msg,
-            Notification.NotificationEntity.FRIEND,
-            Notification.NotificationType.FRIEND_REQUEST,
-            Notification.NotificationStatus.PENDING_INVITE,
+            NotificationEntity.FRIEND,
+            NotificationType.FRIEND_REQUEST,
+            NotificationStatus.PENDING_INVITE,
             friendship.getId()
     );
   }
@@ -112,23 +116,23 @@ public class NotificationController {
     sendNotification(
             sender,
             msg,
-            Notification.NotificationEntity.FRIEND,
-            Notification.NotificationType.FRIEND_REQUEST,
-            Notification.NotificationStatus.ACCPETED_INVITE,
+            NotificationEntity.FRIEND,
+            NotificationType.FRIEND_REQUEST,
+            NotificationStatus.ACCPETED_INVITE,
             friendship.getId()
     );
   }
 
   public void updateFriendshipRequestNotificationsFor(Friendship friendship) {
-    String[] notificationInfo = Notification.getNotificationEntities(
-            Notification.NotificationEntity.FRIEND,
-            Notification.NotificationType.FRIEND_REQUEST,
-            Notification.NotificationStatus.PENDING_INVITE
+    NotificationEntityNames notificationInfo = Notification.getNotificationEntities(
+            NotificationEntity.FRIEND,
+            NotificationType.FRIEND_REQUEST,
+            NotificationStatus.PENDING_INVITE
     );
     notificationRepository.getNotificationsByDataAndType(
             friendship.getId(),
-            notificationInfo[0], // dataType
-            notificationInfo[1]  // notificationType
+            notificationInfo.dataType,
+            notificationInfo.notificationType
     ).forEach(this::markNotificationDone);
   }
 
@@ -140,8 +144,8 @@ public class NotificationController {
             applicant,
             msg,
             getNotificationEntityType(group),
-            Notification.NotificationType.APPLICATION,
-            Notification.NotificationStatus.DECLINED_INVITE,
+            NotificationType.APPLICATION,
+            NotificationStatus.DECLINED_INVITE,
             application.getId()
     );
   }
@@ -156,8 +160,8 @@ public class NotificationController {
             applicant,
             msg,
             getNotificationEntityType(group),
-            Notification.NotificationType.INTERVIEW_INVITATION,
-            Notification.NotificationStatus.PENDING_INVITE,
+            NotificationType.INTERVIEW_INVITATION,
+            NotificationStatus.PENDING_INVITE,
             interviewInvitation.getId()
     );
   }
@@ -170,8 +174,8 @@ public class NotificationController {
             reciever,
             msg,
             getNotificationEntityType(group),
-            Notification.NotificationType.JOIN_INVITATION,
-            Notification.NotificationStatus.PENDING_INVITE,
+            NotificationType.JOIN_INVITATION,
+            NotificationStatus.PENDING_INVITE,
             groupInvitation.getId()
     );
   }
@@ -182,8 +186,8 @@ public class NotificationController {
             group,
             msg,
             getNotificationEntityType(group),
-            Notification.NotificationType.JOINED,
-            Notification.NotificationStatus.INFO,
+            NotificationType.JOINED,
+            NotificationStatus.INFO,
             group.getId()
     );
   }
@@ -195,8 +199,8 @@ public class NotificationController {
             group,
             msg,
             getNotificationEntityType(group),
-            Notification.NotificationType.JOIN_INVITATION,
-            Notification.NotificationStatus.DECLINED_INVITE,
+            NotificationType.JOIN_INVITATION,
+            NotificationStatus.DECLINED_INVITE,
             group.getId()
     );
   }
@@ -209,21 +213,21 @@ public class NotificationController {
             group,
             msg,
             getNotificationEntityType(group),
-            Notification.NotificationType.APPLICATION,
-            Notification.NotificationStatus.INFO,
+            NotificationType.APPLICATION,
+            NotificationStatus.INFO,
             application.getId()
     );
   }
 
   public <T extends Group, A extends GroupApplicant<T>> void markAsDoneForApplicant(A application) {
-    String[] notificationInfo = Notification.getNotificationEntities(
+    NotificationEntityNames notificationInfo = Notification.getNotificationEntities(
             getNotificationEntityType(application.getGroup()),
-            Notification.NotificationType.APPLICATION,
-            Notification.NotificationStatus.INFO
+            NotificationType.APPLICATION,
+            NotificationStatus.INFO
     );
     notificationRepository.getNotificationsByData(
             application.getId(),
-            notificationInfo[0] // dataType
+            notificationInfo.dataType
     ).forEach(this::markNotificationDone);
   }
 
@@ -242,15 +246,15 @@ public class NotificationController {
   }
 
   public <T extends Group, I extends GroupInvitation<T>> void markInvitationNotificationsAsDone(I invitation) {
-    String[] notificationInfo = Notification.getNotificationEntities(
+    NotificationEntityNames notificationInfo = Notification.getNotificationEntities(
             getNotificationEntityType(invitation.getGroup()),
-            Notification.NotificationType.JOIN_INVITATION,
-            Notification.NotificationStatus.PENDING_INVITE
+            NotificationType.JOIN_INVITATION,
+            NotificationStatus.PENDING_INVITE
     );
     notificationRepository.getNotificationsByDataAndType(
             invitation.getId(),
-            notificationInfo[0], // dataType
-            notificationInfo[1]  // notificationType
+            notificationInfo.dataType,
+            notificationInfo.notificationType
     ).forEach(this::markNotificationDone);
   }
 
@@ -260,10 +264,10 @@ public class NotificationController {
     notificationRepository.save(notification);
   }
 
-  private Notification.NotificationEntity getNotificationEntityType(Group group) {
+  private NotificationEntity getNotificationEntityType(Group group) {
     return isGroupProject(group) ?
-            Notification.NotificationEntity.PROJECT :
-            Notification.NotificationEntity.ORGANIZATION;
+            NotificationEntity.PROJECT :
+            NotificationEntity.ORGANIZATION;
   }
 
   private boolean isGroupProject(Group group) {
@@ -277,9 +281,9 @@ public class NotificationController {
   private void sendNotification(
           User user,
           String message,
-          Notification.NotificationEntity dataType,
-          Notification.NotificationType notificationType,
-          Notification.NotificationStatus notificationStatus,
+          NotificationEntity dataType,
+          NotificationType notificationType,
+          NotificationStatus notificationStatus,
           long id
   ) throws IllegalArgumentException {
 
@@ -298,9 +302,9 @@ public class NotificationController {
   private <T extends Group> void sendGroupNotificationToAdmins(
           T group,
           String message,
-          Notification.NotificationEntity dataType,
-          Notification.NotificationType notificationType,
-          Notification.NotificationStatus notificationStatus,
+          NotificationEntity dataType,
+          NotificationType notificationType,
+          NotificationStatus notificationStatus,
           long id
   ) throws IllegalArgumentException {
     if (isGroupProject(group)) {

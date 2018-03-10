@@ -3,6 +3,7 @@ package server.entities.dto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import server.entities.dto.user.User;
+import server.utility.NotificationEntityNames;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -105,9 +106,9 @@ public class Notification {
 
     @JsonIgnore
     public void setInfo(NotificationEntity notificationEntityType, NotificationType notificationType, NotificationStatus notificationStatus) throws IllegalArgumentException {
-        String[] types = getNotificationEntities(notificationEntityType, notificationType, notificationStatus);
-        this.data_type = types[0];
-        this.notification_type = types[1];
+        NotificationEntityNames types = getNotificationEntities(notificationEntityType, notificationType, notificationStatus);
+        this.data_type = types.dataType;
+        this.notification_type = types.notificationType;
     }
 
     /**
@@ -121,7 +122,7 @@ public class Notification {
      * @throws IllegalArgumentException Throws an illegal argumetn exception if it is unable to generate the data type and/or notification type
      */
     @JsonIgnore
-    public static String[] getNotificationEntities(NotificationEntity notificationEntityType, NotificationType notificationType, NotificationStatus notificationStatus) throws IllegalArgumentException {
+    public static NotificationEntityNames getNotificationEntities(NotificationEntity notificationEntityType, NotificationType notificationType, NotificationStatus notificationStatus) throws IllegalArgumentException {
         String entityType = "";
         switch (notificationEntityType) {
             case PROJECT:
@@ -178,7 +179,7 @@ public class Notification {
         String finalDataType = entityType + notifType;
 
         if (isValidNotificationType(finalNotificationType) && isValidDataType(finalDataType)) {
-            return new String[]{finalDataType, finalNotificationType};
+            return new NotificationEntityNames(finalDataType, finalNotificationType);
         } else {
             if (!isValidDataType(finalDataType)) {
                 throw new IllegalArgumentException("Unexpected data type " + finalDataType);
