@@ -2,7 +2,6 @@ package server.handlers;
 
 import static server.constants.InvitationStatus.ACCEPTED;
 import static server.constants.InvitationStatus.DECLINED;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,10 +11,10 @@ import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.PossibleError;
 import server.entities.dto.group.organization.Organization;
-import server.entities.dto.group.organization.OrganizationApplicant;
+import server.entities.dto.group.organization.OrganizationApplication;
 import server.entities.dto.group.organization.OrganizationInvitation;
 import server.entities.dto.group.project.Project;
-import server.entities.dto.group.project.ProjectApplicant;
+import server.entities.dto.group.project.ProjectApplication;
 import server.entities.dto.group.project.ProjectInvitation;
 import server.entities.dto.user.User;
 import server.entities.user_to_group.permissions.PermissionFactory;
@@ -31,7 +30,6 @@ import server.repositories.group.project.ProjectApplicantRepository;
 import server.repositories.group.project.ProjectInvitationRepository;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
 
 @Component
 public class InvitationHandler {
@@ -82,7 +80,7 @@ public class InvitationHandler {
 
     if (!possibleError.hasError()) {
       savedInvitation.setStatus(ACCEPTED);
-      ProjectApplicant applicant = projectApplicantRepository.findOne(savedInvitation.getApplicant().getId());
+      ProjectApplication applicant = projectApplicantRepository.findOne(savedInvitation.getApplicant().getId());
       if (savedInvitation.getType().equals("join")) {
         applicant.setStatus("accepted");
         notificationController.markAsDoneForApplicant(applicant);
@@ -106,7 +104,7 @@ public class InvitationHandler {
   public BaseResponse declineProjectInvitation(HttpServletResponse response, ProjectInvitation savedInvitation, User user, Project group) {
     savedInvitation.setStatus(DECLINED);
     if (savedInvitation.getApplicant() != null) {
-      ProjectApplicant applicant = projectApplicantRepository.findOne(savedInvitation.getApplicant().getId());
+      ProjectApplication applicant = projectApplicantRepository.findOne(savedInvitation.getApplicant().getId());
       applicant.setStatus("declined");
       notificationController.markAsDoneForApplicant(applicant);
       notificationController.markInvitationsAsDoneFor(applicant);
@@ -139,7 +137,7 @@ public class InvitationHandler {
 
     if (!possibleError.hasError()) {
       savedInvitation.setStatus(ACCEPTED);
-      OrganizationApplicant applicant = organizationApplicantRepository.findOne(savedInvitation.getApplicant().getId());
+      OrganizationApplication applicant = organizationApplicantRepository.findOne(savedInvitation.getApplicant().getId());
       if (savedInvitation.getType().equals("join")) {
         applicant.setStatus("accepted");
         notificationController.markAsDoneForApplicant(applicant);
@@ -163,7 +161,7 @@ public class InvitationHandler {
   public BaseResponse declineOrganizationInvitation(HttpServletResponse response, OrganizationInvitation savedInvitation, User user, Organization group) {
     savedInvitation.setStatus(DECLINED);
     if (savedInvitation.getApplicant() != null) {
-      OrganizationApplicant applicant = organizationApplicantRepository.findOne(savedInvitation.getApplicant().getId());
+      OrganizationApplication applicant = organizationApplicantRepository.findOne(savedInvitation.getApplicant().getId());
       applicant.setStatus("declined");
       notificationController.markAsDoneForApplicant(applicant);
       notificationController.markInvitationsAsDoneFor(applicant);

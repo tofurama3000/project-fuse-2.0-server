@@ -19,7 +19,7 @@ import java.util.List;
 
 @Data
 @MappedSuperclass
-public abstract class GroupApplicant<T extends Group> {
+public abstract class GroupApplication<T extends Group> {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   private long id;

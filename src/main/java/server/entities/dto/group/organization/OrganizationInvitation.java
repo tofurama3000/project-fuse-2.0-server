@@ -1,7 +1,7 @@
 package server.entities.dto.group.organization;
 
 import lombok.Data;
-import server.entities.dto.group.GroupApplicant;
+import server.entities.dto.group.GroupApplication;
 import server.entities.dto.group.GroupInvitation;
 
 import javax.persistence.Entity;
@@ -21,7 +21,7 @@ public class OrganizationInvitation extends GroupInvitation<Organization> {
 
   @OneToOne
   @JoinColumn(name = "applicant_id", referencedColumnName = "id")
-  private OrganizationApplicant applicant;
+  private OrganizationApplication applicant;
 
   @Override
   public Organization getGroup() {
@@ -29,13 +29,13 @@ public class OrganizationInvitation extends GroupInvitation<Organization> {
   }
 
   @Override
-  public OrganizationApplicant getApplicant() {
+  public OrganizationApplication getApplicant() {
     return applicant;
   }
 
   @Override
-  public void setApplicant(GroupApplicant applicant) {
-    this.applicant = (OrganizationApplicant) applicant;
+  public void setApplicant(GroupApplication applicant) {
+    this.applicant = (OrganizationApplication) applicant;
   }
 
 

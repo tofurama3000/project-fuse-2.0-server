@@ -45,10 +45,10 @@ import server.email.StandardEmailSender;
 import server.entities.dto.FuseSession;
 import server.entities.dto.UploadFile;
 import server.entities.dto.group.organization.Organization;
-import server.entities.dto.group.organization.OrganizationApplicant;
+import server.entities.dto.group.organization.OrganizationApplication;
 import server.entities.dto.group.organization.OrganizationInvitation;
 import server.entities.dto.group.project.Project;
-import server.entities.dto.group.project.ProjectApplicant;
+import server.entities.dto.group.project.ProjectApplication;
 import server.entities.dto.group.project.ProjectInvitation;
 import server.entities.dto.user.UnregisteredUser;
 import server.entities.dto.user.User;
@@ -411,7 +411,7 @@ public class UserController {
   @GetMapping(path = "/{id}/projects/applications")
   @ResponseBody
   @ApiOperation(value = "Get all project applications for the user")
-  public TypedResponse<List<ProjectApplicant>> getAllApplicationsOfUserProjects(
+  public TypedResponse<List<ProjectApplication>> getAllApplicationsOfUserProjects(
       @PathVariable Long id,
       @PathParam("status") String status,
       @PathParam("not_status") String not_status,
@@ -429,7 +429,7 @@ public class UserController {
       return new TypedResponse<>(response, Status.DENIED, errors);
     }
 
-    List<ProjectApplicant> applicants;
+    List<ProjectApplication> applicants;
     User user = session.get().getUser();
 
     if (status != null) {
@@ -444,7 +444,7 @@ public class UserController {
   @GetMapping(path = "/{id}/organizations/applications")
   @ResponseBody
   @ApiOperation(value = "Get all organization applications for the user")
-  public TypedResponse<List<OrganizationApplicant>> getAllApplicationsOfUserOrganizations(
+  public TypedResponse<List<OrganizationApplication>> getAllApplicationsOfUserOrganizations(
       @PathVariable Long id,
       @PathParam("status") String status,
       @PathParam("not_status") String not_status,
@@ -462,7 +462,7 @@ public class UserController {
       return new TypedResponse<>(response, Status.DENIED, errors);
     }
 
-    List<OrganizationApplicant> applicants;
+    List<OrganizationApplication> applicants;
     User user = session.get().getUser();
 
     if (status != null) {

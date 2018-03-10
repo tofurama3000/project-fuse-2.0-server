@@ -27,11 +27,10 @@ import server.entities.dto.Notification.NotificationEntity;
 import server.entities.dto.Notification.NotificationStatus;
 import server.entities.dto.Notification.NotificationType;
 import server.entities.dto.group.Group;
-import server.entities.dto.group.GroupApplicant;
+import server.entities.dto.group.GroupApplication;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
-import server.entities.dto.group.project.ProjectInvitation;
 import server.entities.dto.user.Friendship;
 import server.entities.dto.user.User;
 import server.repositories.FriendRepository;
@@ -100,12 +99,12 @@ public class NotificationController {
     User sender = friendship.getSender();
     String msg = sender.getName() + " has sent you a friend request!";
     sendNotification(
-            reciever,
-            msg,
-            NotificationEntity.FRIEND,
-            NotificationType.FRIEND_REQUEST,
-            NotificationStatus.PENDING_INVITE,
-            friendship.getId()
+        reciever,
+        msg,
+        NotificationEntity.FRIEND,
+        NotificationType.FRIEND_REQUEST,
+        NotificationStatus.PENDING_INVITE,
+        friendship.getId()
     );
   }
 
@@ -114,55 +113,55 @@ public class NotificationController {
     User sender = friendship.getSender();
     String msg = reciever.getName() + " has accepted your friend request!";
     sendNotification(
-            sender,
-            msg,
-            NotificationEntity.FRIEND,
-            NotificationType.FRIEND_REQUEST,
-            NotificationStatus.ACCPETED_INVITE,
-            friendship.getId()
+        sender,
+        msg,
+        NotificationEntity.FRIEND,
+        NotificationType.FRIEND_REQUEST,
+        NotificationStatus.ACCPETED_INVITE,
+        friendship.getId()
     );
   }
 
   public void updateFriendshipRequestNotificationsFor(Friendship friendship) {
     NotificationEntityNames notificationInfo = Notification.getNotificationEntities(
-            NotificationEntity.FRIEND,
-            NotificationType.FRIEND_REQUEST,
-            NotificationStatus.PENDING_INVITE
+        NotificationEntity.FRIEND,
+        NotificationType.FRIEND_REQUEST,
+        NotificationStatus.PENDING_INVITE
     );
     notificationRepository.getNotificationsByDataAndType(
-            friendship.getId(),
-            notificationInfo.dataType,
-            notificationInfo.notificationType
+        friendship.getId(),
+        notificationInfo.dataType,
+        notificationInfo.notificationType
     ).forEach(this::markNotificationDone);
   }
 
-  public void sendApplicationRejectedNotification(GroupApplicant application) {
+  public void sendApplicationRejectedNotification(GroupApplication application) {
     User applicant = application.getSender();
     Group group = application.getGroup();
     String msg = "Your application to " + group.getName() + " was declined.";
     sendNotification(
-            applicant,
-            msg,
-            getNotificationEntityType(group),
-            NotificationType.APPLICATION,
-            NotificationStatus.DECLINED_INVITE,
-            application.getId()
+        applicant,
+        msg,
+        getNotificationEntityType(group),
+        NotificationType.APPLICATION,
+        NotificationStatus.DECLINED_INVITE,
+        application.getId()
     );
   }
 
   public <T extends Group, I extends GroupInvitation<T>> void sendInterviewInvitation(I interviewInvitation) {
-    GroupApplicant application = interviewInvitation.getApplicant();
+    GroupApplication application = interviewInvitation.getApplicant();
     User applicant = application.getSender();
     Group group = application.getGroup();
 
     String msg = "You have been invited to interview with " + group.getName();
     sendNotification(
-            applicant,
-            msg,
-            getNotificationEntityType(group),
-            NotificationType.INTERVIEW_INVITATION,
-            NotificationStatus.PENDING_INVITE,
-            interviewInvitation.getId()
+        applicant,
+        msg,
+        getNotificationEntityType(group),
+        NotificationType.INTERVIEW_INVITATION,
+        NotificationStatus.PENDING_INVITE,
+        interviewInvitation.getId()
     );
   }
 
@@ -171,90 +170,90 @@ public class NotificationController {
     T group = groupInvitation.getGroup();
     String msg = "You have been invited to join " + group.getName() + "!";
     sendNotification(
-            reciever,
-            msg,
-            getNotificationEntityType(group),
-            NotificationType.JOIN_INVITATION,
-            NotificationStatus.PENDING_INVITE,
-            groupInvitation.getId()
+        reciever,
+        msg,
+        getNotificationEntityType(group),
+        NotificationType.JOIN_INVITATION,
+        NotificationStatus.PENDING_INVITE,
+        groupInvitation.getId()
     );
   }
 
   public <T extends Group> void sendUserJoinedNotification(User user, T group) {
     String msg = user.getName() + " has joined the " + group.getGroupType().toLowerCase() + " " + group.getName();
     sendGroupNotificationToAdmins(
-            group,
-            msg,
-            getNotificationEntityType(group),
-            NotificationType.JOINED,
-            NotificationStatus.INFO,
-            group.getId()
+        group,
+        msg,
+        getNotificationEntityType(group),
+        NotificationType.JOINED,
+        NotificationStatus.INFO,
+        group.getId()
     );
   }
 
   public <T extends Group> void sendUserDeclinedJoinInvite(User user, T group) {
     String msg = user.getName() + " declined to join the project "
-            + group.getGroupType().toLowerCase() + " " + group.getName();
+        + group.getGroupType().toLowerCase() + " " + group.getName();
     sendGroupNotificationToAdmins(
-            group,
-            msg,
-            getNotificationEntityType(group),
-            NotificationType.JOIN_INVITATION,
-            NotificationStatus.DECLINED_INVITE,
-            group.getId()
+        group,
+        msg,
+        getNotificationEntityType(group),
+        NotificationType.JOIN_INVITATION,
+        NotificationStatus.DECLINED_INVITE,
+        group.getId()
     );
   }
 
-  public void sendUserAppliedNotification(GroupApplicant application) {
+  public void sendUserAppliedNotification(GroupApplication application) {
     User user = application.getSender();
     Group group = application.getGroup();
     String msg = user.getName() + " has applied to the " + group.getGroupType().toLowerCase() + " " + group.getName();
     sendGroupNotificationToAdmins(
-            group,
-            msg,
-            getNotificationEntityType(group),
-            NotificationType.APPLICATION,
-            NotificationStatus.INFO,
-            application.getId()
+        group,
+        msg,
+        getNotificationEntityType(group),
+        NotificationType.APPLICATION,
+        NotificationStatus.INFO,
+        application.getId()
     );
   }
 
-  public <T extends Group, A extends GroupApplicant<T>> void markAsDoneForApplicant(A application) {
+  public <T extends Group, A extends GroupApplication<T>> void markAsDoneForApplicant(A application) {
     NotificationEntityNames notificationInfo = Notification.getNotificationEntities(
-            getNotificationEntityType(application.getGroup()),
-            NotificationType.APPLICATION,
-            NotificationStatus.INFO
+        getNotificationEntityType(application.getGroup()),
+        NotificationType.APPLICATION,
+        NotificationStatus.INFO
     );
     notificationRepository.getNotificationsByData(
-            application.getId(),
-            notificationInfo.dataType
+        application.getId(),
+        notificationInfo.dataType
     ).forEach(this::markNotificationDone);
   }
 
-  public <T extends Group, A extends GroupApplicant<T>> void markInvitationsAsDoneFor(A application) {
+  public <T extends Group, A extends GroupApplication<T>> void markInvitationsAsDoneFor(A application) {
     Group group = application.getGroup();
     User applicant = application.getSender();
     if (isGroupProject(group)) {
       projectInvitationRepository.findByReceiver(applicant).stream()
-              .filter(p -> p.getApplicant() != null && p.getApplicant().getId() == application.getId())
-              .forEach(this::markInvitationNotificationsAsDone);
+          .filter(p -> p.getApplicant() != null && p.getApplicant().getId() == application.getId())
+          .forEach(this::markInvitationNotificationsAsDone);
     } else if (isGroupOrganzization(group)) {
       organizationInvitationRepository.findByReceiver(applicant).stream()
-              .filter(o -> o.getApplicant() != null && o.getApplicant().getId() == application.getId())
-              .forEach(this::markInvitationNotificationsAsDone);
+          .filter(o -> o.getApplicant() != null && o.getApplicant().getId() == application.getId())
+          .forEach(this::markInvitationNotificationsAsDone);
     }
   }
 
   public <T extends Group, I extends GroupInvitation<T>> void markInvitationNotificationsAsDone(I invitation) {
     NotificationEntityNames notificationInfo = Notification.getNotificationEntities(
-            getNotificationEntityType(invitation.getGroup()),
-            NotificationType.JOIN_INVITATION,
-            NotificationStatus.PENDING_INVITE
+        getNotificationEntityType(invitation.getGroup()),
+        NotificationType.JOIN_INVITATION,
+        NotificationStatus.PENDING_INVITE
     );
     notificationRepository.getNotificationsByDataAndType(
-            invitation.getId(),
-            notificationInfo.dataType,
-            notificationInfo.notificationType
+        invitation.getId(),
+        notificationInfo.dataType,
+        notificationInfo.notificationType
     ).forEach(this::markNotificationDone);
   }
 
@@ -266,8 +265,8 @@ public class NotificationController {
 
   private NotificationEntity getNotificationEntityType(Group group) {
     return isGroupProject(group) ?
-            NotificationEntity.PROJECT :
-            NotificationEntity.ORGANIZATION;
+        NotificationEntity.PROJECT :
+        NotificationEntity.ORGANIZATION;
   }
 
   private boolean isGroupProject(Group group) {
@@ -279,12 +278,12 @@ public class NotificationController {
   }
 
   private void sendNotification(
-          User user,
-          String message,
-          NotificationEntity dataType,
-          NotificationType notificationType,
-          NotificationStatus notificationStatus,
-          long id
+      User user,
+      String message,
+      NotificationEntity dataType,
+      NotificationType notificationType,
+      NotificationStatus notificationStatus,
+      long id
   ) throws IllegalArgumentException {
 
     Notification notification = new Notification();
@@ -300,30 +299,30 @@ public class NotificationController {
   }
 
   private <T extends Group> void sendGroupNotificationToAdmins(
-          T group,
-          String message,
-          NotificationEntity dataType,
-          NotificationType notificationType,
-          NotificationStatus notificationStatus,
-          long id
+      T group,
+      String message,
+      NotificationEntity dataType,
+      NotificationType notificationType,
+      NotificationStatus notificationStatus,
+      long id
   ) throws IllegalArgumentException {
     if (isGroupProject(group)) {
       final Set<User> uniqueUsers = new HashSet<>(projectMemberRepository.getUsersByGroup((Project) group));
       uniqueUsers.stream()
-                .filter(u -> projectMemberRepository.getRoles((Project) group, u).stream()
-                          .filter(r -> r == ADMIN || r == OWNER)
-                          .collect(Collectors.toList())
-                          .size() > 0)
-                .forEach(u -> sendNotification(u, message, dataType, notificationType, notificationStatus, id));
+          .filter(u -> projectMemberRepository.getRoles((Project) group, u).stream()
+              .filter(r -> r == ADMIN || r == OWNER)
+              .collect(Collectors.toList())
+              .size() > 0)
+          .forEach(u -> sendNotification(u, message, dataType, notificationType, notificationStatus, id));
 
     } else if (isGroupOrganzization(group)) {
       final Set<User> uniqueUsers = new HashSet<>(organizationMemberRepository.getUsersByGroup((Organization) group));
       uniqueUsers.stream()
-              .filter(u -> organizationMemberRepository.getRoles((Organization) group, u).stream()
-                        .filter(r -> r == ADMIN || r == OWNER)
-                        .collect(Collectors.toList())
-                        .size() > 0)
-              .forEach(u -> sendNotification(u, message, dataType, notificationType, notificationStatus, id));
+          .filter(u -> organizationMemberRepository.getRoles((Organization) group, u).stream()
+              .filter(r -> r == ADMIN || r == OWNER)
+              .collect(Collectors.toList())
+              .size() > 0)
+          .forEach(u -> sendNotification(u, message, dataType, notificationType, notificationStatus, id));
     } else {
       throw new IllegalArgumentException("Unknown group type " + group.getClass().getName());
     }
@@ -458,7 +457,7 @@ public class NotificationController {
   }
 
   private <T extends Group, I extends GroupInvitation<T>> List<Notification> populateNotifications(List<Notification> notifications) {
-    List<Notification> list =  notifications.stream().map(
+    List<Notification> list = notifications.stream().map(
         notification -> {
           if (notification == null || notification.getData_type() == null || notification.getObjectId() == null) {
             return notification;
