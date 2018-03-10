@@ -75,11 +75,11 @@ public class Interview {
   }
 
   public String getStart() {
-    return startDateTime.toString() + "+00:00";
+    return startDateTime != null ? startDateTime.toString() + "+00:00" : null;
   }
 
   public String getEnd() {
-    return endDateTime.toString() + "+00:00";
+    return endDateTime != null ? endDateTime.toString() + "+00:00" : null;
   }
 
   // Generate a unique, 256 character code

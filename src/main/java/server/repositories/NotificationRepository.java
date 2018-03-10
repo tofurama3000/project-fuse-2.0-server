@@ -18,6 +18,9 @@ public interface NotificationRepository extends CrudRepository<Notification, Lon
   @Query("FROM Notification a where a.receiver = :receiver and a.deleted = 0 and a.hasRead=0 ORDER BY a.time DESC")
   List<Notification> getUnreadNotifications(@Param("receiver") User receiver);
 
-  @Query("FROM Notification n where n.objectId = :id and n.notification_type = :notificationType")
-  List<Notification> getNotifications(@Param("id") Long id, @Param("notificationType") String notificationType);
+  @Query("FROM Notification n where n.objectId = :id and n.data_type = :dataType")
+  List<Notification> getNotificationsByData(@Param("id") Long id, @Param("dataType") String dataType);
+
+  @Query("FROM Notification n where n.objectId = :id and n.data_type = :dataType and n.notification_type = :notificationType")
+  List<Notification> getNotificationsByDataAndType(@Param("id") Long id, @Param("dataType") String dataType, @Param("notificationType") String notificationType);
 }
