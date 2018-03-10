@@ -77,26 +77,62 @@ public class Notification {
     }
 
     public enum NotificationStatus {
-        PENDING_INVITE,
-        ACCPETED_INVITE,
-        DECLINED_INVITE,
-        INFO
+        PENDING_INVITE("Pending"),
+        ACCPETED_INVITE("Accepted"),
+        DECLINED_INVITE("Declined"),
+        INFO("Info")
+        ;
+
+        private final String text;
+
+        NotificationStatus(final String text) {
+            this.text = text;
+        }
+
+        @Override
+        public String toString() {
+            return text;
+        }
     }
 
     ;
 
     public enum NotificationType {
-        JOIN_INVITATION,
-        INTERVIEW_INVITATION,
-        APPLICATION,
-        FRIEND_REQUEST,
-        JOINED
+        JOIN_INVITATION("Invitation"),
+        INTERVIEW_INVITATION("Interview"),
+        APPLICATION("Applicant"),
+        FRIEND_REQUEST("Request"),
+        JOINED("Joined")
+        ;
+
+        private final String text;
+
+        NotificationType(final String text) {
+            this.text = text;
+        }
+
+        @Override
+        public String toString() {
+            return text;
+        }
     }
 
     public enum NotificationEntity {
-        PROJECT,
-        ORGANIZATION,
-        FRIEND
+        PROJECT("Project"),
+        ORGANIZATION("Organization"),
+        FRIEND("Friend")
+        ;
+
+        private final String text;
+
+        NotificationEntity(final String text) {
+            this.text = text;
+        }
+
+        @Override
+        public String toString() {
+            return text;
+        }
     }
 
     public enum NotificationActionState {
@@ -123,58 +159,9 @@ public class Notification {
      */
     @JsonIgnore
     public static NotificationEntityNames getNotificationEntities(NotificationEntity notificationEntityType, NotificationType notificationType, NotificationStatus notificationStatus) throws IllegalArgumentException {
-        String entityType = "";
-        switch (notificationEntityType) {
-            case PROJECT:
-                entityType = "Project";
-                break;
-            case ORGANIZATION:
-                entityType = "Organization";
-                break;
-            case FRIEND:
-                entityType = "Friend";
-                break;
-            default:
-                throw new IllegalArgumentException("Unexpected value " + notificationEntityType + " for notification entity type");
-        }
-
-        String notifType;
-        switch (notificationType) {
-            case JOIN_INVITATION:
-                notifType = "Invitation";
-                break;
-            case INTERVIEW_INVITATION:
-                notifType = "Interview";
-                break;
-            case FRIEND_REQUEST:
-                notifType = "Request";
-                break;
-            case APPLICATION:
-                notifType = "Applicant";
-                break;
-            case JOINED:
-                notifType = "Joined";
-                break;
-            default:
-                throw new IllegalArgumentException("Unexpected value " + notificationType + " for notification type");
-        }
-
-        String notifStatus = "";
-        switch (notificationStatus) {
-            case ACCPETED_INVITE:
-                notifStatus = "Accepted";
-                break;
-            case DECLINED_INVITE:
-                notifStatus = "Declined";
-                break;
-            case PENDING_INVITE:
-                notifStatus = "Pending";
-                break;
-            case INFO:
-                notifStatus = "Info";
-                break;
-        }
-
+        String entityType = notificationEntityType.toString();
+        String notifType = notificationType.toString();
+        String notifStatus = notificationStatus.toString();
         String finalNotificationType = entityType + notifType + ":" + notifStatus;
         String finalDataType = entityType + notifType;
 
