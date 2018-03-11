@@ -31,7 +31,6 @@ public class UserInfoEnricher {
   private static final String SHOULD_HIDE = "SHOULD_HIDE";
 
 
-
   @Autowired
   public UserInfoEnricher(PermissionFactory permissionFactory, EntityFinder entityFinder, FriendRepository friendRepository) {
     this.permissionFactory = permissionFactory;
@@ -72,11 +71,12 @@ public class UserInfoEnricher {
         return entityFinder.findEntity(id, User.class)
             .map(user -> enrichForUser(loggedInUser, user, friendships, searchResult))
             .orElse(searchResult);
-      default: return searchResult;
+      default:
+        return searchResult;
     }
   }
 
-  private SearchResult enrichForUser(User loggedInUser, Organization organizationFromSearch, SearchResult searchResult ) {
+  private SearchResult enrichForUser(User loggedInUser, Organization organizationFromSearch, SearchResult searchResult) {
     UserToOrganizationPermission permission = permissionFactory.createUserToOrganizationPermission(loggedInUser, organizationFromSearch);
     enrichWithPermission(searchResult, permission);
 
@@ -84,15 +84,14 @@ public class UserInfoEnricher {
   }
 
 
-
-  private SearchResult enrichForUser(User loggedInUser, Project projectFromSearch, SearchResult searchResult ) {
+  private SearchResult enrichForUser(User loggedInUser, Project projectFromSearch, SearchResult searchResult) {
     UserToProjectPermission permission = permissionFactory.createUserToProjectPermission(loggedInUser, projectFromSearch);
     enrichWithPermission(searchResult, permission);
 
     return searchResult;
   }
 
-  private SearchResult enrichForUser(User loggedInUser, User userFromSearch, Set<Friendship> friendships, SearchResult searchResult ) {
+  private SearchResult enrichForUser(User loggedInUser, User userFromSearch, Set<Friendship> friendships, SearchResult searchResult) {
 
     Friendship friendship = new Friendship();
     friendship.setSender(loggedInUser);
