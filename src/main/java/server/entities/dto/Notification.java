@@ -78,7 +78,7 @@ public class Notification {
 
   public enum NotificationStatus {
     PENDING_INVITE("Pending"),
-    ACCPETED_INVITE("Accepted"),
+    ACCEPTED_INVITE("Accepted"),
     DECLINED_INVITE("Declined"),
     INFO("Info");
 
@@ -154,11 +154,11 @@ public class Notification {
    */
   @JsonIgnore
   public static NotificationEntityNames getNotificationEntities(NotificationEntity notificationEntityType, NotificationType notificationType, NotificationStatus notificationStatus) throws IllegalArgumentException {
-    String entityType = notificationEntityType.toString();
-    String notifType = notificationType.toString();
-    String notifStatus = notificationStatus.toString();
-    String finalNotificationType = entityType + notifType + ":" + notifStatus;
-    String finalDataType = entityType + notifType;
+    String notificationEntityTypeString = notificationEntityType.toString();
+    String notificationTypeString = notificationType.toString();
+    String notificationStatusString = notificationStatus.toString();
+    String finalNotificationType = notificationEntityTypeString + notificationTypeString + ":" + notificationStatusString;
+    String finalDataType = notificationEntityTypeString + notificationTypeString;
 
     if (isValidNotificationType(finalNotificationType) && isValidDataType(finalDataType)) {
       return new NotificationEntityNames(finalDataType, finalNotificationType);
@@ -231,11 +231,11 @@ public class Notification {
     return validAction.contains(action);
   }
 
-  public static boolean isValidNotificationType(String type) {
+  private static boolean isValidNotificationType(String type) {
     return validNotificationTypes.contains(type);
   }
 
-  public static boolean isValidDataType(String type) {
+  private static boolean isValidDataType(String type) {
     return validDataTypes.contains(type);
   }
 

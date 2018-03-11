@@ -10,6 +10,7 @@ import server.controllers.rest.NotificationController;
 import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.PossibleError;
+import server.entities.dto.group.interview.Interview;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.organization.OrganizationApplication;
 import server.entities.dto.group.organization.OrganizationInvitation;
@@ -85,18 +86,17 @@ public class InvitationHandler {
         applicant.setStatus("accepted");
         notificationController.markAsDoneForApplicant(applicant);
         notificationController.markInvitationsAsDoneFor(applicant);
+        notificationController.sendUserJoinedNotification(user, group);
+
       } else {
         applicant.setStatus("interview_scheduled");
-        applicant.setInterview(interviewRepository.findOne(savedInvitation.getInterview().getId()));
+        Interview interview = interviewRepository.findOne(savedInvitation.getInterview().getId());
+        applicant.setInterview(interview);
+        notificationController.sendUserAcceptedInterviewNotification(user, group, interview);
       }
       projectApplicantRepository.save(applicant);
       projectInvitationRepository.save(savedInvitation);
 
-      try {
-        notificationController.sendUserJoinedNotification(user, group);
-      } catch (Exception e) {
-        logger.error(e.getMessage(), e);
-      }
     }
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
   }
@@ -142,18 +142,15 @@ public class InvitationHandler {
         applicant.setStatus("accepted");
         notificationController.markAsDoneForApplicant(applicant);
         notificationController.markInvitationsAsDoneFor(applicant);
+        notificationController.sendUserJoinedNotification(user, group);
       } else {
         applicant.setStatus("interview_scheduled");
-        applicant.setInterview(interviewRepository.findOne(savedInvitation.getInterview().getId()));
+        Interview interview = interviewRepository.findOne(savedInvitation.getInterview().getId());
+        applicant.setInterview(interview);
+        notificationController.sendUserAcceptedInterviewNotification(user, group, interview);
       }
       organizationApplicantRepository.save(applicant);
       organizationInvitationRepository.save(savedInvitation);
-
-      try {
-        notificationController.sendUserJoinedNotification(user, group);
-      } catch (Exception e) {
-        logger.error(e.getMessage(), e);
-      }
     }
     return new GeneralResponse(response, possibleError.getStatus(), possibleError.getErrors());
   }

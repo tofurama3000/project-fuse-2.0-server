@@ -29,6 +29,7 @@ import server.entities.dto.Notification.NotificationType;
 import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupApplication;
 import server.entities.dto.group.GroupInvitation;
+import server.entities.dto.group.interview.Interview;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
 import server.entities.dto.user.Friendship;
@@ -117,7 +118,7 @@ public class NotificationController {
         msg,
         NotificationEntity.FRIEND,
         NotificationType.FRIEND_REQUEST,
-        NotificationStatus.ACCPETED_INVITE,
+        NotificationStatus.ACCEPTED_INVITE,
         friendship.getId()
     );
   }
@@ -166,11 +167,11 @@ public class NotificationController {
   }
 
   public <T extends Group, I extends GroupInvitation<T>> void sendJoinInvitationNotification(I groupInvitation) {
-    User reciever = groupInvitation.getReceiver();
+    User receiver = groupInvitation.getReceiver();
     T group = groupInvitation.getGroup();
     String msg = "You have been invited to join " + group.getName() + "!";
     sendNotification(
-        reciever,
+        receiver,
         msg,
         getNotificationEntityType(group),
         NotificationType.JOIN_INVITATION,
@@ -181,6 +182,19 @@ public class NotificationController {
 
   public <T extends Group> void sendUserJoinedNotification(User user, T group) {
     String msg = user.getName() + " has joined the " + group.getGroupType().toLowerCase() + " " + group.getName();
+    sendGroupNotificationToAdmins(
+        group,
+        msg,
+        getNotificationEntityType(group),
+        NotificationType.JOINED,
+        NotificationStatus.INFO,
+        group.getId()
+    );
+  }
+
+  public <T extends Group> void sendUserAcceptedInterviewNotification(User user, T group, Interview interview) {
+    String msg = user.getName() + " has accepted invitation to interview for  " + group.getGroupType().toLowerCase() + " "
+        + group.getName() + " at " + interview.getPrettyFormattedTimeInterval();
     sendGroupNotificationToAdmins(
         group,
         msg,
@@ -407,7 +421,7 @@ public class NotificationController {
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
     Notification notification = notificationRepository.findOne(id);
-    if (notification.getReceiver().getId() != session.get().getUser().getId()) {
+    if (notification.getReceiver().getId().equals(session.get().getUser().getId())) {
       errors.add(INSUFFICIENT_PRIVELAGES);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
