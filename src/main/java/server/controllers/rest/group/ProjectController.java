@@ -9,11 +9,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMapping;
 import server.controllers.rest.response.BaseResponse;
 import server.entities.PossibleError;
-import server.entities.dto.group.GroupApplicant;
+import server.entities.dto.group.GroupApplication;
 import server.entities.dto.group.GroupProfile;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
-import server.entities.dto.group.project.ProjectApplicant;
+import server.entities.dto.group.project.ProjectApplication;
 import server.entities.dto.group.project.ProjectInvitation;
 import server.entities.dto.group.project.ProjectMember;
 import server.entities.dto.user.User;
@@ -111,8 +111,8 @@ public class ProjectController extends GroupController<Project, ProjectMember, P
   }
 
   @Override
-  protected GroupApplicant<Project> getApplication() {
-    return new ProjectApplicant();
+  protected GroupApplication<Project> getApplication() {
+    return new ProjectApplication();
   }
 
   @Override

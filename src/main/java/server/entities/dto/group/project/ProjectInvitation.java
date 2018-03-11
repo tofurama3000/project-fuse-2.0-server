@@ -1,7 +1,7 @@
 package server.entities.dto.group.project;
 
 import lombok.Data;
-import server.entities.dto.group.GroupApplicant;
+import server.entities.dto.group.GroupApplication;
 import server.entities.dto.group.GroupInvitation;
 
 import javax.persistence.Entity;
@@ -20,7 +20,7 @@ public class ProjectInvitation extends GroupInvitation<Project> {
 
   @OneToOne
   @JoinColumn(name = "applicant_id", referencedColumnName = "id")
-  private ProjectApplicant applicant;
+  private ProjectApplication applicant;
 
   @Override
   public Project getGroup() {
@@ -28,13 +28,13 @@ public class ProjectInvitation extends GroupInvitation<Project> {
   }
 
   @Override
-  public ProjectApplicant getApplicant() {
+  public ProjectApplication getApplicant() {
     return applicant;
   }
 
   @Override
-  public void setApplicant(GroupApplicant applicant) {
-    this.applicant = (ProjectApplicant) applicant;
+  public void setApplicant(GroupApplication applicant) {
+    this.applicant = (ProjectApplication) applicant;
   }
 
   @Override

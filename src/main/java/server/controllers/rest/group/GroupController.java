@@ -52,7 +52,7 @@ import server.entities.PossibleError;
 import server.entities.dto.FuseSession;
 import server.entities.dto.UploadFile;
 import server.entities.dto.group.Group;
-import server.entities.dto.group.GroupApplicant;
+import server.entities.dto.group.GroupApplication;
 import server.entities.dto.group.GroupInvitation;
 import server.entities.dto.group.GroupMember;
 import server.entities.dto.group.GroupProfile;
@@ -86,7 +86,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 @SuppressWarnings("unused")
@@ -209,7 +208,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
 
-    GroupApplicant<T> application = getApplication();
+    GroupApplication<T> application = getApplication();
     T group = getGroupRepository().findOne(id);
     if (group == null) {
       errors.add(NO_GROUP_FOUND);
@@ -223,7 +222,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
         errors.add(ALREADY_JOINED_MSG);
         return new GeneralResponse(response, ERROR, errors);
     }
-    List<GroupApplicant> applicants = getGroupApplicantRepository().getApplicantsBySender(session.get().getUser());
+    List<GroupApplication> applicants = getGroupApplicantRepository().getApplicantsBySender(session.get().getUser());
     if (ApplicantUtil.applicantsContainId(applicants, id)) {
       return new GeneralResponse(response, ERROR, "Already applied");
     }
@@ -429,7 +428,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     List<String> errors = new ArrayList<>();
     invite.setGroup(getGroupRepository().findOne(id));
     GroupApplicantRepository applicantRepository = getGroupApplicantRepository();
-    GroupApplicant<T> applicant = (GroupApplicant) applicantRepository.findOne(applicantId);
+    GroupApplication<T> applicant = (GroupApplication) applicantRepository.findOne(applicantId);
     if (applicant == null) {
       errors.add("Applicant not found");
       return new GeneralResponse(response, errors);
@@ -655,14 +654,13 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     T group = getGroupRepository().findOne(id);
     List<User> allMembers = new ArrayList<>(getMembersOf(group));
 
-    Stream<MemberRelationship> stream = getPagedResults(allMembers, page, pageSize).stream().map(user -> {
-      UserToGroupPermission permission = getUserToGroupPermission(user, group);
-      MemberRelationship relationship = new MemberRelationship(user);
-      relationship.setPermissions(permission);
-      return relationship;
-    });
+    List<MemberRelationship> memberRelationships = getPagedResults(allMembers, page, pageSize).stream()
+        .map(user -> getUserToGroupPermission(user, group))
+        .filter(UserToGroupPermission::isMember)
+        .map(UserToGroupPermission::toRelationship)
+        .collect(Collectors.toList());
 
-    return new TypedResponse<>(response, BaseResponse.Status.OK, null, stream.collect(Collectors.toList()));
+    return new TypedResponse<>(response, BaseResponse.Status.OK, null, memberRelationships);
   }
 
   @GetMapping
@@ -714,13 +712,13 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @GetMapping(path = "/{id}/applicants/{status}")
   @ApiOperation("Get applicants by status")
   @ResponseBody
-  public TypedResponse<List<GroupApplicant>> getApplicants(@ApiParam("ID of entity")
-                                       @PathVariable(value = "id")
-                                           Long id,
-                                       @ApiParam("Applicant status (one of 'accepted', 'declined', 'pending' 'interviewed', 'interview_scheduled')")
-                                       @PathVariable(value = "status")
-                                           String status,
-                                       HttpServletRequest request, HttpServletResponse response) {
+  public TypedResponse<List<GroupApplication>> getApplicants(@ApiParam("ID of entity")
+                                                             @PathVariable(value = "id")
+                                                                 Long id,
+                                                             @ApiParam("Applicant status (one of 'accepted', 'declined', 'pending' 'interviewed', 'interview_scheduled')")
+                                                             @PathVariable(value = "status")
+                                                                 String status,
+                                                             HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -729,7 +727,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       return new TypedResponse<>(response, BaseResponse.Status.DENIED, errors);
     }
 
-    if (GroupApplicant.ValidStatuses().indexOf(status) == -1) {
+    if (GroupApplication.ValidStatuses().indexOf(status) == -1) {
       errors.add("Invalid status!");
       return new TypedResponse<>(response, BaseResponse.Status.BAD_DATA, errors);
     }
@@ -742,18 +740,18 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     }
 
     GroupApplicantRepository groupApplicantRepository = getGroupApplicantRepository();
-    List<GroupApplicant> applicants = groupApplicantRepository.getApplicants(getGroupRepository().findOne(id), status);
+    List<GroupApplication> applicants = groupApplicantRepository.getApplicants(getGroupRepository().findOne(id), status);
 
-    if(status.equals("interview_scheduled")) {
-      List<GroupApplicant> applicantsTmp = applicants.stream()
-              .filter(a -> a.getDateTime() != null)
-              .sorted((a1, a2) -> a1.getDateTime().compareTo(a2.getDateTime()))
-              .collect(Collectors.toList());
+    if (status.equals("interview_scheduled")) {
+      List<GroupApplication> applicantsTmp = applicants.stream()
+          .filter(a -> a.getDateTime() != null)
+          .sorted((a1, a2) -> a1.getDateTime().compareTo(a2.getDateTime()))
+          .collect(Collectors.toList());
       applicantsTmp.addAll(
-              applicants
-                      .stream()
-                      .filter(a -> a.getDateTime() == null)
-                      .collect(Collectors.toList())
+          applicants
+              .stream()
+              .filter(a -> a.getDateTime() == null)
+              .collect(Collectors.toList())
       );
       applicants = applicantsTmp;
     }
@@ -779,7 +777,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
 
-    if (GroupApplicant.ValidStatuses().indexOf(status) == -1) {
+    if (GroupApplication.ValidStatuses().indexOf(status) == -1) {
       errors.add("Invalid status!");
       return new GeneralResponse(response, BaseResponse.Status.BAD_DATA, errors);
     }
@@ -792,7 +790,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     }
 
     GroupApplicantRepository groupApplicantRepository = getGroupApplicantRepository();
-    GroupApplicant applicationToSave = (GroupApplicant) groupApplicantRepository.findOne(appId);
+    GroupApplication applicationToSave = (GroupApplication) groupApplicantRepository.findOne(appId);
     if (applicationToSave.getStatus().equals(status)) {
       return new GeneralResponse(response, OK);
     }
@@ -1199,7 +1197,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     return group;
   }
 
-  protected abstract GroupApplicant<T> getApplication();
+  protected abstract GroupApplication<T> getApplication();
 
   protected abstract I getInvitation();
 

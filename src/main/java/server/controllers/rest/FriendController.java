@@ -26,7 +26,6 @@ import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
 import server.entities.dto.FuseSession;
-import server.entities.dto.Notification;
 import server.entities.dto.user.Friendship;
 import server.entities.dto.user.User;
 import server.repositories.FriendRepository;

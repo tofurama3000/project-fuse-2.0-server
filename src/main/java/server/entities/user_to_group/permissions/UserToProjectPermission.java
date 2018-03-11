@@ -24,13 +24,7 @@ public class UserToProjectPermission extends UserToGroupPermission<Project> {
   }
 
   @Override
-  protected String getGroupFieldName() {
-    return "project";
-  }
-
-  @Override
   public Iterable<Integer> getRoles() {
     return repository.getRoles(group, user);
   }
-
 }
