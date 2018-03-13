@@ -1,18 +1,23 @@
 package server.entities.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
-/**
- * Created by TR on 1/27/2018.
- */
 @Data
 public class PagedResults {
-  List<Object> items;
 
-  long totalItems;
-  long start;
-  long end;
-  long pageSize;
+  @JsonIgnore
+  private List<SearchResult> searchResults;
+
+  public List<Object> getItems() {
+    return searchResults.stream().map(SearchResult::getData).collect(Collectors.toList());
+  }
+
+  private long totalItems;
+  private long start;
+  private long end;
+  private long pageSize;
 }

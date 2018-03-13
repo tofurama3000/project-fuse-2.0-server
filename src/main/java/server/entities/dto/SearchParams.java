@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
-import server.entities.dto.group.team.Team;
 import server.entities.dto.user.User;
 
 import java.util.ArrayList;
@@ -19,8 +18,8 @@ import java.util.stream.Collectors;
 
 public class SearchParams {
 
-  final static String entityIdentifierRegex = "(^(\\s*in:[\\w,]+))|(\\s+in:[\\w,]+)";
-  final static Pattern entityIdentifierPattern = Pattern.compile(entityIdentifierRegex);
+  private final static String entityIdentifierRegex = "(^(\\s*in:[\\w,]+))|(\\s+in:[\\w,]+)";
+  private final static Pattern entityIdentifierPattern = Pattern.compile(entityIdentifierRegex);
 
   @JsonIgnore
   @Getter
@@ -86,10 +85,6 @@ public class SearchParams {
 
   private static String mapEntityToIndex(String entity) {
     switch (entity.toLowerCase()) {
-      case "t":
-      case "team":
-      case "teams":
-        return Team.esIndex();
       case "o":
       case "org":
       case "orgs":

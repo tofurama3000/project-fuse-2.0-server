@@ -26,10 +26,10 @@ import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
 import server.entities.PossibleError;
 import server.entities.dto.FuseSession;
-import server.entities.dto.group.GroupApplicant;
+import server.entities.dto.group.GroupApplication;
 import server.entities.dto.group.GroupProfile;
 import server.entities.dto.group.organization.Organization;
-import server.entities.dto.group.organization.OrganizationApplicant;
+import server.entities.dto.group.organization.OrganizationApplication;
 import server.entities.dto.group.organization.OrganizationInvitation;
 import server.entities.dto.group.organization.OrganizationMember;
 import server.entities.dto.group.project.Project;
@@ -283,8 +283,8 @@ public class OrganizationController extends GroupController<Organization, Organi
   }
 
   @Override
-  protected GroupApplicant<Organization> getApplication() {
-    return new OrganizationApplicant();
+  protected GroupApplication<Organization> getApplication() {
+    return new OrganizationApplication();
   }
 
   @Override
