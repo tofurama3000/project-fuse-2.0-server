@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.entities.Indexable;
 import server.entities.dto.PagedResults;
+import server.entities.dto.SearchResult;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -154,16 +155,16 @@ public class ElasticsearchClient {
       SearchResponse resp = elasticsearch_client.search(req);
       PagedResults results = new PagedResults();
       results.setStart(page * pageSize);
-      List<Object> resultItems = Arrays.stream(resp.getHits().getHits())
+      List<SearchResult> resultItems = Arrays.stream(resp.getHits().getHits())
           .sorted((res1, res2) -> Float.compare(res2.getScore(), res1.getScore()))
           .map(res -> {
             Map<String, Object> map = res.getSourceAsMap();
             map.put("score", res.getScore());
             return map;
-          })
+          }).map(SearchResult::new)
           .collect(Collectors.toList());
       results.setEnd(page * pageSize + resultItems.size() - 1);
-      results.setItems(resultItems);
+      results.setSearchResults(resultItems);
       results.setTotalItems(resp.getHits().getTotalHits());
       results.setPageSize(pageSize);
       return results;

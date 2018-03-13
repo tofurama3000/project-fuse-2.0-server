@@ -50,6 +50,7 @@ import server.entities.dto.group.organization.OrganizationInvitation;
 import server.entities.dto.group.project.Project;
 import server.entities.dto.group.project.ProjectApplication;
 import server.entities.dto.group.project.ProjectInvitation;
+import server.entities.dto.user.Friendship;
 import server.entities.dto.user.UnregisteredUser;
 import server.entities.dto.user.User;
 import server.entities.dto.user.UserProfile;
@@ -57,6 +58,7 @@ import server.entities.user_to_group.permissions.PermissionFactory;
 import server.entities.user_to_group.permissions.UserPermission;
 import server.handlers.InvitationHandler;
 import server.handlers.UserToGroupRelationshipHandler;
+import server.repositories.FriendRepository;
 import server.repositories.UnregisteredUserRepository;
 import server.repositories.UserProfileRepository;
 import server.repositories.UserRepository;
@@ -130,6 +132,9 @@ public class UserController {
 
   @Autowired
   private InvitationHandler invitationHandler;
+
+  @Autowired
+  private FriendRepository friendRepository;
 
   @Value("${fuse.fileUploadPath}")
   private String fileUploadPath;
@@ -406,6 +411,27 @@ public class UserController {
     List<Project> projectsUserIsPartOf = membersOfGroupController.getProjectsUserIsPartOf(user);
 
     return new TypedResponse<>(response, OK, null, getPagedResults(projectsUserIsPartOf, page, pageSize));
+  }
+
+
+  @GetMapping(path= "/{id}/friends")
+  @ResponseBody
+  @ApiOperation(value = "Get all friends for the specified user")
+  public TypedResponse<List<Friendship>> getAllFriendsOfUser(
+          @PathVariable Long id,
+          HttpServletRequest request, HttpServletResponse response
+  ) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new TypedResponse<>(response, Status.DENIED, errors);
+    }
+
+    User user = userRepository.findOne(id);
+
+    return new TypedResponse<>(response, OK, null, friendRepository.getFriends(user));
   }
 
   @GetMapping(path = "/{id}/projects/applications")
