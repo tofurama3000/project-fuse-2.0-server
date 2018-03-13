@@ -40,7 +40,7 @@ public class Friendship {
     }
   }
 
-  public static List<String> getValidStatuses() {
+  private static List<String> getValidStatuses() {
     return valid;
   }
 
@@ -50,4 +50,18 @@ public class Friendship {
       "deleted",
       "declined"
   );
+
+  @Override
+  public int hashCode() {
+    if (receiver == null || sender == null || receiver.getId() == null || sender.getId() == null) {
+      return super.hashCode();
+    } else {
+      return receiver.getId().hashCode() + sender.getId().hashCode();
+    }
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    return other != null && other instanceof Friendship && other.hashCode() == this.hashCode();
+  }
 }
