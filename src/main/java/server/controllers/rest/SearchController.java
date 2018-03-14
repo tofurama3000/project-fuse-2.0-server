@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
+import server.controllers.rest.errors.BadDataException;
+import server.controllers.rest.errors.ServerErrorException;
 import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.TypedResponse;
 import server.entities.dto.FuseSession;

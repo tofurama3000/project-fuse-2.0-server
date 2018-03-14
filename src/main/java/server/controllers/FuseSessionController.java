@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.AlternativeJdkIdGenerator;
 import org.springframework.util.IdGenerator;
+import server.controllers.rest.errors.DeniedException;
 import server.entities.PossibleError;
 import server.entities.dto.FuseSession;
 import server.entities.dto.user.User;
@@ -59,6 +60,18 @@ public class FuseSessionController {
       return Optional.ofNullable(fuseSession);
     }
     return Optional.empty();
+  }
+
+  public User getUserFromSession(HttpServletRequest servletRequest) throws InvalidSessionException {
+    return getSession(servletRequest).map(FuseSession::getUser).orElseThrow(InvalidSessionException::new);
+
+  }
+
+  private class InvalidSessionException extends DeniedException {
+
+    InvalidSessionException() {
+      super(INVALID_SESSION);
+    }
   }
 
   private static String createId() {

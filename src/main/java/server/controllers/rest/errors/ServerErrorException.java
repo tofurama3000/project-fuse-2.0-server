@@ -1,4 +1,4 @@
-package server.controllers.rest;
+package server.controllers.rest.errors;
 
 public class ServerErrorException extends Throwable {
   public ServerErrorException(String message) {
