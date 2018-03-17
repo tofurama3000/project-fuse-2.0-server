@@ -2,6 +2,8 @@ package server.controllers.rest;
 
 import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
+
+import com.google.common.graph.ElementOrder;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.BaseResponse;
+import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
 import server.entities.dto.FuseSession;
 import server.entities.dto.Link;
@@ -31,7 +34,9 @@ import server.service.LinkResolver;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping(value = "/links")
@@ -52,7 +57,8 @@ public class LinkController {
 
   @PostMapping
   @ResponseBody
-  public TypedResponse<Link> addLink(@ApiParam(value = "The user information to create with", required = true)
+  public TypedResponse<Link> addLink(
+          @ApiParam(value = "The user information to create with", required = true)
                                      @RequestBody Link link,
                                      HttpServletRequest request,
                                      HttpServletResponse response) {
@@ -137,5 +143,64 @@ public class LinkController {
       default:
         return false;
     }
+  }
+
+  public BaseResponse updateLinksFor(String referenceType, Long referenceId, List<Link> links, HttpServletResponse response) {
+
+    List<Link> savedLinks = linkRepository.getLinksWithIdOfType(referenceId, referenceType);
+
+    // Update links that need updating
+    List<Link> linksToUpdate = savedLinks.stream()
+            .map(link -> links.stream()
+                    .filter(l ->
+                            Objects.equals(l.getId(), link.getId())
+                    )
+                    .filter(l ->
+                            !l.getLink().equalsIgnoreCase(link.getLink()) ||
+                                    !l.getName().equals(link.getName())
+                    )
+                    .map(l -> {
+                      l.setReferencedId(referenceId);
+                      l.setReferencedType(referenceType);
+                      return l;
+                    })
+                    .findFirst()
+            )
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.toList());
+    linkRepository.save(linksToUpdate);
+
+    // Delete links not present
+    List<Link> linksToDelete = savedLinks.stream()
+            .filter(link -> links.stream()
+                    .filter(l ->
+                            Objects.equals(l.getId(), link.getId()) &&
+                                    Objects.equals(l.getReferencedId(), link.getReferencedId()) &&
+                                    l.getReferencedType().equals(link.getReferencedType())
+                    )
+                    .count() == 0
+            )
+            .collect(Collectors.toList());
+    linkRepository.delete(linksToDelete);
+
+    // Create links that don't have an id
+    List<Link> linksToCreate = links.stream()
+            .filter(link -> link.getId() == null)
+            .map(link -> {
+              link.setReferencedId(referenceId);
+              link.setReferencedType(referenceType);
+              return link;
+            })
+            .collect(Collectors.toList());
+    linkRepository.save(linksToCreate);
+
+    return new GeneralResponse(response, BaseResponse.Status.OK);
+  }
+
+  public TypedResponse<List<Link>> getLinksFor(String referenceType, Long referenceId, HttpServletResponse response) {
+
+    return new TypedResponse<>(response, BaseResponse.Status.OK, null,
+            linkRepository.getLinksWithIdOfType(referenceId, referenceType));
   }
 }
