@@ -34,19 +34,19 @@ public class Link {
     // All relative links are relative to the UI URL and not the server
     switch(name.toLowerCase()) {
       case "github":
-        return "/assets/images/github.png";
+        return "/assets/images/github.svg";
       case "youtube":
-        return "/assets/images/youtube.png";
+        return "/assets/images/youtube.svg";
       case "linkedin":
-        return "/assets/images/linkedin.png";
+        return "/assets/images/linkedin.svg";
       case "facebook":
-        return "/assets/images/facebook.png";
+        return "/assets/images/facebook.svg";
       case "twitter":
         return "/assets/images/twitter.svg";
       case "wordpress":
-        return "/assets/images/wordpress.png";
+        return "/assets/images/wordpress.svg";
       case "drupal":
-        return "/assets/images/drupal.png";
+        return "/assets/images/drupal.svg";
       default:
         return null;
     }
