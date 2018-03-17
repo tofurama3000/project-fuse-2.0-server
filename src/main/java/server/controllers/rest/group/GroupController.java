@@ -1010,6 +1010,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     T group = getGroupRepository().findOne(id);
     group.getProfile().setThumbnail_id(uploadFile.getId());
     getGroupApplicantRepository().save(group.getProfile());
+    group.indexAsync();
     return new TypedResponse<>(response, OK, null, uploadFile);
   }
 

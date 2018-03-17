@@ -712,6 +712,7 @@ public class UserController {
 
     profile.setThumbnail_id(uploadFile.getId());
     userProfileRepository.save(user.getProfile());
+    user.indexAsync();
     return new TypedResponse<>(response, OK, null, uploadFile);
   }
 
