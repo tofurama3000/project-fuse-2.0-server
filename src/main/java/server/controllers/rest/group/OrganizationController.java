@@ -241,6 +241,11 @@ public class OrganizationController extends GroupController<Organization, Organi
   @Override
   protected void removeRelationship(User user, Organization group, int role) {
     relationshipFactory.createUserToOrganizationRelationship(user, group).removeRelationship(role);
+    List<User> list  = organizationMemberRepository.getUsersByGroup(group);
+    Set<User> set = new HashSet<>(list);
+    group.setNum_members(new Long (set.size()));
+    organizationRepository.save(group);
+    group.indexAsync();
   }
 
   @Override

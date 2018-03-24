@@ -105,6 +105,11 @@ public class ProjectController extends GroupController<Project, ProjectMember, P
   @Override
   protected void removeRelationship(User user, Project group, int role) {
     relationshipFactory.createUserToProjectRelationship(user, group).removeRelationship(role);
+    List<User> list  = projectMemberRepository.getUsersByGroup(group);
+    Set<User> set = new HashSet<>(list);
+    group.setNum_members(new Long (set.size()));
+    projectRepository.save(group);
+    group.indexAsync();
   }
 
   @Override

@@ -46,11 +46,6 @@ public class Organization extends Group<OrganizationProfile> {
   }
 
   @Override
-  public Map<String, Object> getEsJson() {
-    Map<String, Object> map = super.getEsJson();
-    return map;
-  }
-  @Override
   public String getEsIndex() {
     return esIndex();
   }

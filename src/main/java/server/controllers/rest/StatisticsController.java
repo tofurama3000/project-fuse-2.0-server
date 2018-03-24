@@ -18,8 +18,10 @@ import server.controllers.rest.errors.DeniedException;
 import server.controllers.rest.response.TypedResponse;
 import server.entities.dto.TimeInterval;
 import server.entities.dto.group.project.ProjectInterviewSlots;
+import server.entities.dto.user.ProjectNumMember;
 import server.entities.dto.user.User;
 import server.entities.dto.user.UserInterviewSlots;
+import server.handlers.GroupMemberHelper;
 import server.handlers.InterviewSlotsHelper;
 
 import javax.servlet.http.HttpServletRequest;
@@ -39,6 +41,9 @@ public class StatisticsController {
 
   @Autowired
   private InterviewSlotsHelper interviewSlotsHelper;
+
+  @Autowired
+  private GroupMemberHelper groupMemberHelper;
 
   @GetMapping("organizations/{id}/projects/interviews")
   @ResponseBody
@@ -79,7 +84,23 @@ public class StatisticsController {
     try {
       User user = sessionController.getUserFromSession(request);
       return new TypedResponse<>(response, interviewSlotsHelper.getInterviewSlotsForAllMembersInOrganization(id, user, timeInterval.getStartDateTime(), timeInterval.getEndDateTime()));
+    } catch (DeniedException e) {
+      return new TypedResponse<>(response, DENIED, e.getMessage());
+    } catch (BadDataException e) {
+      return new TypedResponse<>(response, BAD_DATA, e.getMessage());
+    }
+  }
 
+  @GetMapping("organization/id/projects/members")
+  @ResponseBody
+  @ApiOperation("Returns all projects associated with an organization")
+  public TypedResponse<List<ProjectNumMember>> getNumOfEachProject(@ApiParam("Id of the organization")
+                                                                              @PathVariable(value = "id") Long id,
+                                                                            HttpServletRequest request, HttpServletResponse response)
+
+  {
+    try {
+      return  new TypedResponse<>(response,groupMemberHelper.usersInEachProject(id, sessionController.getUserFromSession(request)));
     } catch (DeniedException e) {
       return new TypedResponse<>(response, DENIED, e.getMessage());
     } catch (BadDataException e) {
