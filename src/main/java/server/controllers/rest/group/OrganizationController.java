@@ -51,9 +51,7 @@ import server.repositories.group.project.ProjectRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
@@ -248,6 +246,10 @@ public class OrganizationController extends GroupController<Organization, Organi
   @Override
   protected void addRelationship(User user, Organization group, int role) {
     relationshipFactory.createUserToOrganizationRelationship(user, group).addRelationship(role);
+    List<User> list  = organizationMemberRepository.getUsersByGroup(group);
+    Set<User> set = new HashSet<>(list);
+    group.setNum_members(new Long (set.size()));
+    organizationRepository.save(group);
     group.indexAsync();
   }
 

@@ -32,7 +32,9 @@ import server.repositories.group.project.ProjectProfileRepository;
 import server.repositories.group.project.ProjectRepository;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Controller
 @RequestMapping(value = "/projects")
@@ -108,6 +110,11 @@ public class ProjectController extends GroupController<Project, ProjectMember, P
   @Override
   protected void addRelationship(User user, Project group, int role) {
     relationshipFactory.createUserToProjectRelationship(user, group).addRelationship(role);
+    List<User> list  = projectMemberRepository.getUsersByGroup(group);
+    Set<User> set = new HashSet<>(list);
+    group.setNum_members(new Long (set.size()));
+    projectRepository.save(group);
+    group.indexAsync();
   }
 
   @Override
