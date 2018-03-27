@@ -36,7 +36,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Controller
 @RequestMapping(value = "/links")
@@ -147,38 +150,37 @@ public class LinkController {
 
   public BaseResponse updateLinksFor(String referenceType, Long referenceId, List<Link> links, HttpServletResponse response) {
 
-    List<Link> savedLinks = linkRepository.getLinksWithIdOfType(referenceId, referenceType);
+    List<Link> dbLinks = linkRepository.getLinksWithIdOfType(referenceId, referenceType);
+
+    // Helper functions useful for this function
+    BiFunction<Link, Link, Boolean> idsMatch = (link1, link2) -> link1.getId().equals(link2.getId());
+    BiFunction<Link, Link, Boolean> linkIsDifferent = (link1, link2) ->
+            !link1.getLink().equalsIgnoreCase(link2.getLink()) ||
+                    !link1.getName().equals(link2.getName());
+    Function<Link, Link> createCopyToSave = (link) -> {
+        Link linkToSave = new Link();
+        linkToSave.setLink(link.getLink());
+        linkToSave.setName(link.getName());
+        linkToSave.setReferencedType(referenceType);
+        linkToSave.setReferencedId(referenceId);
+        linkToSave.setId(link.getId());
+        return linkToSave;
+    };
 
     // Update links that need updating
-    List<Link> linksToUpdate = savedLinks.stream()
-            .map(link -> links.stream()
-                    .filter(l ->
-                            Objects.equals(l.getId(), link.getId())
-                    )
-                    .filter(l ->
-                            !l.getLink().equalsIgnoreCase(link.getLink()) ||
-                                    !l.getName().equals(link.getName())
-                    )
-                    .map(l -> {
-                      l.setReferencedId(referenceId);
-                      l.setReferencedType(referenceType);
-                      return l;
-                    })
-                    .findFirst()
+    List<Link> linksToUpdate = dbLinks.stream()
+            .flatMap(dbLink -> links.stream().filter(
+                    inputLink -> idsMatch.apply(inputLink, dbLink) && linkIsDifferent.apply(inputLink, dbLink)
+                ).limit(1)
             )
-            .filter(Optional::isPresent)
-            .map(Optional::get)
+            .map(createCopyToSave)
             .collect(Collectors.toList());
     linkRepository.save(linksToUpdate);
 
     // Delete links not present
-    List<Link> linksToDelete = savedLinks.stream()
-            .filter(link -> links.stream()
-                    .filter(l ->
-                            Objects.equals(l.getId(), link.getId()) &&
-                                    Objects.equals(l.getReferencedId(), link.getReferencedId()) &&
-                                    l.getReferencedType().equals(link.getReferencedType())
-                    )
+    List<Link> linksToDelete = dbLinks.stream()
+            .filter(dbLink -> links.stream()
+                    .filter(inputLink -> idsMatch.apply(dbLink, inputLink))
                     .count() == 0
             )
             .collect(Collectors.toList());
@@ -187,11 +189,7 @@ public class LinkController {
     // Create links that don't have an id
     List<Link> linksToCreate = links.stream()
             .filter(link -> link.getId() == null)
-            .map(link -> {
-              link.setReferencedId(referenceId);
-              link.setReferencedType(referenceType);
-              return link;
-            })
+            .map(createCopyToSave)
             .collect(Collectors.toList());
     linkRepository.save(linksToCreate);
 
