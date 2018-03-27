@@ -23,6 +23,16 @@ public class Organization extends Group<OrganizationProfile> {
   @OneToOne
   private OrganizationSettings organizationSettings;
 
+  private boolean canEveryoneCreate;
+
+  public boolean getCanEveryoneCreate() {
+    return canEveryoneCreate;
+  }
+
+  public void setCanEveryoneCreate(boolean b) {
+    canEveryoneCreate = b;
+  }
+
   @Override
   public String getGroupType() {
     return "Organization";

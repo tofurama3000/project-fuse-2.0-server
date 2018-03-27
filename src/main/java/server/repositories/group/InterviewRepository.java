@@ -1,6 +1,7 @@
 package server.repositories.group;
 
 import static server.constants.Availability.AVAILABLE;
+
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
