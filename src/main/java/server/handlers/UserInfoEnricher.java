@@ -40,7 +40,7 @@ public class UserInfoEnricher {
 
   public PagedResults enrichWithUserInfo(User user, PagedResults results) {
 
-    Set<Friendship> friendships = new HashSet<>(friendRepository.getFriends(user));
+    Set<Friendship> friendships = new HashSet<>(friendRepository.getAllFriends(user));
 
     List<SearchResult> enrichedSearchResults = results.getSearchResults().stream()
         .map(searchResult -> enrichForUser(user, friendships, searchResult))

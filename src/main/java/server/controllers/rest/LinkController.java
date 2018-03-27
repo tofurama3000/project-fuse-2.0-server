@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.response.BaseResponse;
+import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
 import server.entities.dto.FuseSession;
 import server.entities.dto.Link;
@@ -33,6 +34,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping(value = "/links")
@@ -53,7 +57,8 @@ public class LinkController {
 
   @PostMapping
   @ResponseBody
-  public TypedResponse<Link> addLink(@ApiParam(value = "The user information to create with", required = true)
+  public TypedResponse<Link> addLink(
+          @ApiParam(value = "The user information to create with", required = true)
                                      @RequestBody Link link,
                                      HttpServletRequest request,
                                      HttpServletResponse response) {
@@ -138,5 +143,59 @@ public class LinkController {
       default:
         return false;
     }
+  }
+
+  public BaseResponse updateLinksFor(String referenceType, Long referenceId, List<Link> links, HttpServletResponse response) {
+
+    List<Link> dbLinks = linkRepository.getLinksWithIdOfType(referenceId, referenceType);
+
+    // Helper functions useful for this function
+    BiFunction<Link, Link, Boolean> idsMatch = (link1, link2) -> link1.getId().equals(link2.getId());
+    BiFunction<Link, Link, Boolean> linkIsDifferent = (link1, link2) ->
+            !link1.getLink().equalsIgnoreCase(link2.getLink()) ||
+                    !link1.getName().equals(link2.getName());
+    Function<Link, Link> createCopyToSave = (link) -> {
+        Link linkToSave = new Link();
+        linkToSave.setLink(link.getLink());
+        linkToSave.setName(link.getName());
+        linkToSave.setReferencedType(referenceType);
+        linkToSave.setReferencedId(referenceId);
+        linkToSave.setId(link.getId());
+        return linkToSave;
+    };
+
+    // Update links that need updating
+    List<Link> linksToUpdate = dbLinks.stream()
+            .flatMap(dbLink -> links.stream().filter(
+                    inputLink -> idsMatch.apply(inputLink, dbLink) && linkIsDifferent.apply(inputLink, dbLink)
+                ).limit(1)
+            )
+            .map(createCopyToSave)
+            .collect(Collectors.toList());
+    linkRepository.save(linksToUpdate);
+
+    // Delete links not present
+    List<Link> linksToDelete = dbLinks.stream()
+            .filter(dbLink -> links.stream()
+                    .filter(inputLink -> idsMatch.apply(dbLink, inputLink))
+                    .count() == 0
+            )
+            .collect(Collectors.toList());
+    linkRepository.delete(linksToDelete);
+
+    // Create links that don't have an id
+    List<Link> linksToCreate = links.stream()
+            .filter(link -> link.getId() == null)
+            .map(createCopyToSave)
+            .collect(Collectors.toList());
+    linkRepository.save(linksToCreate);
+
+    return new GeneralResponse(response, BaseResponse.Status.OK);
+  }
+
+  public TypedResponse<List<Link>> getLinksFor(String referenceType, Long referenceId, HttpServletResponse response) {
+
+    return new TypedResponse<>(response, BaseResponse.Status.OK, null,
+            linkRepository.getLinksWithIdOfType(referenceId, referenceType));
   }
 }

@@ -42,6 +42,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.FileController;
+import server.controllers.rest.LinkController;
 import server.controllers.rest.NotificationController;
 import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.CannedResponse;
@@ -50,6 +51,7 @@ import server.controllers.rest.response.TypedResponse;
 import server.entities.MemberRelationship;
 import server.entities.PossibleError;
 import server.entities.dto.FuseSession;
+import server.entities.dto.Link;
 import server.entities.dto.UploadFile;
 import server.entities.dto.group.Group;
 import server.entities.dto.group.GroupApplication;
@@ -93,6 +95,9 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
 
   @Autowired
   protected FuseSessionController fuseSessionController;
+
+  @Autowired
+  private LinkController linkController;
 
   @Autowired
   protected UserRepository userRepository;
@@ -567,6 +572,79 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     return new GeneralResponse(response, OK);
   }
 
+
+
+  @CrossOrigin
+  @ApiOperation(value = "Updates the links for a group (must be logged in as an admin)")
+  @PutMapping(path = "/{id}/links")
+  @ResponseBody
+  public BaseResponse updateGroupLinks(
+          @ApiParam(value = "ID of the group to update")
+          @PathVariable long id,
+          @ApiParam(value = "Set of links for the group")
+          @RequestBody List<Link> links,
+          HttpServletRequest request,
+          HttpServletResponse response
+  ) {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
+    }
+
+    T group = getGroupRepository().findOne(id);
+
+    if (group == null) {
+      errors.add("Group not found!");
+      return new TypedResponse<>(response, BaseResponse.Status.BAD_DATA, errors);
+    }
+
+    User currentUser = session.get().getUser();
+
+    if (!getUserToGroupPermissionTyped(currentUser, group).canUpdate()) {
+      errors.add("Unable to edit group, permission denied");
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
+    }
+
+    final long profileId = group.getProfile().getId();
+    String referenceType = group.getGroupType();
+
+    return linkController.updateLinksFor(referenceType, profileId, links, response);
+  }
+
+  @ApiOperation(value = "Gets links for the group")
+  @GetMapping(path = "/{id}/links")
+  @ResponseBody
+  public TypedResponse<List<Link>> getLinks(
+          @ApiParam(value = "Id of the group to get links for")
+          @PathVariable long id,
+          HttpServletRequest request,
+          HttpServletResponse response
+  ) {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new TypedResponse<>(response, BaseResponse.Status.DENIED, errors);
+    }
+
+    T group = getGroupRepository().findOne(id);
+
+    if (group == null) {
+      errors.add("Group not found!");
+      return new TypedResponse<>(response, BaseResponse.Status.BAD_DATA, errors);
+    }
+
+    if (group.getProfile() == null) {
+      return new TypedResponse<>(response, BaseResponse.Status.OK, null, new ArrayList<>());
+    }
+
+    String referenceType = group.getGroupType();
+
+    return linkController.getLinksFor(referenceType, group.getProfile().getId(), response);
+  }
+
   @ApiOperation("Find a group by the name and/or owner email")
   @GetMapping(path = "/find", params = {"name", "email"})
   @ResponseBody
@@ -932,6 +1010,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     T group = getGroupRepository().findOne(id);
     group.getProfile().setThumbnail_id(uploadFile.getId());
     getGroupApplicantRepository().save(group.getProfile());
+    group.indexAsync();
     return new TypedResponse<>(response, OK, null, uploadFile);
   }
 
