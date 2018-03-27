@@ -24,7 +24,6 @@ public class Link {
   @Column(name = "referenced_Id")
   private Long referencedId;
 
-  @Transient
   public String getImg() {
     // Images are picked on the server in case we want the server (Tier 3 feature)
     //  to cache images for the actual page (such as media tags) in the future
