@@ -35,11 +35,6 @@ public class UserToOrganizationPermission extends UserToGroupPermission<Organiza
   }
 
   @Override
-  protected String getGroupFieldName() {
-    return "organization";
-  }
-
-  @Override
   public Iterable<Integer> getRoles() {
     return repository.getRoles(group, user);
   }

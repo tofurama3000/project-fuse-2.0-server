@@ -38,6 +38,14 @@ public class PossibleError {
     hasError = this.status != OK;
   }
 
+  public PossibleError(String error, Status status) {
+    this.errors = new ArrayList<>();
+    errors.add(error);
+    this.status = status;
+
+    hasError = this.status != OK;
+  }
+
   public PossibleError(Status status) {
     this.errors = new ArrayList<>();
     this.status = status;

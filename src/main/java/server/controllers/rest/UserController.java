@@ -45,19 +45,20 @@ import server.email.StandardEmailSender;
 import server.entities.dto.FuseSession;
 import server.entities.dto.UploadFile;
 import server.entities.dto.group.organization.Organization;
-import server.entities.dto.group.organization.OrganizationApplicant;
+import server.entities.dto.group.organization.OrganizationApplication;
 import server.entities.dto.group.organization.OrganizationInvitation;
 import server.entities.dto.group.project.Project;
-import server.entities.dto.group.project.ProjectApplicant;
+import server.entities.dto.group.project.ProjectApplication;
 import server.entities.dto.group.project.ProjectInvitation;
+import server.entities.dto.user.Friendship;
 import server.entities.dto.user.UnregisteredUser;
 import server.entities.dto.user.User;
 import server.entities.dto.user.UserProfile;
 import server.entities.user_to_group.permissions.PermissionFactory;
 import server.entities.user_to_group.permissions.UserPermission;
 import server.handlers.InvitationHandler;
-import server.handlers.NotificationHandler;
 import server.handlers.UserToGroupRelationshipHandler;
+import server.repositories.FriendRepository;
 import server.repositories.UnregisteredUserRepository;
 import server.repositories.UserProfileRepository;
 import server.repositories.UserRepository;
@@ -133,7 +134,7 @@ public class UserController {
   private InvitationHandler invitationHandler;
 
   @Autowired
-  private NotificationHandler notificationHandler;
+  private FriendRepository friendRepository;
 
   @Value("${fuse.fileUploadPath}")
   private String fileUploadPath;
@@ -412,10 +413,31 @@ public class UserController {
     return new TypedResponse<>(response, OK, null, getPagedResults(projectsUserIsPartOf, page, pageSize));
   }
 
+
+  @GetMapping(path= "/{id}/friends")
+  @ResponseBody
+  @ApiOperation(value = "Get all friends for the specified user")
+  public TypedResponse<List<Friendship>> getAllFriendsOfUser(
+          @PathVariable Long id,
+          HttpServletRequest request, HttpServletResponse response
+  ) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new TypedResponse<>(response, Status.DENIED, errors);
+    }
+
+    User user = userRepository.findOne(id);
+
+    return new TypedResponse<>(response, OK, null, friendRepository.getFriends(user));
+  }
+
   @GetMapping(path = "/{id}/projects/applications")
   @ResponseBody
   @ApiOperation(value = "Get all project applications for the user")
-  public TypedResponse<List<ProjectApplicant>> getAllApplicationsOfUserProjects(
+  public TypedResponse<List<ProjectApplication>> getAllApplicationsOfUserProjects(
       @PathVariable Long id,
       @PathParam("status") String status,
       @PathParam("not_status") String not_status,
@@ -433,7 +455,7 @@ public class UserController {
       return new TypedResponse<>(response, Status.DENIED, errors);
     }
 
-    List<ProjectApplicant> applicants;
+    List<ProjectApplication> applicants;
     User user = session.get().getUser();
 
     if (status != null) {
@@ -448,7 +470,7 @@ public class UserController {
   @GetMapping(path = "/{id}/organizations/applications")
   @ResponseBody
   @ApiOperation(value = "Get all organization applications for the user")
-  public TypedResponse<List<OrganizationApplicant>> getAllApplicationsOfUserOrganizations(
+  public TypedResponse<List<OrganizationApplication>> getAllApplicationsOfUserOrganizations(
       @PathVariable Long id,
       @PathParam("status") String status,
       @PathParam("not_status") String not_status,
@@ -466,7 +488,7 @@ public class UserController {
       return new TypedResponse<>(response, Status.DENIED, errors);
     }
 
-    List<OrganizationApplicant> applicants;
+    List<OrganizationApplication> applicants;
     User user = session.get().getUser();
 
     if (status != null) {
@@ -691,7 +713,7 @@ public class UserController {
     Organization group = savedInvitation.getGroup();
 
     if (action.equalsIgnoreCase("decline")) {
-      return invitationHandler.declineOrganizationInvitation(response, errors, savedInvitation, user, group);
+      return invitationHandler.declineOrganizationInvitation(response, savedInvitation, user, group);
     } else {
       return invitationHandler.acceptOrganizationInvitation(organizationInvitation, response, savedInvitation, user, group);
     }

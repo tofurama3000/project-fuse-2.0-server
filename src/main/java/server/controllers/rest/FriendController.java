@@ -1,5 +1,6 @@
 package server.controllers.rest;
 
+import static server.controllers.rest.response.BaseResponse.Status.ERROR;
 import static server.controllers.rest.response.BaseResponse.Status.OK;
 import static server.controllers.rest.response.CannedResponse.FRIEND_FOUND;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
@@ -25,10 +26,8 @@ import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
 import server.entities.dto.FuseSession;
-import server.entities.dto.Notification;
-import server.entities.dto.user.Friend;
+import server.entities.dto.user.Friendship;
 import server.entities.dto.user.User;
-import server.handlers.NotificationHandler;
 import server.repositories.FriendRepository;
 import server.repositories.NotificationRepository;
 import server.repositories.UserRepository;
@@ -52,9 +51,6 @@ public class FriendController {
   private FriendRepository friendRepository;
 
   @Autowired
-  private NotificationHandler notificationHandler;
-
-  @Autowired
   private NotificationRepository notificationRepository;
 
   @Autowired
@@ -68,12 +64,12 @@ public class FriendController {
   @ApiOperation("Get all friends with paginate option")
   @GetMapping
   @ResponseBody
-  public TypedResponse<List<Friend>> getFriends(@ApiParam(value = "The page of results to pull")
-                                                @RequestParam(value = "page", required = false, defaultValue = "0") int page,
-                                                @ApiParam(value = "The number of results per page")
-                                                @RequestParam(value = "size", required = false, defaultValue = "15") int pageSize,
-                                                HttpServletRequest request,
-                                                HttpServletResponse response) {
+  public TypedResponse<List<Friendship>> getFriends(@ApiParam(value = "The page of results to pull")
+                                                    @RequestParam(value = "page", required = false, defaultValue = "0") int page,
+                                                    @ApiParam(value = "The number of results per page")
+                                                    @RequestParam(value = "size", required = false, defaultValue = "15") int pageSize,
+                                                    HttpServletRequest request,
+                                                    HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -81,43 +77,43 @@ public class FriendController {
       return new TypedResponse<>(response, BaseResponse.Status.DENIED, errors);
     }
 
-    List<Friend> allFriends = friendRepository.getFriends(session.get().getUser());
+    List<Friendship> allFriendships = friendRepository.getFriends(session.get().getUser());
 
-    return new TypedResponse<>(response, BaseResponse.Status.OK, null, getPagedResults(allFriends, page, pageSize));
+    return new TypedResponse<>(response, BaseResponse.Status.OK, null, getPagedResults(allFriendships, page, pageSize));
   }
 
   @ApiOperation("Get all friends")
   @GetMapping("/all")
   @ResponseBody
-  public TypedResponse<List<Friend>> getFriendIds(HttpServletRequest request,
-                                                  HttpServletResponse response) {
+  public TypedResponse<List<Friendship>> getFriendIds(HttpServletRequest request,
+                                                      HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
       return new TypedResponse<>(response, BaseResponse.Status.DENIED, errors);
     }
-    List<Friend> list = friendRepository.getAllFriends(session.get().getUser());
+    List<Friendship> list = friendRepository.getAllFriends(session.get().getUser());
     return new TypedResponse<>(response, BaseResponse.Status.OK, null, list);
   }
 
   @ApiOperation("Get all friend applicants")
   @GetMapping(path = "/applicants")
   @ResponseBody
-  public TypedResponse<List<Friend>> getFriendRequests(@ApiParam(value = "The page of results to pull")
-                                                       @RequestParam(value = "page", required = false, defaultValue = "0") int page,
-                                                       @ApiParam(value = "The number of results per page")
-                                                       @RequestParam(value = "size", required = false, defaultValue = "15") int pageSize,
-                                                       HttpServletRequest request, HttpServletResponse response) {
+  public TypedResponse<List<Friendship>> getFriendRequests(@ApiParam(value = "The page of results to pull")
+                                                           @RequestParam(value = "page", required = false, defaultValue = "0") int page,
+                                                           @ApiParam(value = "The number of results per page")
+                                                           @RequestParam(value = "size", required = false, defaultValue = "15") int pageSize,
+                                                           HttpServletRequest request, HttpServletResponse response) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
       errors.add(INVALID_SESSION);
       return new TypedResponse<>(response, BaseResponse.Status.DENIED, errors);
     }
-    List<Friend> friendRequests = friendRepository.getFriendApplicant(session.get().getUser());
+    List<Friendship> friendshipRequests = friendRepository.getFriendApplicant(session.get().getUser());
 
-    return new TypedResponse<>(response, BaseResponse.Status.OK, null, getPagedResults(friendRequests, page, pageSize));
+    return new TypedResponse<>(response, BaseResponse.Status.OK, null, getPagedResults(friendshipRequests, page, pageSize));
   }
 
   @CrossOrigin
@@ -131,28 +127,32 @@ public class FriendController {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
-    Friend friend = friendRepository.findOne(id);
-    if (friend == null) {
+    if (isFriend(session.get().getUser(), id)) {
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, "Already friends");
+    }
+
+    Friendship friendship = friendRepository.findOne(id);
+    if (friendship == null) {
       errors.add(INVALID_FIELDS);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
-    if (!friend.getReceiver().getId().equals(session.get().getUser().getId())) {
+    if (!friendship.getReceiver().getId().equals(session.get().getUser().getId())) {
       errors.add(INVALID_FIELDS);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
-    if (!friend.getStatus().equals("applied")) {
+    if (!friendship.getStatus().equals("applied")) {
       errors.add(INVALID_FIELDS);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
-    friend.setStatus("accepted");
+    friendship.setStatus("accepted");
     try {
-      notificationController.sendNotification(friend.getSender(), friend.getReceiver().getName() + " has accepted your friend request", "Friend", "Friend:Accepted", friend.getId());
+      notificationController.sendFriendshipAcceptedNotification(friendship);
+      friendRepository.save(friendship);
     } catch (Exception e) {
-      logger.error(e.getMessage(), e);
+      errors.add(e.getMessage());
+      return new GeneralResponse(response, ERROR, errors);
     }
-    List<Notification> list = notificationRepository.getNotifications(id,"Friend:Request");
-    for(Notification n : list)
-    notificationHandler.markNotificationDone(n);
+    notificationController.updateFriendshipRequestNotificationsFor(friendship);
 
     return new GeneralResponse(response, OK);
   }
@@ -168,21 +168,21 @@ public class FriendController {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
-    Friend friend = friendRepository.findOne(id);
-    if (friend == null) {
+    Friendship Friendship = friendRepository.findOne(id);
+    if (Friendship == null) {
       errors.add(INVALID_FIELDS);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
-    if (!friend.getReceiver().getId().equals(session.get().getUser().getId())) {
+    if (!Friendship.getReceiver().getId().equals(session.get().getUser().getId())) {
       errors.add(INVALID_FIELDS);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
-    if (!friend.getStatus().equals("applied")) {
+    if (!Friendship.getStatus().equals("applied")) {
       errors.add(INVALID_FIELDS);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
-    friend.setStatus("declined");
-    friendRepository.save(friend);
+    Friendship.setStatus("declined");
+    friendRepository.save(Friendship);
 
     return new GeneralResponse(response, OK);
   }
@@ -201,17 +201,17 @@ public class FriendController {
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
-    Friend friend = friendRepository.findOne(id);
-    if (friend == null) {
+    Friendship friendship = friendRepository.findOne(id);
+    if (friendship == null) {
       errors.add(INVALID_FIELDS);
       return new GeneralResponse(response, BaseResponse.Status.DENIED);
     }
-    if (!friend.getStatus().equals("accepted")) {
+    if (!friendship.getStatus().equals("accepted")) {
       errors.add(INVALID_FIELDS);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
-    friend.setStatus("deleted");
-    friendRepository.save(friend);
+    friendship.setStatus("deleted");
+    friendRepository.save(friendship);
     return new GeneralResponse(response, OK);
   }
 
@@ -235,28 +235,33 @@ public class FriendController {
       errors.add(FRIEND_FOUND);
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
+
+    long count = friendRepository.getAllFriends(sender).stream()
+        .filter(friendship -> friendship.getId().equals(id) && friendship.getStatus().equals("applied")).count();
+
+    if (count != 0) {
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, "Already sent friend request");
+    }
+
     User receiver = userRepository.findOne(id);
-    Friend friend = new Friend();
-    friend.setSender(sender);
-    friend.setStatus("applied");
-    friend.setReceiver(receiver);
-    friendRepository.save(friend);
+    Friendship friendship = new Friendship();
+    friendship.setSender(sender);
+    friendship.setStatus("applied");
+    friendship.setReceiver(receiver);
+    friendRepository.save(friendship);
     try {
-      notificationController.sendNotification(receiver, sender.getName() + " wants to be your friend!",
-          "Friend", "Friend:Request",
-          friend.getId()
-      );
+      notificationController.sendFriendshipRequestNotification(friendship);
     } catch (Exception e) {
-      logger.error(e.getMessage(), e);
+      logger.error(e.getMessage());
     }
     return new GeneralResponse(response, OK);
   }
 
   private boolean isFriend(User user, long id) {
-    List<Friend> friends = friendRepository.getFriends(user);
-    for (Friend friend : friends) {
-      if (friend.getReceiver().getId() == id || friend.getSender().getId() == id) {
-        if (friend.getStatus().equals("accepted")) {
+    List<Friendship> Friendships = friendRepository.getFriends(user);
+    for (Friendship Friendship : Friendships) {
+      if (Friendship.getReceiver().getId() == id || Friendship.getSender().getId() == id) {
+        if (Friendship.getStatus().equals("accepted")) {
           return true;
         }
       }

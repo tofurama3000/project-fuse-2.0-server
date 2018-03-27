@@ -51,10 +51,10 @@ public abstract class GroupInvitation<T extends Group> {
   public abstract T getGroup();
 
   @JsonIgnore
-  public abstract GroupApplicant getApplicant();
+  public abstract GroupApplication getApplicant();
 
   @JsonIgnore
-  public abstract void setApplicant(GroupApplicant applicant);
+  public abstract void setApplicant(GroupApplication applicant);
 
   public abstract void setGroup(T group);
 }

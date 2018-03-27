@@ -2,7 +2,7 @@ package server.entities.dto.group.organization;
 
 
 import lombok.Data;
-import server.entities.dto.group.GroupApplicant;
+import server.entities.dto.group.GroupApplication;
 
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
@@ -12,7 +12,7 @@ import javax.persistence.Table;
 @Data
 @Entity
 @Table(name = "organization_applicant")
-public class OrganizationApplicant extends GroupApplicant<Organization> {
+public class OrganizationApplication extends GroupApplication<Organization> {
 
   @ManyToOne
   @JoinColumn(name = "organization_id", referencedColumnName = "id")

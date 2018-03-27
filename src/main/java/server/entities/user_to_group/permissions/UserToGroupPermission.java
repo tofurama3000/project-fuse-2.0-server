@@ -7,6 +7,7 @@ import static server.constants.RoleValue.OWNER;
 
 import org.hibernate.Session;
 import org.springframework.transaction.annotation.Transactional;
+import server.entities.MemberRelationship;
 import server.entities.dto.group.Group;
 import server.entities.dto.user.User;
 import server.entities.user_to_group.permissions.results.JoinResult;
@@ -42,10 +43,6 @@ public abstract class UserToGroupPermission<T extends Group> {
   }
 
   protected abstract Session getSession();
-
-  @Deprecated
-  protected abstract String getGroupFieldName();
-
 
   public boolean isMember() {
     for (Integer roleId : getRoles()) {
@@ -83,6 +80,12 @@ public abstract class UserToGroupPermission<T extends Group> {
 
   public boolean canUpdate() {
     return isAdmin();
+  }
+
+  public MemberRelationship toRelationship() {
+    MemberRelationship memberRelationship = new MemberRelationship(user);
+    memberRelationship.setPermissions(this);
+    return memberRelationship;
   }
 
   private boolean isAdmin() {

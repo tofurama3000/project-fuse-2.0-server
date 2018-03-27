@@ -15,10 +15,10 @@ import java.util.List;
 @Entity
 @Table(name = "friend")
 @Data
-public class Friend {
+public class Friendship {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
-  private long id;
+  private Long id;
 
   @ManyToOne
   @JoinColumn(name = "receiver_id", referencedColumnName = "id")
@@ -33,14 +33,14 @@ public class Friend {
 
   public void setStatus(String status) {
     status = status.toLowerCase();
-    if (ValidStatuses().indexOf(status) != -1) {
+    if (getValidStatuses().indexOf(status) != -1) {
       this.status = status;
     } else {
       this.status = null;
     }
   }
 
-  public static List<String> ValidStatuses() {
+  private static List<String> getValidStatuses() {
     return valid;
   }
 
@@ -50,4 +50,18 @@ public class Friend {
       "deleted",
       "declined"
   );
+
+  @Override
+  public int hashCode() {
+    if (receiver == null || sender == null || receiver.getId() == null || sender.getId() == null) {
+      return super.hashCode();
+    } else {
+      return receiver.getId().hashCode() + sender.getId().hashCode();
+    }
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    return other != null && other instanceof Friendship && other.hashCode() == this.hashCode();
+  }
 }
