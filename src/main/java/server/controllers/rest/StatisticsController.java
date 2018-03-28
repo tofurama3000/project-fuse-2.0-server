@@ -21,6 +21,7 @@ import server.entities.dto.group.project.ProjectInterviewSlots;
 import server.entities.dto.user.ProjectNumMember;
 import server.entities.dto.user.User;
 import server.entities.dto.user.UserInterviewSlots;
+import server.entities.dto.user.UserProjectCount;
 import server.handlers.GroupMemberHelper;
 import server.handlers.InterviewSlotsHelper;
 
@@ -108,4 +109,20 @@ public class StatisticsController {
     }
   }
 
+  @GetMapping("organization/id/members/projects")
+  @ResponseBody
+  @ApiOperation("Returns count of projects for all users apart of")
+  public TypedResponse<List<UserProjectCount>> getNumOfProjectsThatUserArpatOf(@ApiParam("Id of the organization")
+                                                                   @PathVariable(value = "id") Long id,
+                                                                   HttpServletRequest request, HttpServletResponse response)
+
+  {
+    try {
+      return  new TypedResponse<>(response,groupMemberHelper.numOfProjectsThatUserArpatOf(id, sessionController.getUserFromSession(request)));
+    } catch (DeniedException e) {
+      return new TypedResponse<>(response, DENIED, e.getMessage());
+    } catch (BadDataException e) {
+      return new TypedResponse<>(response, BAD_DATA, e.getMessage());
+    }
+  }
 }

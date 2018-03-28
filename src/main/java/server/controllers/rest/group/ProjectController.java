@@ -107,7 +107,7 @@ public class ProjectController extends GroupController<Project, ProjectMember, P
     relationshipFactory.createUserToProjectRelationship(user, group).removeRelationship(role);
     List<User> list  = projectMemberRepository.getUsersByGroup(group);
     Set<User> set = new HashSet<>(list);
-    group.setNum_members(new Long (set.size()));
+    group.setNumberOfMembers(new Long (set.size()));
     projectRepository.save(group);
     group.indexAsync();
   }
@@ -117,7 +117,7 @@ public class ProjectController extends GroupController<Project, ProjectMember, P
     relationshipFactory.createUserToProjectRelationship(user, group).addRelationship(role);
     List<User> list  = projectMemberRepository.getUsersByGroup(group);
     Set<User> set = new HashSet<>(list);
-    group.setNum_members(new Long (set.size()));
+    group.setNumberOfMembers(new Long (set.size()));
     projectRepository.save(group);
     group.indexAsync();
   }

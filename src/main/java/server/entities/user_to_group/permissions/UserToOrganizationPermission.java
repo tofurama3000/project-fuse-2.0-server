@@ -25,6 +25,11 @@ public class UserToOrganizationPermission extends UserToGroupPermission<Organiza
   }
 
   @Override
+  protected boolean allowedToJoin() {
+    return true;
+  }
+
+  @Override
   protected Session getSession() {
     return session;
   }

@@ -8,6 +8,7 @@ import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
 import server.entities.dto.user.ProjectNumMember;
 import server.entities.dto.user.User;
+import server.entities.dto.user.UserProjectCount;
 import server.entities.user_to_group.permissions.PermissionFactory;
 import server.entities.user_to_group.permissions.UserToOrganizationPermission;
 import server.repositories.group.organization.OrganizationRepository;
@@ -38,7 +39,22 @@ public class GroupMemberHelper {
     }
     List<Project> projects = organizationRepository.getAllProjectsByOrganization(organization);
     for(Project p : projects)
-      list.add(new ProjectNumMember(p,p.getNum_members()));
+      list.add(new ProjectNumMember(p,p.getNumberOfMembers()));
+    return list;
+  }
+
+
+  public List<UserProjectCount> numOfProjectsThatUserArpatOf(Long id, User user) throws DeniedException, BadDataException {
+    List<UserProjectCount> list = new ArrayList<>() ;
+    Organization organization = organizationRepository.findOne(id);
+    if(organization==null)
+      throw new BadDataException(NO_GROUP_FOUND);
+    UserToOrganizationPermission userToOrganizationPermission = permissionFactory.createUserToOrganizationPermission(user, organization);
+    if (!userToOrganizationPermission.hasRole(ADMIN)) {
+      throw new DeniedException(INSUFFICIENT_PRIVELAGES);
+    }
+    List<Project> projects = organizationRepository.getAllProjectsByOrganization(organization);
+
     return list;
   }
 }

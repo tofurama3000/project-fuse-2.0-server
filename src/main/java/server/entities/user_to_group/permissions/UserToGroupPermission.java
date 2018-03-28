@@ -27,6 +27,9 @@ public abstract class UserToGroupPermission<T extends Group> {
     if (isMember()) {
       return JoinResult.ALREADY_JOINED;
     }
+    if (!allowedToJoin()) {
+      return JoinResult.NOT_ALLOWED;
+    }
 
     switch (group.getRestriction()) {
       case INVITE:
@@ -40,6 +43,8 @@ public abstract class UserToGroupPermission<T extends Group> {
         return JoinResult.OK;
     }
   }
+
+  protected abstract boolean allowedToJoin();
 
   protected abstract Session getSession();
 
