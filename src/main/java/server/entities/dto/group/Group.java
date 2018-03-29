@@ -42,6 +42,8 @@ public abstract class Group<Profile extends GroupProfile> extends BaseIndexable 
   @Transient
   private Boolean canEdit;
 
+  private Boolean deleted;
+
   @Transient
   private Boolean canJoin;
 
