@@ -33,6 +33,7 @@ import server.service.LinkResolver;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -150,10 +151,10 @@ public class LinkController {
     List<Link> dbLinks = linkRepository.getLinksWithIdOfType(referenceId, referenceType);
 
     // Helper functions useful for this function
-    BiFunction<Link, Link, Boolean> idsMatch = (link1, link2) -> link1.getId().equals(link2.getId());
+    BiFunction<Link, Link, Boolean> idsMatch = (link1, link2) -> Objects.equals(link1.getId(), link2.getId());
     BiFunction<Link, Link, Boolean> linkIsDifferent = (link1, link2) ->
-            !link1.getLink().equalsIgnoreCase(link2.getLink()) ||
-                    !link1.getName().equals(link2.getName());
+            !!Objects.equals(link1.getLink(), link2.getLink()) ||
+                    !Objects.equals(link1.getName(), link2.getName());
     Function<Link, Link> createCopyToSave = (link) -> {
         Link linkToSave = new Link();
         linkToSave.setLink(link.getLink());
