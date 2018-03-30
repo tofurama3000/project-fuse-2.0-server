@@ -9,6 +9,8 @@ import server.entities.dto.group.organization.Organization;
 import server.entities.dto.user.User;
 import server.repositories.group.organization.OrganizationMemberRepository;
 
+import javax.annotation.Resource;
+import javax.transaction.Transactional;
 import java.util.HashSet;
 import java.util.Set;
 

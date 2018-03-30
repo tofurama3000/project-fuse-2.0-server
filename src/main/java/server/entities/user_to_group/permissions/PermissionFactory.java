@@ -33,6 +33,7 @@ public class PermissionFactory {
     return permission;
   }
 
+  @Transactional
   public UserToOrganizationPermission createUserToOrganizationPermission(User user, Organization organization) {
     UserToOrganizationPermission permission = new UserToOrganizationPermission(user, organization);
     permission.setSession(sessionFactory.getCurrentSession());
@@ -44,6 +45,9 @@ public class PermissionFactory {
     UserToProjectPermission permission = new UserToProjectPermission(user, project);
     permission.setSession(sessionFactory.getCurrentSession());
     permission.setRepository(projectMemberRepository);
+    if (project.getOrganization() != null) {
+      permission.setUserToOrganizationPermission(createUserToOrganizationPermission(user, project.getOrganization()));
+    }
     return permission;
   }
 }

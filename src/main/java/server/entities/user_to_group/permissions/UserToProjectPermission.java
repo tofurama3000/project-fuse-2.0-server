@@ -2,15 +2,20 @@ package server.entities.user_to_group.permissions;
 
 import lombok.Setter;
 import org.hibernate.Session;
+import org.springframework.beans.factory.annotation.Autowired;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
 import server.entities.dto.user.User;
+import server.repositories.group.organization.OrganizationMemberRepository;
 import server.repositories.group.project.ProjectMemberRepository;
 
 public class UserToProjectPermission extends UserToGroupPermission<Project> {
 
   @Setter
   private ProjectMemberRepository repository;
+
+  @Setter
+  private UserToOrganizationPermission userToOrganizationPermission;
 
   @Setter
   private Session session;
@@ -21,14 +26,7 @@ public class UserToProjectPermission extends UserToGroupPermission<Project> {
 
   @Override
   protected boolean allowedToJoin() {
-
-    Organization org = group.getOrganization();
-    if (org!=null){
-      UserToOrganizationPermission permission = new UserToOrganizationPermission(user,org);
-      if(!permission.isMember())
-        return false;
-    }
-    return true;
+    return userToOrganizationPermission == null || userToOrganizationPermission.isMember();
   }
 
   @Override

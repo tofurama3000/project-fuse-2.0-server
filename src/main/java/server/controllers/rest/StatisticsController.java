@@ -92,7 +92,7 @@ public class StatisticsController {
     }
   }
 
-  @GetMapping("organization/id/projects/members")
+  @GetMapping("organizations/{id}/projects/members")
   @ResponseBody
   @ApiOperation("Returns all projects associated with an organization")
   public TypedResponse<List<ProjectNumMember>> getNumOfEachProject(@ApiParam("Id of the organization")
@@ -109,7 +109,7 @@ public class StatisticsController {
     }
   }
 
-  @GetMapping("organization/id/members/projects")
+  @GetMapping("organizations/{id}/members/projects")
   @ResponseBody
   @ApiOperation("Returns count of projects for all users apart of")
   public TypedResponse<List<UserProjectCount>> getNumOfProjectsThatUserArpatOf(@ApiParam("Id of the organization")
