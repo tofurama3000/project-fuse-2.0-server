@@ -340,6 +340,10 @@ public class OrganizationController extends GroupController<Organization, Organi
     return permissionFactory.createUserToOrganizationPermission(user, group);
   }
 
+  private UserToOrganizationPermission getUserToOrganizationPermission(User user, Organization org) {
+    return permissionFactory.createUserToOrganizationPermission(user, org);
+  }
+
   @Override
   protected PossibleError validateGroup(User user, Organization group) {
     return new PossibleError(OK);
@@ -348,6 +352,14 @@ public class OrganizationController extends GroupController<Organization, Organi
   @Override
   protected void saveInvitation(OrganizationInvitation invitation) {
     organizationInvitationRepository.save(invitation);
+  }
+
+  @Override
+  protected Organization setJoinPermissions(User user, Organization group) {
+    group = super.setJoinPermissions(user, group);
+    UserToOrganizationPermission permission = getUserToOrganizationPermission(user, group);
+    group.setCanCreateProject(permission.canCreateProjectsInOrganization());
+    return group;
   }
 
   private Project setJoinPermissionsForProject(User user, Project res) {

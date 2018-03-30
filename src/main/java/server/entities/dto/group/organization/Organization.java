@@ -1,14 +1,12 @@
 package server.entities.dto.group.organization;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 import server.entities.dto.group.Group;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @ToString(exclude = "profile")
 @Entity
@@ -24,6 +22,11 @@ public class Organization extends Group<OrganizationProfile> {
   private OrganizationSettings organizationSettings;
 
   private boolean canEveryoneCreate;
+
+  @Transient
+  @Getter
+  @Setter
+  private boolean canCreateProject;
 
   public boolean getCanEveryoneCreate() {
     return canEveryoneCreate;
