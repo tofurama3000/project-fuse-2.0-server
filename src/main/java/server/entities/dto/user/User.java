@@ -55,6 +55,12 @@ public class User extends BaseIndexable {
 
   private String email;
 
+  @Transient
+  private String friendAction;
+
+  @Transient
+  private Long friendInvitationId;
+
   // default make users unregistered
   @Column(name = "registration_status")
   private char registrationStatus = UNREGISTERED;
@@ -135,5 +141,17 @@ public class User extends BaseIndexable {
   @JsonIgnore
   public String getEsId() {
     return this.id.toString();
+  }
+
+  public void setFriendAction(String action) {
+    switch(action.toLowerCase()) {
+      case "send":
+      case "accept":
+        this.friendAction = action.toLowerCase();
+        break;
+      case "none":
+      default:
+        this.friendAction = "none";
+    }
   }
 }
