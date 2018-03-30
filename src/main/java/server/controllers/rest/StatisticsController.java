@@ -2,6 +2,8 @@ package server.controllers.rest;
 
 import static server.controllers.rest.response.BaseResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.BaseResponse.Status.DENIED;
+import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -15,7 +17,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.errors.BadDataException;
 import server.controllers.rest.errors.DeniedException;
+import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
+import server.entities.dto.FuseSession;
 import server.entities.dto.TimeInterval;
 import server.entities.dto.group.project.ProjectInterviewSlots;
 import server.entities.dto.user.ProjectNumMember;
@@ -31,6 +35,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.TemporalAmount;
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 @RequestMapping(value = "/statistics")
@@ -100,8 +105,10 @@ public class StatisticsController {
                                                                             HttpServletRequest request, HttpServletResponse response)
 
   {
+
     try {
-      return  new TypedResponse<>(response,groupMemberHelper.usersInEachProject(id, sessionController.getUserFromSession(request)));
+      User user = sessionController.getUserFromSession(request);
+      return  new TypedResponse<>(response,groupMemberHelper.usersInEachProject(id, user));
     } catch (DeniedException e) {
       return new TypedResponse<>(response, DENIED, e.getMessage());
     } catch (BadDataException e) {
