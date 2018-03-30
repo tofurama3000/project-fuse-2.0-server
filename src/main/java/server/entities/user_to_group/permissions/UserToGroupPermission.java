@@ -96,4 +96,7 @@ public abstract class UserToGroupPermission<T extends Group> {
     }
     return false;
   }
+
+
+  public abstract boolean hasApplied();
 }
