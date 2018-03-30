@@ -18,7 +18,12 @@ public class JoinPermissionsUtil {
         break;
       case NEED_INVITE:
         group.setCanJoin(false);
-        group.setCanApply(true);
+
+        if(permission.hasApplied()) {
+          group.setCanApply(false);
+        } else {
+          group.setCanApply(true);
+        }
         break;
       case ALREADY_JOINED:
       case ERROR:
