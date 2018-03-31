@@ -26,6 +26,8 @@ public abstract class GroupProfile<T extends Group> {
 
   private Long background_id = 0L;
 
+  private String tags;
+
   @JsonIgnore
   public abstract T getGroup();
 
