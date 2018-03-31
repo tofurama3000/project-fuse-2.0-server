@@ -17,11 +17,7 @@ import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
@@ -206,6 +202,48 @@ public class OrganizationController extends GroupController<Organization, Organi
     }
 
     addRelationship(otherUser, organization, CREATE_PROJECT_IN_ORGANIZATION);
+    return new GeneralResponse(response, OK);
+  }
+
+  @ApiOperation("Grants everyone to be able to create projects with in organization")
+  @CrossOrigin
+  @PutMapping("/{id}/grantEveryoneCreatePermission/{action}")
+  @ResponseBody
+  public BaseResponse grantEveryonePermissionToCreateProjectsInOrganization(@ApiParam("ID of the organization")
+                                                                            @PathVariable(value = "id") Long id,
+                                                                            @ApiParam("Action: can be true or false")
+                                                                            @PathVariable(value = "action") String action,
+                                                                            HttpServletRequest request, HttpServletResponse response) {
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
+    }
+
+    User loggedInUser = session.get().getUser();
+
+    if (id == null) {
+      errors.add(INVALID_FIELDS);
+      return new GeneralResponse(response, errors);
+    }
+
+    Organization organization = organizationRepository.findOne(id);
+    if (organization == null) {
+      errors.add(NO_GROUP_FOUND);
+      return new GeneralResponse(response, errors);
+    }
+
+    UserToOrganizationPermission loggedInUserPermission =
+        permissionFactory.createUserToOrganizationPermission(loggedInUser, organization);
+
+    if (!loggedInUserPermission.hasRole(ADMIN)) {
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, INSUFFICIENT_PRIVELAGES);
+    }
+
+    organization.setCanEveryoneCreate(action.equals("true"));
+    organizationRepository.save(organization);
     return new GeneralResponse(response, OK);
   }
 

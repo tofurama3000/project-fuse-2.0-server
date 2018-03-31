@@ -26,6 +26,7 @@ import server.repositories.group.GroupApplicantRepository;
 import server.repositories.group.GroupInvitationRepository;
 import server.repositories.group.GroupMemberRepository;
 import server.repositories.group.GroupRepository;
+import server.repositories.group.organization.OrganizationRepository;
 import server.repositories.group.project.ProjectApplicantRepository;
 import server.repositories.group.project.ProjectInvitationRepository;
 import server.repositories.group.project.ProjectMemberRepository;
@@ -49,6 +50,9 @@ public class ProjectController extends GroupController<Project, ProjectMember, P
 
   @Autowired
   private ProjectProfileRepository projectProfileRepository;
+
+  @Autowired
+  private OrganizationRepository organizationRepository;
 
   @Autowired
   private ProjectApplicantRepository projecApplicantRepository;
@@ -146,7 +150,7 @@ public class ProjectController extends GroupController<Project, ProjectMember, P
       parentOrganization = null;
     }
     if (parentOrganization != null) {
-      UserToOrganizationPermission permission = permissionFactory.createUserToOrganizationPermission(user, parentOrganization);
+      UserToOrganizationPermission permission = permissionFactory.createUserToOrganizationPermission(user, organizationRepository.findOne(parentOrganization.getId()));
       if (permission.canCreateProjectsInOrganization()) {
         return new PossibleError(OK);
       } else {

@@ -29,11 +29,13 @@ public class ProjectProfile extends GroupProfile<Project> {
   @JoinColumn(name = "referenced_id", referencedColumnName = "id")
   private List<Link> links;
 
-  private List<Link> getLinks() {
+  public List<Link> getLinks() {
     if (links == null) {
       return links;
     }
-    return links.stream().filter(link -> link.getReferencedType().equals(groupType)).collect(Collectors.toList());
+    return links.stream().filter(
+            link -> link.getReferencedType().equals(groupType)
+    ).collect(Collectors.toList());
   }
 
   @JsonIgnore

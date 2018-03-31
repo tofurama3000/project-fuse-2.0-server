@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping(value = "/friends")
@@ -237,8 +238,10 @@ public class FriendController {
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
 
-    long count = friendRepository.getAllFriends(sender).stream()
-        .filter(friendship -> friendship.getId().equals(id) && friendship.getStatus().equals("applied")).count();
+    List<Friendship> friends = friendRepository.getAllFriends(sender).stream()
+            .filter(friendship -> friendship.getReceiver().getId().equals(id) )
+            .collect(Collectors.toList());
+    long count = friends.size();
 
     if (count != 0) {
       return new GeneralResponse(response, BaseResponse.Status.DENIED, "Already sent friend request");

@@ -8,7 +8,9 @@ import server.controllers.FuseSessionController;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
 import server.entities.dto.user.User;
+import server.repositories.group.organization.OrganizationApplicantRepository;
 import server.repositories.group.organization.OrganizationMemberRepository;
+import server.repositories.group.project.ProjectApplicantRepository;
 import server.repositories.group.project.ProjectMemberRepository;
 
 @Service
@@ -25,7 +27,13 @@ public class PermissionFactory {
   private ProjectMemberRepository projectMemberRepository;
 
   @Autowired
+  private ProjectApplicantRepository projectApplicantRepository;
+
+  @Autowired
   private OrganizationMemberRepository organizationMemberRepository;
+
+  @Autowired
+  private OrganizationApplicantRepository organizationApplicantRepository;
 
   public UserPermission createUserPermission(User user) {
     UserPermission permission = new UserPermission(user);
@@ -33,11 +41,11 @@ public class PermissionFactory {
     return permission;
   }
 
-  @Transactional
   public UserToOrganizationPermission createUserToOrganizationPermission(User user, Organization organization) {
     UserToOrganizationPermission permission = new UserToOrganizationPermission(user, organization);
     permission.setSession(sessionFactory.getCurrentSession());
     permission.setRepository(organizationMemberRepository);
+    permission.setOrganizationApplicantRepository(organizationApplicantRepository);
     return permission;
   }
 

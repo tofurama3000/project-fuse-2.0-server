@@ -17,12 +17,15 @@ import server.entities.dto.user.UserInterviewSlots;
 import server.entities.user_to_group.permissions.PermissionFactory;
 import server.entities.user_to_group.permissions.UserToOrganizationPermission;
 import server.repositories.group.InterviewRepository;
+import server.repositories.group.organization.OrganizationMemberRepository;
 import server.repositories.group.organization.OrganizationRepository;
 import server.repositories.group.project.ProjectRepository;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -31,6 +34,9 @@ public class InterviewSlotsHelper {
 
   @Autowired
   private OrganizationRepository organizationRepository;
+
+  @Autowired
+  private OrganizationMemberRepository organizationMemberRepository;
 
   @Autowired
   private ProjectRepository projectRepository;
@@ -59,11 +65,18 @@ public class InterviewSlotsHelper {
 
   public List<UserInterviewSlots> getInterviewSlotsForAllMembersInOrganization
       (Long organizationId, User loggedInUser, LocalDateTime start, LocalDateTime end) throws BadDataException, DeniedException {
+    Organization organization = Optional.ofNullable(organizationRepository.findOne(organizationId))
+        .orElseThrow(() -> new BadDataException(NO_GROUP_FOUND));
+
     List<ProjectInterviewSlots> projectInterviewSlots = getInterviewSlotsForAllProjectsInOrganization(organizationId, loggedInUser, start, end);
 
-    return projectInterviewSlots.stream().flatMap(p -> p.getInterviews().stream().filter(interview -> interview.getUser() != null))
-        .collect(Collectors.groupingBy(Interview::getUser))
-        .entrySet().stream()
+    Map<User, List<Interview>> usersToInterview = projectInterviewSlots.stream().flatMap(p -> p.getInterviews().stream().filter(interview -> interview.getUser() != null))
+        .collect(Collectors.groupingBy(Interview::getUser));
+
+    List<User> usersInOrganization = organizationMemberRepository.getUsersByGroup(organization);
+    usersInOrganization.forEach(user -> usersToInterview.putIfAbsent(user, new ArrayList<>()));
+
+    return usersToInterview.entrySet().stream()
         .map(entry -> new UserInterviewSlots(entry.getKey(), entry.getValue()))
         .sorted(Comparator.comparing(e -> e.getUser().getName())).collect(Collectors.toList());
   }

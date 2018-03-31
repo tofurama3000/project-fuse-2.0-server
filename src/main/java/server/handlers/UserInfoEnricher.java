@@ -40,7 +40,7 @@ public class UserInfoEnricher {
 
   public PagedResults enrichWithUserInfo(User user, PagedResults results) {
 
-    Set<Friendship> friendships = new HashSet<>(friendRepository.getFriends(user));
+    Set<Friendship> friendships = new HashSet<>(friendRepository.getAllFriends(user));
 
     List<SearchResult> enrichedSearchResults = results.getSearchResults().stream()
         .map(searchResult -> enrichForUser(user, friendships, searchResult))
@@ -112,7 +112,11 @@ public class UserInfoEnricher {
   private void enrichWithPermission(SearchResult searchResult, UserToGroupPermission permission) {
     switch (permission.canJoin()) {
       case NEED_INVITE:
-        searchResult.getData().put(ACTIONS_AVAILABLE, "apply");
+        if(permission.hasApplied()) {
+          searchResult.getData().put(ACTIONS_AVAILABLE, "none");
+        } else {
+          searchResult.getData().put(ACTIONS_AVAILABLE, "apply");
+        }
         break;
       case HAS_INVITE:
       case OK:

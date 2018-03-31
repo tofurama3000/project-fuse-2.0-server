@@ -44,6 +44,7 @@ import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
 import server.email.StandardEmailSender;
 import server.entities.dto.FuseSession;
+import server.entities.dto.Link;
 import server.entities.dto.UploadFile;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.organization.OrganizationApplication;
@@ -59,10 +60,7 @@ import server.entities.user_to_group.permissions.PermissionFactory;
 import server.entities.user_to_group.permissions.UserPermission;
 import server.handlers.InvitationHandler;
 import server.handlers.UserToGroupRelationshipHandler;
-import server.repositories.FriendRepository;
-import server.repositories.UnregisteredUserRepository;
-import server.repositories.UserProfileRepository;
-import server.repositories.UserRepository;
+import server.repositories.*;
 import server.repositories.group.organization.OrganizationApplicantRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
 import server.repositories.group.organization.OrganizationRepository;
@@ -78,6 +76,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 @Controller
@@ -88,6 +87,9 @@ public class UserController {
 
   @Autowired
   private UserRepository userRepository;
+
+  @Autowired
+  private LinkController linkController;
 
   @Autowired
   private NotificationController notificationController;
@@ -350,6 +352,75 @@ public class UserController {
     return new GeneralResponse(response, Status.OK);
   }
 
+
+  @CrossOrigin
+  @ApiOperation(value = "Updates the links for a user (must be logged in as that user)")
+  @PutMapping(path = "/{id}/links")
+  @ResponseBody
+  public BaseResponse updateUserLinks(
+          @ApiParam(value = "ID of the user to update")
+          @PathVariable long id,
+          @ApiParam(value = "Set of links for the user")
+          @RequestBody List<Link> links,
+          HttpServletRequest request,
+          HttpServletResponse response
+  ) {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
+
+    User userToSave = session.get().getUser();
+
+    if (id != userToSave.getId()) {
+      errors.add("Unable to edit user, permission denied");
+      return new GeneralResponse(response, Status.DENIED, errors);
+    }
+    UserProfile profile = userToSave.getProfile();
+
+    if (profile == null) {
+      profile = new UserProfile();
+      profile = userProfileRepository.save(profile);
+      userToSave.setProfile(profile);
+      userRepository.save(userToSave);
+    }
+
+    final long profileId = profile.getId();
+
+    return linkController.updateLinksFor("User", profileId, links, response);
+  }
+
+  @ApiOperation(value = "Gets links for the user")
+  @GetMapping(path = "/{id}/links")
+  @ResponseBody
+  public TypedResponse<List<Link>> getLinks(
+          @ApiParam(value = "Id of the user ot get links for")
+          @PathVariable long id,
+          HttpServletRequest request,
+          HttpServletResponse response
+  ) {
+    List<String> errors = new ArrayList<>();
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new TypedResponse<>(response, Status.DENIED, errors);
+    }
+
+    User user = userRepository.findOne(id);
+
+    if (user == null) {
+      errors.add("User ID not found!");
+      return new TypedResponse<>(response, Status.BAD_DATA, errors);
+    }
+
+    if (user.getProfile() == null) {
+      return new TypedResponse<>(response, Status.OK, null, new ArrayList<>());
+    }
+
+    return linkController.getLinksFor("User", user.getProfile().getId(), response);
+  }
 
   @GetMapping
   @ResponseBody
@@ -642,6 +713,7 @@ public class UserController {
 
     profile.setThumbnail_id(uploadFile.getId());
     userProfileRepository.save(user.getProfile());
+    user.indexAsync();
     return new TypedResponse<>(response, OK, null, uploadFile);
   }
 
