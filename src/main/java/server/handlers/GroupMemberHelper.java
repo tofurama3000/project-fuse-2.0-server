@@ -17,7 +17,9 @@ import server.repositories.group.organization.OrganizationMemberRepository;
 import server.repositories.group.organization.OrganizationRepository;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static server.constants.RoleValue.ADMIN;
@@ -60,19 +62,8 @@ public class GroupMemberHelper {
     if (!userToOrganizationPermission.hasRole(ADMIN)) {
       throw new DeniedException(INSUFFICIENT_PRIVELAGES);
     }
-    List<Project> projects = organizationRepository.getAllProjectsByOrganization(organization);
-    List<User> users = organizationMemberRepository.getUsersByGroup(organization);
+    Set<User> users = new HashSet<>(organizationMemberRepository.getUsersByGroup(organization));
     return users.stream().map(user -> new UserProjectCount(user, numberProjectsUserIsIn(user, organization))).collect(Collectors.toList());
-    //for(User u :users){
-    //  int count=0;
-    //  for(Project p : projects){
-    //    UserToProjectPermission premission = new UserToProjectPermission(u,p);
-    //    if(premission.isMember())
-    //      count++;
-    //  }
-    //  list.add(new UserProjectCount(u,count));
-    //}
-    //return list;
   }
 
   private int numberProjectsUserIsIn(User user, Organization organization) {

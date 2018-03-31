@@ -1,7 +1,8 @@
 package server.entities.dto.user;
 
-import server.entities.dto.group.project.Project;
+import lombok.Data;
 
+@Data
 public class UserProjectCount {
   private User user;
   private int num;
