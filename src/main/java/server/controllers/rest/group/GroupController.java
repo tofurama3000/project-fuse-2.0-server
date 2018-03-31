@@ -14,6 +14,7 @@ import static server.controllers.rest.response.CannedResponse.*;
 import static server.utility.JoinPermissionsUtil.genericSetJoinPermissions;
 import static server.utility.PagingUtil.getPagedResults;
 import static server.utility.RolesUtility.getRoleFromInvitationType;
+
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.hibernate.Session;
@@ -303,7 +304,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       return new GeneralResponse(response, DENIED, errors);
     }
     T group = getGroupRepository().findOne(id);
-    if(group==null){
+    if (group == null) {
       errors.add(NO_GROUP_FOUND);
       return new GeneralResponse(response, ERROR, errors);
     }

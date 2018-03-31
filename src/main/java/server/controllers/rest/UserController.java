@@ -14,6 +14,7 @@ import static server.controllers.rest.response.CannedResponse.NO_INVITATION_FOUN
 import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
 import static server.utility.ApplicantUtil.filterApplicants;
 import static server.utility.PagingUtil.getPagedResults;
+
 import com.google.common.collect.Lists;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -414,12 +415,12 @@ public class UserController {
   }
 
 
-  @GetMapping(path= "/{id}/friends")
+  @GetMapping(path = "/{id}/friends")
   @ResponseBody
   @ApiOperation(value = "Get all friends for the specified user")
   public TypedResponse<List<Friendship>> getAllFriendsOfUser(
-          @PathVariable Long id,
-          HttpServletRequest request, HttpServletResponse response
+      @PathVariable Long id,
+      HttpServletRequest request, HttpServletResponse response
   ) {
     List<String> errors = new ArrayList<>();
 

@@ -3,6 +3,7 @@ package server.handlers;
 import static server.constants.RoleValue.ADMIN;
 import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
 import static server.controllers.rest.response.CannedResponse.NO_GROUP_FOUND;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import server.controllers.rest.errors.BadDataException;

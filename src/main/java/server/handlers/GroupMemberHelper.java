@@ -38,25 +38,25 @@ public class GroupMemberHelper {
   private PermissionFactory permissionFactory;
 
   public List<ProjectNumMember> usersInEachProject(Long id, User user) throws DeniedException, BadDataException {
-    List<ProjectNumMember> list = new ArrayList<>() ;
+    List<ProjectNumMember> list = new ArrayList<>();
     Organization organization = organizationRepository.findOne(id);
-    if(organization==null)
+    if (organization == null)
       throw new BadDataException(NO_GROUP_FOUND);
     UserToOrganizationPermission userToOrganizationPermission = permissionFactory.createUserToOrganizationPermission(user, organization);
     if (!userToOrganizationPermission.hasRole(ADMIN)) {
       throw new DeniedException(INSUFFICIENT_PRIVELAGES);
     }
     List<Project> projects = organizationRepository.getAllProjectsByOrganization(organization);
-    for(Project p : projects)
-      list.add(new ProjectNumMember(p,p.getNumberOfMembers()));
+    for (Project p : projects)
+      list.add(new ProjectNumMember(p, p.getNumberOfMembers()));
     return list;
   }
 
 
   public List<UserProjectCount> numOfProjectsThatUserArpatOf(Long id, User loggedInUser) throws DeniedException, BadDataException {
-    List<UserProjectCount> list = new ArrayList<>() ;
+    List<UserProjectCount> list = new ArrayList<>();
     Organization organization = organizationRepository.findOne(id);
-    if(organization==null)
+    if (organization == null)
       throw new BadDataException(NO_GROUP_FOUND);
     UserToOrganizationPermission userToOrganizationPermission = permissionFactory.createUserToOrganizationPermission(loggedInUser, organization);
     if (!userToOrganizationPermission.hasRole(ADMIN)) {

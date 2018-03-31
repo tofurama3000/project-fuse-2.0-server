@@ -1,6 +1,7 @@
 package server.controllers.rest.group;
 
 import static server.controllers.rest.response.BaseResponse.Status.OK;
+
 import io.swagger.annotations.Api;
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -105,9 +106,9 @@ public class ProjectController extends GroupController<Project, ProjectMember, P
   @Override
   protected void removeRelationship(User user, Project group, int role) {
     relationshipFactory.createUserToProjectRelationship(user, group).removeRelationship(role);
-    List<User> list  = projectMemberRepository.getUsersByGroup(group);
+    List<User> list = projectMemberRepository.getUsersByGroup(group);
     Set<User> set = new HashSet<>(list);
-    group.setNumberOfMembers(new Long (set.size()));
+    group.setNumberOfMembers(new Long(set.size()));
     projectRepository.save(group);
     group.indexAsync();
   }
@@ -115,9 +116,9 @@ public class ProjectController extends GroupController<Project, ProjectMember, P
   @Override
   protected void addRelationship(User user, Project group, int role) {
     relationshipFactory.createUserToProjectRelationship(user, group).addRelationship(role);
-    List<User> list  = projectMemberRepository.getUsersByGroup(group);
+    List<User> list = projectMemberRepository.getUsersByGroup(group);
     Set<User> set = new HashSet<>(list);
-    group.setNumberOfMembers(new Long (set.size()));
+    group.setNumberOfMembers(new Long(set.size()));
     projectRepository.save(group);
     group.indexAsync();
   }

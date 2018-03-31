@@ -101,14 +101,14 @@ public class StatisticsController {
   @ResponseBody
   @ApiOperation("Returns all projects associated with an organization")
   public TypedResponse<List<ProjectNumMember>> getNumOfEachProject(@ApiParam("Id of the organization")
-                                                                              @PathVariable(value = "id") Long id,
-                                                                            HttpServletRequest request, HttpServletResponse response)
+                                                                   @PathVariable(value = "id") Long id,
+                                                                   HttpServletRequest request, HttpServletResponse response)
 
   {
 
     try {
       User user = sessionController.getUserFromSession(request);
-      return  new TypedResponse<>(response,groupMemberHelper.usersInEachProject(id, user));
+      return new TypedResponse<>(response, groupMemberHelper.usersInEachProject(id, user));
     } catch (DeniedException e) {
       return new TypedResponse<>(response, DENIED, e.getMessage());
     } catch (BadDataException e) {
@@ -120,12 +120,12 @@ public class StatisticsController {
   @ResponseBody
   @ApiOperation("Returns count of projects for all users apart of")
   public TypedResponse<List<UserProjectCount>> getNumOfProjectsThatUserArpatOf(@ApiParam("Id of the organization")
-                                                                   @PathVariable(value = "id") Long id,
-                                                                   HttpServletRequest request, HttpServletResponse response)
+                                                                               @PathVariable(value = "id") Long id,
+                                                                               HttpServletRequest request, HttpServletResponse response)
 
   {
     try {
-      return  new TypedResponse<>(response,groupMemberHelper.numOfProjectsThatUserArpatOf(id, sessionController.getUserFromSession(request)));
+      return new TypedResponse<>(response, groupMemberHelper.numOfProjectsThatUserArpatOf(id, sessionController.getUserFromSession(request)));
     } catch (DeniedException e) {
       return new TypedResponse<>(response, DENIED, e.getMessage());
     } catch (BadDataException e) {
