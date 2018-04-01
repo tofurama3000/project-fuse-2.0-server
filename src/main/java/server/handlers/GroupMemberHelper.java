@@ -50,7 +50,6 @@ public class GroupMemberHelper {
 
 
   public List<UserProjectCount> organizationMembersProjectCount(Long organizationId, User loggedInUser) throws DeniedException, BadDataException {
-    List<UserProjectCount> list = new ArrayList<>();
     Organization organization = organizationRepository.findOne(organizationId);
     if (organization == null)
       throw new BadDataException(NO_GROUP_FOUND);
