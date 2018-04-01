@@ -13,6 +13,9 @@ public class UserToProjectPermission extends UserToGroupPermission<Project> {
   private ProjectMemberRepository repository;
 
   @Setter
+  private UserToOrganizationPermission userToOrganizationPermission;
+
+  @Setter
   private Session session;
 
   @Setter
@@ -20,6 +23,11 @@ public class UserToProjectPermission extends UserToGroupPermission<Project> {
 
   public UserToProjectPermission(User user, Project group) {
     super(user, group);
+  }
+
+  @Override
+  protected boolean allowedToJoin() {
+    return userToOrganizationPermission == null || userToOrganizationPermission.isMember();
   }
 
   @Override

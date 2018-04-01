@@ -14,6 +14,7 @@ import static server.controllers.rest.response.CannedResponse.NO_INVITATION_FOUN
 import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
 import static server.utility.ApplicantUtil.filterApplicants;
 import static server.utility.PagingUtil.getPagedResults;
+
 import com.google.common.collect.Lists;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
