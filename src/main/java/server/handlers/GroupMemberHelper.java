@@ -6,13 +6,12 @@ import server.controllers.rest.errors.BadDataException;
 import server.controllers.rest.errors.DeniedException;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
-import server.entities.dto.user.ProjectNumMember;
+import server.entities.dto.user.ProjectMemberCount;
 import server.entities.dto.user.User;
 import server.entities.dto.user.UserProjectCount;
 import server.entities.user_to_group.permissions.PermissionFactory;
 import server.entities.user_to_group.permissions.UserToGroupPermission;
 import server.entities.user_to_group.permissions.UserToOrganizationPermission;
-import server.entities.user_to_group.permissions.UserToProjectPermission;
 import server.repositories.group.organization.OrganizationMemberRepository;
 import server.repositories.group.organization.OrganizationRepository;
 
@@ -37,25 +36,22 @@ public class GroupMemberHelper {
   @Autowired
   private PermissionFactory permissionFactory;
 
-  public List<ProjectNumMember> usersInEachProject(Long id, User user) throws DeniedException, BadDataException {
-    List<ProjectNumMember> list = new ArrayList<>();
-    Organization organization = organizationRepository.findOne(id);
+  public List<ProjectMemberCount> organizationProjectsUserCount(Long organizationId, User loggedInUser) throws DeniedException, BadDataException {
+    List<ProjectMemberCount> list = new ArrayList<>();
+    Organization organization = organizationRepository.findOne(organizationId);
     if (organization == null)
       throw new BadDataException(NO_GROUP_FOUND);
-    UserToOrganizationPermission userToOrganizationPermission = permissionFactory.createUserToOrganizationPermission(user, organization);
+    UserToOrganizationPermission userToOrganizationPermission = permissionFactory.createUserToOrganizationPermission(loggedInUser, organization);
     if (!userToOrganizationPermission.hasRole(ADMIN)) {
       throw new DeniedException(INSUFFICIENT_PRIVELAGES);
     }
-    List<Project> projects = organizationRepository.getAllProjectsByOrganization(organization);
-    for (Project p : projects)
-      list.add(new ProjectNumMember(p, p.getNumberOfMembers()));
-    return list;
+    return organizationRepository.getAllProjectsByOrganization(organization).stream().map(project -> new ProjectMemberCount(project, project.getNumberOfMembers())).collect(Collectors.toList());
   }
 
 
-  public List<UserProjectCount> numOfProjectsThatUserArpatOf(Long id, User loggedInUser) throws DeniedException, BadDataException {
+  public List<UserProjectCount> organizationMembersProjectCount(Long organizationId, User loggedInUser) throws DeniedException, BadDataException {
     List<UserProjectCount> list = new ArrayList<>();
-    Organization organization = organizationRepository.findOne(id);
+    Organization organization = organizationRepository.findOne(organizationId);
     if (organization == null)
       throw new BadDataException(NO_GROUP_FOUND);
     UserToOrganizationPermission userToOrganizationPermission = permissionFactory.createUserToOrganizationPermission(loggedInUser, organization);

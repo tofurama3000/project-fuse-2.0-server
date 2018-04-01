@@ -280,9 +280,7 @@ public class OrganizationController extends GroupController<Organization, Organi
   @Override
   protected void removeRelationship(User user, Organization group, int role) {
     relationshipFactory.createUserToOrganizationRelationship(user, group).removeRelationship(role);
-    List<User> list = organizationMemberRepository.getUsersByGroup(group);
-    Set<User> set = new HashSet<>(list);
-    group.setNumberOfMembers(new Long(set.size()));
+    group.setNumberOfMembers((long) new HashSet<>(organizationMemberRepository.getUsersByGroup(group)).size());
     organizationRepository.save(group);
     group.indexAsync();
   }
@@ -290,9 +288,7 @@ public class OrganizationController extends GroupController<Organization, Organi
   @Override
   protected void addRelationship(User user, Organization group, int role) {
     relationshipFactory.createUserToOrganizationRelationship(user, group).addRelationship(role);
-    List<User> list = organizationMemberRepository.getUsersByGroup(group);
-    Set<User> set = new HashSet<>(list);
-    group.setNumberOfMembers(new Long(set.size()));
+    group.setNumberOfMembers((long) new HashSet<>(organizationMemberRepository.getUsersByGroup(group)).size());
     organizationRepository.save(group);
     group.indexAsync();
   }

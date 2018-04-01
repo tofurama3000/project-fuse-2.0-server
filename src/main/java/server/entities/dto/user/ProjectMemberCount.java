@@ -4,12 +4,12 @@ import lombok.Data;
 import server.entities.dto.group.project.Project;
 
 @Data
-public class ProjectNumMember {
+public class ProjectMemberCount {
   private Project project;
-  private Long num;
+  private Long memberCount;
 
-  public ProjectNumMember(Project project, Long num) {
+  public ProjectMemberCount(Project project, Long memberCount) {
     this.project = project;
-    this.num = num;
+    this.memberCount = memberCount;
   }
 }

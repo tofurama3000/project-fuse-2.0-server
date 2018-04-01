@@ -2,7 +2,6 @@ package server.controllers.rest;
 
 import static server.controllers.rest.response.BaseResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.BaseResponse.Status.DENIED;
-import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -17,12 +16,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.FuseSessionController;
 import server.controllers.rest.errors.BadDataException;
 import server.controllers.rest.errors.DeniedException;
-import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
-import server.entities.dto.FuseSession;
 import server.entities.dto.TimeInterval;
 import server.entities.dto.group.project.ProjectInterviewSlots;
-import server.entities.dto.user.ProjectNumMember;
+import server.entities.dto.user.ProjectMemberCount;
 import server.entities.dto.user.User;
 import server.entities.dto.user.UserInterviewSlots;
 import server.entities.dto.user.UserProjectCount;
@@ -31,11 +28,7 @@ import server.handlers.InterviewSlotsHelper;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.temporal.TemporalAmount;
 import java.util.List;
-import java.util.Optional;
 
 @Controller
 @RequestMapping(value = "/statistics")
@@ -100,15 +93,15 @@ public class StatisticsController {
   @GetMapping("organizations/{id}/projects/members")
   @ResponseBody
   @ApiOperation("Returns all projects associated with an organization")
-  public TypedResponse<List<ProjectNumMember>> getNumOfEachProject(@ApiParam("Id of the organization")
+  public TypedResponse<List<ProjectMemberCount>> getMemberCountForEachProject(@ApiParam("Id of the organization")
                                                                    @PathVariable(value = "id") Long id,
-                                                                   HttpServletRequest request, HttpServletResponse response)
+                                                                              HttpServletRequest request, HttpServletResponse response)
 
   {
 
     try {
       User user = sessionController.getUserFromSession(request);
-      return new TypedResponse<>(response, groupMemberHelper.usersInEachProject(id, user));
+      return new TypedResponse<>(response, groupMemberHelper.organizationProjectsUserCount(id, user));
     } catch (DeniedException e) {
       return new TypedResponse<>(response, DENIED, e.getMessage());
     } catch (BadDataException e) {
@@ -119,13 +112,13 @@ public class StatisticsController {
   @GetMapping("organizations/{id}/members/projects")
   @ResponseBody
   @ApiOperation("Returns count of projects for all users apart of")
-  public TypedResponse<List<UserProjectCount>> getNumOfProjectsThatUserArpatOf(@ApiParam("Id of the organization")
+  public TypedResponse<List<UserProjectCount>> getNumOfProjectsThatUserApartOf(@ApiParam("Id of the organization")
                                                                                @PathVariable(value = "id") Long id,
                                                                                HttpServletRequest request, HttpServletResponse response)
 
   {
     try {
-      return new TypedResponse<>(response, groupMemberHelper.numOfProjectsThatUserArpatOf(id, sessionController.getUserFromSession(request)));
+      return new TypedResponse<>(response, groupMemberHelper.organizationMembersProjectCount(id, sessionController.getUserFromSession(request)));
     } catch (DeniedException e) {
       return new TypedResponse<>(response, DENIED, e.getMessage());
     } catch (BadDataException e) {
