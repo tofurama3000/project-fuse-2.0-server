@@ -238,8 +238,8 @@ public class FriendController {
     }
 
     List<Friendship> friends = friendRepository.getAllFriends(sender).stream()
-            .filter(friendship -> friendship.getReceiver().getId().equals(id) )
-            .collect(Collectors.toList());
+        .filter(friendship -> friendship.getReceiver().getId().equals(id))
+        .collect(Collectors.toList());
     long count = friends.size();
 
     if (count != 0) {

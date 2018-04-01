@@ -20,6 +20,6 @@ public interface OrganizationApplicantRepository extends GroupApplicantRepositor
   List<OrganizationApplication> getApplicantsByStatus(@Param("status") String status);
 
   @Query("SELECT count(a.id) FROM OrganizationApplication a where a.organization = :organization and " +
-          "a.status <> 'accepted' and a.status <> 'declined' and a.sender = :user")
+      "a.status <> 'accepted' and a.status <> 'declined' and a.sender = :user")
   Integer getNumApplications(@Param("organization") Organization organization, @Param("user") User user);
 }

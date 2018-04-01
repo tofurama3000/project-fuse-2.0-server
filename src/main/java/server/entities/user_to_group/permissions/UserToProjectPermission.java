@@ -2,12 +2,10 @@ package server.entities.user_to_group.permissions;
 
 import lombok.Setter;
 import org.hibernate.Session;
-import org.springframework.beans.factory.annotation.Autowired;
 import server.entities.dto.group.project.Project;
 import server.entities.dto.user.User;
 import server.repositories.group.project.ProjectApplicantRepository;
 import server.repositories.group.project.ProjectMemberRepository;
-import server.utility.ApplicantUtil;
 
 public class UserToProjectPermission extends UserToGroupPermission<Project> {
 

@@ -80,6 +80,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -573,18 +574,17 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   }
 
 
-
   @CrossOrigin
   @ApiOperation(value = "Updates the links for a group (must be logged in as an admin)")
   @PutMapping(path = "/{id}/links")
   @ResponseBody
   public BaseResponse updateGroupLinks(
-          @ApiParam(value = "ID of the group to update")
-          @PathVariable long id,
-          @ApiParam(value = "Set of links for the group")
-          @RequestBody List<Link> links,
-          HttpServletRequest request,
-          HttpServletResponse response
+      @ApiParam(value = "ID of the group to update")
+      @PathVariable long id,
+      @ApiParam(value = "Set of links for the group")
+      @RequestBody List<Link> links,
+      HttpServletRequest request,
+      HttpServletResponse response
   ) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -617,10 +617,10 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @GetMapping(path = "/{id}/links")
   @ResponseBody
   public TypedResponse<List<Link>> getLinks(
-          @ApiParam(value = "Id of the group to get links for")
-          @PathVariable long id,
-          HttpServletRequest request,
-          HttpServletResponse response
+      @ApiParam(value = "Id of the group to get links for")
+      @PathVariable long id,
+      HttpServletRequest request,
+      HttpServletResponse response
   ) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -823,7 +823,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     if (status.equals("interview_scheduled")) {
       List<GroupApplication> applicantsTmp = applicants.stream()
           .filter(a -> a.getDateTime() != null)
-          .sorted((a1, a2) -> a1.getDateTime().compareTo(a2.getDateTime()))
+          .sorted(Comparator.comparing(GroupApplication::getDateTime))
           .collect(Collectors.toList());
       applicantsTmp.addAll(
           applicants

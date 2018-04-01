@@ -34,7 +34,7 @@ public class ProjectProfile extends GroupProfile<Project> {
       return links;
     }
     return links.stream().filter(
-            link -> link.getReferencedType().equals(groupType)
+        link -> link.getReferencedType().equals(groupType)
     ).collect(Collectors.toList());
   }
 

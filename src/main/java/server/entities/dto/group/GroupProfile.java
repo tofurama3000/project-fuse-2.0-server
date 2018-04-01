@@ -42,6 +42,9 @@ public abstract class GroupProfile<T extends Group> {
     if (profile.getSummary() != null) {
       profileToSave.setSummary(profile.getSummary());
     }
+    if (profile.getTags() != null) {
+      profileToSave.setTags(profile.getTags());
+    }
     return profileToSave;
   }
 

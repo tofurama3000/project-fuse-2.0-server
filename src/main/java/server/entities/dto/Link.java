@@ -2,7 +2,12 @@ package server.entities.dto;
 
 import lombok.Data;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 @Entity
 @Table(name = "link")
@@ -31,7 +36,7 @@ public class Link {
     //  without having to affect the UI
 
     // All relative links are relative to the UI URL and not the server
-    switch(name.toLowerCase()) {
+    switch (name.toLowerCase()) {
       case "github":
         return "/assets/images/github.svg";
       case "youtube":
