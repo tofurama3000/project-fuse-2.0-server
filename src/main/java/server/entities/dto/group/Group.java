@@ -99,6 +99,9 @@ public abstract class Group<Profile extends GroupProfile> extends BaseIndexable 
   }
 
   private List<String> getTagsList(String tagsString) {
+    if (tagsString == null) {
+      return new ArrayList<>();
+    }
     return Arrays.stream(tagsString.split(","))
         .filter(tag -> !tag.isEmpty()).collect(Collectors.toList());
   }
