@@ -184,6 +184,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     }
 
     T g = getGroupRepository().findOne(id);
+
     if (g == null || g.getDeleted()) {
       errors.add("Entity does not exist!");
       return new GeneralResponse(response, BAD_DATA, errors);
@@ -318,7 +319,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     }
 
     T group = getGroupRepository().findOne(id);
-    if(group.getDeleted() || group == null)
+    if(group == null || group.getDeleted())
     {
       errors.add(NO_GROUP_FOUND);
       return new GeneralResponse(response, BaseResponse.Status.BAD_DATA, errors);
