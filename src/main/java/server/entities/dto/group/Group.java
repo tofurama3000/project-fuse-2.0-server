@@ -84,7 +84,7 @@ public abstract class Group<Profile extends GroupProfile> extends BaseIndexable 
     map.put("headline", this.getProfile().getHeadline());
     map.put("img", this.getProfile().getThumbnail_id());
     map.put("index", this.getEsIndex());
-
+    map.put("deleted", this.getDeleted());
     return map;
   }
 

@@ -19,7 +19,4 @@ public interface ProjectRepository extends GroupRepository<Project> {
   @Query("From Project t WHERE t.organization =:organization AND t.deleted = 0")
   List<Project> getGroupsInOrganization(@Param("organization") Organization organization);
 
-  @Override
-  @Query("From Project t WHERE t.id =:id AND t.deleted = 0")
-  Project findOne(@Param("id") Long id);
 }
