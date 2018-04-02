@@ -35,6 +35,8 @@ public abstract class Group<Profile extends GroupProfile> extends BaseIndexable 
 
   private String name;
 
+  private Long numberOfMembers;
+
   @Column(name = "restriction")
   @JsonIgnore
   private String restrictionString;
@@ -83,6 +85,7 @@ public abstract class Group<Profile extends GroupProfile> extends BaseIndexable 
     map.put("summary", this.getProfile().getSummary());
     map.put("headline", this.getProfile().getHeadline());
     map.put("img", this.getProfile().getThumbnail_id());
+    map.put("number_of_members", this.getNumberOfMembers());
     map.put("index", this.getEsIndex());
     map.put("deleted", this.getDeleted());
     return map;

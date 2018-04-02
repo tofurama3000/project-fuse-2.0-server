@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
 import server.entities.dto.user.User;
+import server.entities.dto.user.UserProjectCount;
 import server.repositories.group.GroupRepository;
 
 import java.util.List;

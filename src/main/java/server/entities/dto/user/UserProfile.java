@@ -59,7 +59,9 @@ public class UserProfile {
     if (links == null) {
       return links;
     }
-    return links.stream().filter(link -> link.getReferencedType().equals("User")).collect(Collectors.toList());
+    return links.stream().filter(
+            link -> link.getReferencedType().equals("User")
+    ).collect(Collectors.toList());
   }
 
   public UserProfile merge(UserProfile original, UserProfile newUserProfile) {

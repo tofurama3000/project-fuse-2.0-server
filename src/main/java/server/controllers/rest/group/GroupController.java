@@ -10,19 +10,11 @@ import static server.controllers.rest.response.BaseResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.BaseResponse.Status.DENIED;
 import static server.controllers.rest.response.BaseResponse.Status.ERROR;
 import static server.controllers.rest.response.BaseResponse.Status.OK;
-import static server.controllers.rest.response.CannedResponse.ALREADY_JOINED_MSG;
-import static server.controllers.rest.response.CannedResponse.ALREADY_JOINED_OR_INVITED;
-import static server.controllers.rest.response.CannedResponse.FILE_NOT_FOUND;
-import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
-import static server.controllers.rest.response.CannedResponse.INTERVIEW_NOT_AVAILABLE;
-import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
-import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS_FOR_CREATE;
-import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
-import static server.controllers.rest.response.CannedResponse.NO_GROUP_FOUND;
-import static server.controllers.rest.response.CannedResponse.SERVER_ERROR;
+import static server.controllers.rest.response.CannedResponse.*;
 import static server.utility.JoinPermissionsUtil.genericSetJoinPermissions;
 import static server.utility.PagingUtil.getPagedResults;
 import static server.utility.RolesUtility.getRoleFromInvitationType;
+
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.hibernate.Session;
@@ -361,6 +353,9 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       case ALREADY_JOINED:
         errors.add(ALREADY_JOINED_MSG);
         return new GeneralResponse(response, ERROR, errors);
+      case NOT_ALLOWED:
+        errors.add(NOT_ALLOWED_MSG);
+        return new GeneralResponse(response, ERROR, errors);
       case ERROR:
       default:
         errors.add(SERVER_ERROR);
@@ -657,7 +652,6 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       return new TypedResponse<>(response, BaseResponse.Status.BAD_DATA, errors);
     }
 
-
     if (group.getProfile() == null) {
       return new TypedResponse<>(response, BaseResponse.Status.OK, null, new ArrayList<>());
     }
@@ -811,11 +805,9 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
 
       return new TypedResponse<>(response, OK, null, group);
     }
-
     errors.add("Invalid ID! Object does not exist!");
 
     return new TypedResponse<>(response, BAD_DATA, errors);
-
   }
 
   @GetMapping(path = "/{id}/applicants/{status}")
@@ -1214,6 +1206,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       return new TypedResponse<>(response, DENIED, errors);
     }
 
+    if (group == null) {
+      errors.add("Group not found");
+      return new GeneralResponse(response, BAD_DATA, errors);
+    }
+
     Optional<User> userOptional = new ArrayList<>(getMembersOf(group))
         .stream()
         .filter(u -> u.getId().equals(memberId))
@@ -1255,6 +1252,11 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     if (!curPermissions.canUpdate()) {
       errors.add("Permission denied");
       return new TypedResponse<>(response, DENIED, errors);
+    }
+
+    if (group == null) {
+      errors.add("Group not found");
+      return new GeneralResponse(response, BAD_DATA, errors);
     }
 
     Optional<User> userOptional = new ArrayList<>(getMembersOf(group))

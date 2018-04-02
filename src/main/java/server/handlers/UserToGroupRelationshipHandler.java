@@ -5,6 +5,7 @@ import static server.constants.RoleValue.INVITED_TO_INTERVIEW;
 import static server.constants.RoleValue.INVITED_TO_JOIN;
 import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import server.controllers.rest.response.BaseResponse;
