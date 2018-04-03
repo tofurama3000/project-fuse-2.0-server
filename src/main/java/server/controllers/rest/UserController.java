@@ -60,7 +60,10 @@ import server.entities.user_to_group.permissions.PermissionFactory;
 import server.entities.user_to_group.permissions.UserPermission;
 import server.handlers.InvitationHandler;
 import server.handlers.UserToGroupRelationshipHandler;
-import server.repositories.*;
+import server.repositories.FriendRepository;
+import server.repositories.UnregisteredUserRepository;
+import server.repositories.UserProfileRepository;
+import server.repositories.UserRepository;
 import server.repositories.group.organization.OrganizationApplicantRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
 import server.repositories.group.organization.OrganizationRepository;
@@ -76,7 +79,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 
 @Controller
@@ -276,6 +278,25 @@ public class UserController {
       return new TypedResponse<>(response, BAD_DATA, errors);
     }
 
+    User current = session.get().getUser();
+    if (!Objects.equals(current.getId(), byId.getId())) {
+      List<Friendship> friendships = friendRepository.getFriendships(current, byId);
+      if (friendships.size() == 0) {
+        byId.setFriendAction("send");
+      } else {
+        Optional<Friendship> existingRequest = friendships.stream().filter(
+                friendship -> Objects.equals(friendship.getStatus(), "applied")
+        ).findFirst();
+        if (existingRequest.isPresent()) {
+          Friendship existing = existingRequest.get();
+          if (existing.getReceiver().getId().equals(current.getId())) {
+            byId.setFriendInvitationId(existing.getId());
+            byId.setFriendAction("accept");
+          }
+        }
+      }
+    }
+
     return new TypedResponse<>(response, OK, null, byId);
   }
 
@@ -358,12 +379,12 @@ public class UserController {
   @PutMapping(path = "/{id}/links")
   @ResponseBody
   public BaseResponse updateUserLinks(
-          @ApiParam(value = "ID of the user to update")
-          @PathVariable long id,
-          @ApiParam(value = "Set of links for the user")
-          @RequestBody List<Link> links,
-          HttpServletRequest request,
-          HttpServletResponse response
+      @ApiParam(value = "ID of the user to update")
+      @PathVariable long id,
+      @ApiParam(value = "Set of links for the user")
+      @RequestBody List<Link> links,
+      HttpServletRequest request,
+      HttpServletResponse response
   ) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -396,10 +417,10 @@ public class UserController {
   @GetMapping(path = "/{id}/links")
   @ResponseBody
   public TypedResponse<List<Link>> getLinks(
-          @ApiParam(value = "Id of the user ot get links for")
-          @PathVariable long id,
-          HttpServletRequest request,
-          HttpServletResponse response
+      @ApiParam(value = "Id of the user ot get links for")
+      @PathVariable long id,
+      HttpServletRequest request,
+      HttpServletResponse response
   ) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);

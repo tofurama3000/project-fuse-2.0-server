@@ -17,7 +17,13 @@ import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
@@ -345,6 +351,10 @@ public class OrganizationController extends GroupController<Organization, Organi
     return permissionFactory.createUserToOrganizationPermission(user, group);
   }
 
+  private UserToOrganizationPermission getUserToOrganizationPermission(User user, Organization org) {
+    return permissionFactory.createUserToOrganizationPermission(user, org);
+  }
+
   @Override
   protected PossibleError validateGroup(User user, Organization group) {
     return new PossibleError(OK);
@@ -353,6 +363,14 @@ public class OrganizationController extends GroupController<Organization, Organi
   @Override
   protected void saveInvitation(OrganizationInvitation invitation) {
     organizationInvitationRepository.save(invitation);
+  }
+
+  @Override
+  protected Organization setJoinPermissions(User user, Organization group) {
+    group = super.setJoinPermissions(user, group);
+    UserToOrganizationPermission permission = getUserToOrganizationPermission(user, group);
+    group.setCanCreateProject(permission.canCreateProjectsInOrganization());
+    return group;
   }
 
   private Project setJoinPermissionsForProject(User user, Project res) {

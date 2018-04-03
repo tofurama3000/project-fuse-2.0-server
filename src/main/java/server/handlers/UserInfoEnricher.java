@@ -112,7 +112,7 @@ public class UserInfoEnricher {
   private void enrichWithPermission(SearchResult searchResult, UserToGroupPermission permission) {
     switch (permission.canJoin()) {
       case NEED_INVITE:
-        if(permission.hasApplied()) {
+        if (permission.hasApplied()) {
           searchResult.getData().put(ACTIONS_AVAILABLE, "none");
         } else {
           searchResult.getData().put(ACTIONS_AVAILABLE, "apply");

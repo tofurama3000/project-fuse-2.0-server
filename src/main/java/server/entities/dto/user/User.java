@@ -1,7 +1,6 @@
 package server.entities.dto.user;
 
 import static server.constants.RegistrationStatus.UNREGISTERED;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.AccessLevel;
@@ -28,7 +27,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-@ToString(exclude = "user")
+@ToString()
 @Entity
 @Table(name = "user")
 @Data
@@ -54,6 +53,12 @@ public class User extends BaseIndexable {
   private String _password;
 
   private String email;
+
+  @Transient
+  private String friendAction;
+
+  @Transient
+  private Long friendInvitationId;
 
   // default make users unregistered
   @Column(name = "registration_status")
@@ -135,5 +140,17 @@ public class User extends BaseIndexable {
   @JsonIgnore
   public String getEsId() {
     return this.id.toString();
+  }
+
+  public void setFriendAction(String action) {
+    switch(action.toLowerCase()) {
+      case "send":
+      case "accept":
+        this.friendAction = action.toLowerCase();
+        break;
+      case "none":
+      default:
+        this.friendAction = "none";
+    }
   }
 }

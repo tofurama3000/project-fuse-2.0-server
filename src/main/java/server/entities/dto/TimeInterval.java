@@ -1,7 +1,6 @@
 package server.entities.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;

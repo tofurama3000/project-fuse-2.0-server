@@ -26,6 +26,8 @@ public abstract class GroupProfile<T extends Group> {
 
   private Long background_id = 0L;
 
+  private String tags;
+
   @JsonIgnore
   public abstract T getGroup();
 
@@ -39,6 +41,9 @@ public abstract class GroupProfile<T extends Group> {
     }
     if (profile.getSummary() != null) {
       profileToSave.setSummary(profile.getSummary());
+    }
+    if (profile.getTags() != null) {
+      profileToSave.setTags(profile.getTags());
     }
     return profileToSave;
   }
