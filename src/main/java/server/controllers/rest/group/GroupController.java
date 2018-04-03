@@ -62,6 +62,7 @@ import server.repositories.group.GroupProfileRepository;
 import server.repositories.group.GroupRepository;
 import server.repositories.group.InterviewRepository;
 import server.utility.ApplicantUtil;
+import server.utility.ElasticsearchClient;
 import server.utility.InterviewUtil;
 import server.utility.UserFindHelper;
 import springfox.documentation.annotations.ApiIgnore;
@@ -183,21 +184,22 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       return new GeneralResponse(response, DENIED, errors);
     }
 
-    T g = getGroupRepository().findOne(id);
+    T group = getGroupRepository().findOne(id);
 
-    if (g == null || g.getDeleted()) {
+    if (group == null || group.getDeleted()) {
       errors.add("Entity does not exist!");
       return new GeneralResponse(response, BAD_DATA, errors);
     }
 
     User user = session.get().getUser();
-    if (!Objects.equals(g.getOwner().getId(), user.getId())) {
+    if (!Objects.equals(group.getOwner().getId(), user.getId())) {
       errors.add("Unable to delete entity, permission denied");
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
     }
 
-    g.setDeleted(true);
-    getGroupRepository().save(g);
+    group.setDeleted(true);
+    getGroupRepository().save(group);
+    ElasticsearchClient.instance().indexAsync(group);
     return new GeneralResponse(response);
   }
 

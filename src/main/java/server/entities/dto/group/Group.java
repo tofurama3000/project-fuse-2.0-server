@@ -75,6 +75,9 @@ public abstract class Group<Profile extends GroupProfile> extends BaseIndexable 
 
   @Override
   public Map<String, Object> getEsJson() {
+    if (deleted)
+      return null;
+
     Map<String, Object> map = new HashMap<>();
 
     map.put("id", this.getId());

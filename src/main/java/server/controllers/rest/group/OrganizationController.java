@@ -324,20 +324,6 @@ public class OrganizationController extends GroupController<Organization, Organi
     return revokeAccessForMember(id, memberId, CREATE_PROJECT_IN_ORGANIZATION, response, request);
   }
 
-  @ApiOperation("Create new interview template")
-  @PostMapping(path = "/{id}/projects/interviewslots")
-  @ResponseBody
-  public BaseResponse createInterviewTemplate(
-          @ApiParam("The id of the organization")
-          @PathVariable(value = "id") Long id,
-          @ApiParam("The id of the user to grant access to")
-          @PathVariable(value = "member_id") Long memberId,
-          HttpServletRequest request, HttpServletResponse response
-  ) {
-    return revokeAccessForMember(id, memberId, CREATE_PROJECT_IN_ORGANIZATION, response, request);
-  }
-
-
 
   @Override
   protected GroupApplication<Organization> getApplication() {
