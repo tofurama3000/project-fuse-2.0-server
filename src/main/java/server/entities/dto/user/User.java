@@ -1,7 +1,6 @@
 package server.entities.dto.user;
 
 import static server.constants.RegistrationStatus.UNREGISTERED;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.AccessLevel;
@@ -28,7 +27,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-@ToString(exclude = "user")
+@ToString()
 @Entity
 @Table(name = "user")
 @Data

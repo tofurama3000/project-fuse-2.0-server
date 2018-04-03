@@ -1,7 +1,6 @@
 package server.controllers.rest.group;
 
 import static server.controllers.rest.response.BaseResponse.Status.OK;
-
 import io.swagger.annotations.Api;
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +33,9 @@ import server.repositories.group.project.ProjectProfileRepository;
 import server.repositories.group.project.ProjectRepository;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Controller
 @RequestMapping(value = "/projects")
@@ -108,11 +109,17 @@ public class ProjectController extends GroupController<Project, ProjectMember, P
   @Override
   protected void removeRelationship(User user, Project group, int role) {
     relationshipFactory.createUserToProjectRelationship(user, group).removeRelationship(role);
+    group.setNumberOfMembers((long) new HashSet<>(projectMemberRepository.getUsersByGroup(group)).size());
+    projectRepository.save(group);
+    group.indexAsync();
   }
 
   @Override
   protected void addRelationship(User user, Project group, int role) {
     relationshipFactory.createUserToProjectRelationship(user, group).addRelationship(role);
+    group.setNumberOfMembers((long) new HashSet<>(projectMemberRepository.getUsersByGroup(group)).size());
+    projectRepository.save(group);
+    group.indexAsync();
   }
 
   @Override

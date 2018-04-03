@@ -19,6 +19,6 @@ public interface ProjectApplicantRepository extends GroupApplicantRepository<Pro
   List<ProjectApplication> getApplicantsByStatus(@Param("status") String status);
 
   @Query("SELECT count(a.id) FROM ProjectApplication a where a.project = :project and " +
-          "a.status <> 'accepted' and a.status <> 'decline' and a.sender = :user")
+      "a.status <> 'accepted' and a.status <> 'decline' and a.sender = :user")
   Integer getNumApplications(@Param("project") Project project, @Param("user") User user);
 }

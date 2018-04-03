@@ -10,19 +10,11 @@ import static server.controllers.rest.response.BaseResponse.Status.BAD_DATA;
 import static server.controllers.rest.response.BaseResponse.Status.DENIED;
 import static server.controllers.rest.response.BaseResponse.Status.ERROR;
 import static server.controllers.rest.response.BaseResponse.Status.OK;
-import static server.controllers.rest.response.CannedResponse.ALREADY_JOINED_MSG;
-import static server.controllers.rest.response.CannedResponse.ALREADY_JOINED_OR_INVITED;
-import static server.controllers.rest.response.CannedResponse.FILE_NOT_FOUND;
-import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
-import static server.controllers.rest.response.CannedResponse.INTERVIEW_NOT_AVAILABLE;
-import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
-import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS_FOR_CREATE;
-import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
-import static server.controllers.rest.response.CannedResponse.NO_GROUP_FOUND;
-import static server.controllers.rest.response.CannedResponse.SERVER_ERROR;
+import static server.controllers.rest.response.CannedResponse.*;
 import static server.utility.JoinPermissionsUtil.genericSetJoinPermissions;
 import static server.utility.PagingUtil.getPagedResults;
 import static server.utility.RolesUtility.getRoleFromInvitationType;
+
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.hibernate.Session;
@@ -80,6 +72,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -316,10 +309,12 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       errors.add(INVALID_SESSION);
       return new GeneralResponse(response, DENIED, errors);
     }
-
     T group = getGroupRepository().findOne(id);
+    if (group == null) {
+      errors.add(NO_GROUP_FOUND);
+      return new GeneralResponse(response, ERROR, errors);
+    }
     User user = session.get().getUser();
-
     switch (getUserToGroupPermission(user, group).canJoin()) {
       case OK:
         try {
@@ -347,6 +342,9 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
         return generalApply(id, request, response);
       case ALREADY_JOINED:
         errors.add(ALREADY_JOINED_MSG);
+        return new GeneralResponse(response, ERROR, errors);
+      case NOT_ALLOWED:
+        errors.add(NOT_ALLOWED_MSG);
         return new GeneralResponse(response, ERROR, errors);
       case ERROR:
       default:
@@ -573,18 +571,17 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   }
 
 
-
   @CrossOrigin
   @ApiOperation(value = "Updates the links for a group (must be logged in as an admin)")
   @PutMapping(path = "/{id}/links")
   @ResponseBody
   public BaseResponse updateGroupLinks(
-          @ApiParam(value = "ID of the group to update")
-          @PathVariable long id,
-          @ApiParam(value = "Set of links for the group")
-          @RequestBody List<Link> links,
-          HttpServletRequest request,
-          HttpServletResponse response
+      @ApiParam(value = "ID of the group to update")
+      @PathVariable long id,
+      @ApiParam(value = "Set of links for the group")
+      @RequestBody List<Link> links,
+      HttpServletRequest request,
+      HttpServletResponse response
   ) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -617,10 +614,10 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   @GetMapping(path = "/{id}/links")
   @ResponseBody
   public TypedResponse<List<Link>> getLinks(
-          @ApiParam(value = "Id of the group to get links for")
-          @PathVariable long id,
-          HttpServletRequest request,
-          HttpServletResponse response
+      @ApiParam(value = "Id of the group to get links for")
+      @PathVariable long id,
+      HttpServletRequest request,
+      HttpServletResponse response
   ) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -823,7 +820,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     if (status.equals("interview_scheduled")) {
       List<GroupApplication> applicantsTmp = applicants.stream()
           .filter(a -> a.getDateTime() != null)
-          .sorted((a1, a2) -> a1.getDateTime().compareTo(a2.getDateTime()))
+          .sorted(Comparator.comparing(GroupApplication::getDateTime))
           .collect(Collectors.toList());
       applicantsTmp.addAll(
           applicants

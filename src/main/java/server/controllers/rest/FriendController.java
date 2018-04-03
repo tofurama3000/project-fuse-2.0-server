@@ -6,6 +6,7 @@ import static server.controllers.rest.response.CannedResponse.FRIEND_FOUND;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
 import static server.utility.PagingUtil.getPagedResults;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -238,8 +239,8 @@ public class FriendController {
     }
 
     List<Friendship> friends = friendRepository.getAllFriends(sender).stream()
-            .filter(friendship -> friendship.getReceiver().getId().equals(id) )
-            .collect(Collectors.toList());
+        .filter(friendship -> friendship.getReceiver().getId().equals(id))
+        .collect(Collectors.toList());
     long count = friends.size();
 
     if (count != 0) {

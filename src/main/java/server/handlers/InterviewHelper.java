@@ -7,6 +7,7 @@ import static server.constants.RoleValue.TO_INTERVIEW;
 import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
 import static server.controllers.rest.response.CannedResponse.INVALID_FIELDS;
 import static server.controllers.rest.response.CannedResponse.NO_INTERVIEW_FOUND;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import server.entities.dto.group.Group;

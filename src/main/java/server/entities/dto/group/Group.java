@@ -2,7 +2,6 @@ package server.entities.dto.group;
 
 import static server.entities.Restriction.INVITE;
 import static server.entities.Restriction.NONE;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import server.entities.BaseIndexable;
@@ -18,8 +17,13 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Transient;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Data
 @MappedSuperclass
@@ -34,6 +38,8 @@ public abstract class Group<Profile extends GroupProfile> extends BaseIndexable 
   private User owner;
 
   private String name;
+
+  private Long numberOfMembers;
 
   @Column(name = "restriction")
   @JsonIgnore
@@ -81,9 +87,23 @@ public abstract class Group<Profile extends GroupProfile> extends BaseIndexable 
     map.put("summary", this.getProfile().getSummary());
     map.put("headline", this.getProfile().getHeadline());
     map.put("img", this.getProfile().getThumbnail_id());
+    map.put("number_of_members", this.getNumberOfMembers());
     map.put("index", this.getEsIndex());
 
+    Optional<Profile> maybeProfile = Optional.ofNullable(this.getProfile());
+
+    map.put("tags", maybeProfile.map(profile -> getTagsList(profile.getTags()))
+        .orElse(new ArrayList<>()));
+
     return map;
+  }
+
+  private List<String> getTagsList(String tagsString) {
+    if (tagsString == null) {
+      return new ArrayList<>();
+    }
+    return Arrays.stream(tagsString.split(","))
+        .filter(tag -> !tag.isEmpty()).collect(Collectors.toList());
   }
 
   public static String esType() {

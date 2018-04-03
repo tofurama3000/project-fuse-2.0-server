@@ -60,7 +60,7 @@ public class UserProfile {
       return links;
     }
     return links.stream().filter(
-            link -> link.getReferencedType().equals("User")
+        link -> link.getReferencedType().equals("User")
     ).collect(Collectors.toList());
   }
 
