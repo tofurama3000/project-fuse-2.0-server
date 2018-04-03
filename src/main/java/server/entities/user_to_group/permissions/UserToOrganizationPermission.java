@@ -6,19 +6,14 @@ import static server.constants.RoleValue.OWNER;
 
 import lombok.Setter;
 import org.hibernate.Session;
-import org.springframework.beans.factory.annotation.Autowired;
 import server.entities.dto.group.organization.Organization;
-import server.entities.dto.group.organization.OrganizationApplication;
 import server.entities.dto.user.User;
 import server.repositories.group.organization.OrganizationApplicantRepository;
 import server.repositories.group.organization.OrganizationMemberRepository;
-import server.repositories.group.organization.OrganizationRepository;
-import server.utility.ApplicantUtil;
 
 import javax.annotation.Resource;
 import javax.transaction.Transactional;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class UserToOrganizationPermission extends UserToGroupPermission<Organization> {
