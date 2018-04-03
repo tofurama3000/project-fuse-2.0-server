@@ -48,6 +48,8 @@ public abstract class Group<Profile extends GroupProfile> extends BaseIndexable 
   @Transient
   private Boolean canEdit;
 
+  private Boolean deleted;
+
   @Transient
   private Boolean canJoin;
 
@@ -77,6 +79,9 @@ public abstract class Group<Profile extends GroupProfile> extends BaseIndexable 
 
   @Override
   public Map<String, Object> getEsJson() {
+    if (deleted)
+      return null;
+
     Map<String, Object> map = new HashMap<>();
 
     map.put("id", this.getId());
@@ -89,8 +94,10 @@ public abstract class Group<Profile extends GroupProfile> extends BaseIndexable 
     map.put("img", this.getProfile().getThumbnail_id());
     map.put("number_of_members", this.getNumberOfMembers());
     map.put("index", this.getEsIndex());
+    map.put("deleted", this.getDeleted());
 
-    Optional<Profile> maybeProfile = Optional.ofNullable(this.getProfile());
+
+      Optional<Profile> maybeProfile = Optional.ofNullable(this.getProfile());
 
     map.put("tags", maybeProfile.map(profile -> getTagsList(profile.getTags()))
         .orElse(new ArrayList<>()));

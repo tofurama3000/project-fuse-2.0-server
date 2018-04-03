@@ -330,6 +330,7 @@ public class OrganizationController extends GroupController<Organization, Organi
     return revokeAccessForMember(id, memberId, CREATE_PROJECT_IN_ORGANIZATION, response, request);
   }
 
+
   @Override
   protected GroupApplication<Organization> getApplication() {
     return new OrganizationApplication();
