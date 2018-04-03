@@ -278,6 +278,25 @@ public class UserController {
       return new TypedResponse<>(response, BAD_DATA, errors);
     }
 
+    User current = session.get().getUser();
+    if (!Objects.equals(current.getId(), byId.getId())) {
+      List<Friendship> friendships = friendRepository.getFriendships(current, byId);
+      if (friendships.size() == 0) {
+        byId.setFriendAction("send");
+      } else {
+        Optional<Friendship> existingRequest = friendships.stream().filter(
+                friendship -> Objects.equals(friendship.getStatus(), "applied")
+        ).findFirst();
+        if (existingRequest.isPresent()) {
+          Friendship existing = existingRequest.get();
+          if (existing.getReceiver().getId().equals(current.getId())) {
+            byId.setFriendInvitationId(existing.getId());
+            byId.setFriendAction("accept");
+          }
+        }
+      }
+    }
+
     return new TypedResponse<>(response, OK, null, byId);
   }
 

@@ -1267,7 +1267,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
     return new GeneralResponse(response, OK);
   }
 
-  private T setJoinPermissions(User user, T group) {
+  protected T setJoinPermissions(User user, T group) {
     UserToGroupPermission<T> permission = getUserToGroupPermissionTyped(user, group);
     genericSetJoinPermissions(user, group, permission);
     return group;

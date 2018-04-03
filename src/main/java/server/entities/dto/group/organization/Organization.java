@@ -1,6 +1,8 @@
 package server.entities.dto.group.organization;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 import org.springframework.beans.factory.annotation.Autowired;
 import server.entities.dto.group.Group;
@@ -27,6 +29,11 @@ public class Organization extends Group<OrganizationProfile> {
   private OrganizationSettings organizationSettings;
 
   private boolean canEveryoneCreate;
+
+  @Transient
+  @Getter
+  @Setter
+  private boolean canCreateProject;
 
   public boolean getCanEveryoneCreate() {
     return canEveryoneCreate;
