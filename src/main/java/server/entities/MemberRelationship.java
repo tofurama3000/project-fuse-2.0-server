@@ -7,7 +7,6 @@ import static server.constants.RoleValue.INVITED_TO_INTERVIEW;
 import static server.constants.RoleValue.INVITED_TO_JOIN;
 import static server.constants.RoleValue.OWNER;
 import static server.constants.RoleValue.TO_INTERVIEW;
-
 import lombok.Data;
 import server.entities.dto.group.Group;
 import server.entities.dto.user.User;

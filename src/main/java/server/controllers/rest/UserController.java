@@ -14,6 +14,7 @@ import static server.controllers.rest.response.CannedResponse.NO_INVITATION_FOUN
 import static server.controllers.rest.response.CannedResponse.NO_USER_FOUND;
 import static server.utility.ApplicantUtil.filterApplicants;
 import static server.utility.PagingUtil.getPagedResults;
+
 import com.google.common.collect.Lists;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -59,7 +60,10 @@ import server.entities.user_to_group.permissions.PermissionFactory;
 import server.entities.user_to_group.permissions.UserPermission;
 import server.handlers.InvitationHandler;
 import server.handlers.UserToGroupRelationshipHandler;
-import server.repositories.*;
+import server.repositories.FriendRepository;
+import server.repositories.UnregisteredUserRepository;
+import server.repositories.UserProfileRepository;
+import server.repositories.UserRepository;
 import server.repositories.group.organization.OrganizationApplicantRepository;
 import server.repositories.group.organization.OrganizationInvitationRepository;
 import server.repositories.group.organization.OrganizationRepository;
@@ -75,7 +79,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 
 @Controller
@@ -376,12 +379,12 @@ public class UserController {
   @PutMapping(path = "/{id}/links")
   @ResponseBody
   public BaseResponse updateUserLinks(
-          @ApiParam(value = "ID of the user to update")
-          @PathVariable long id,
-          @ApiParam(value = "Set of links for the user")
-          @RequestBody List<Link> links,
-          HttpServletRequest request,
-          HttpServletResponse response
+      @ApiParam(value = "ID of the user to update")
+      @PathVariable long id,
+      @ApiParam(value = "Set of links for the user")
+      @RequestBody List<Link> links,
+      HttpServletRequest request,
+      HttpServletResponse response
   ) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -414,10 +417,10 @@ public class UserController {
   @GetMapping(path = "/{id}/links")
   @ResponseBody
   public TypedResponse<List<Link>> getLinks(
-          @ApiParam(value = "Id of the user ot get links for")
-          @PathVariable long id,
-          HttpServletRequest request,
-          HttpServletResponse response
+      @ApiParam(value = "Id of the user ot get links for")
+      @PathVariable long id,
+      HttpServletRequest request,
+      HttpServletResponse response
   ) {
     List<String> errors = new ArrayList<>();
     Optional<FuseSession> session = fuseSessionController.getSession(request);
@@ -504,12 +507,12 @@ public class UserController {
   }
 
 
-  @GetMapping(path= "/{id}/friends")
+  @GetMapping(path = "/{id}/friends")
   @ResponseBody
   @ApiOperation(value = "Get all friends for the specified user")
   public TypedResponse<List<Friendship>> getAllFriendsOfUser(
-          @PathVariable Long id,
-          HttpServletRequest request, HttpServletResponse response
+      @PathVariable Long id,
+      HttpServletRequest request, HttpServletResponse response
   ) {
     List<String> errors = new ArrayList<>();
 

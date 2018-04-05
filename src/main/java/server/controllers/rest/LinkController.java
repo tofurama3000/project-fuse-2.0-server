@@ -2,7 +2,6 @@ package server.controllers.rest;
 
 import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVELAGES;
 import static server.controllers.rest.response.CannedResponse.INVALID_SESSION;
-
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -59,10 +58,10 @@ public class LinkController {
   @PostMapping
   @ResponseBody
   public TypedResponse<Link> addLink(
-          @ApiParam(value = "The user information to create with", required = true)
-                                     @RequestBody Link link,
-                                     HttpServletRequest request,
-                                     HttpServletResponse response) {
+      @ApiParam(value = "The user information to create with", required = true)
+      @RequestBody Link link,
+      HttpServletRequest request,
+      HttpServletResponse response) {
 
     Optional<FuseSession> session = fuseSessionController.getSession(request);
     if (!session.isPresent()) {
@@ -153,42 +152,42 @@ public class LinkController {
     // Helper functions useful for this function
     BiFunction<Link, Link, Boolean> idsMatch = (link1, link2) -> Objects.equals(link1.getId(), link2.getId());
     BiFunction<Link, Link, Boolean> linkIsDifferent = (link1, link2) ->
-            !!Objects.equals(link1.getLink(), link2.getLink()) ||
-                    !Objects.equals(link1.getName(), link2.getName());
+        !!Objects.equals(link1.getLink(), link2.getLink()) ||
+            !Objects.equals(link1.getName(), link2.getName());
     Function<Link, Link> createCopyToSave = (link) -> {
-        Link linkToSave = new Link();
-        linkToSave.setLink(link.getLink());
-        linkToSave.setName(link.getName());
-        linkToSave.setReferencedType(referenceType);
-        linkToSave.setReferencedId(referenceId);
-        linkToSave.setId(link.getId());
-        return linkToSave;
+      Link linkToSave = new Link();
+      linkToSave.setLink(link.getLink());
+      linkToSave.setName(link.getName());
+      linkToSave.setReferencedType(referenceType);
+      linkToSave.setReferencedId(referenceId);
+      linkToSave.setId(link.getId());
+      return linkToSave;
     };
 
     // Update links that need updating
     List<Link> linksToUpdate = dbLinks.stream()
-            .flatMap(dbLink -> links.stream().filter(
-                    inputLink -> idsMatch.apply(inputLink, dbLink) && linkIsDifferent.apply(inputLink, dbLink)
-                ).limit(1)
-            )
-            .map(createCopyToSave)
-            .collect(Collectors.toList());
+        .flatMap(dbLink -> links.stream().filter(
+            inputLink -> idsMatch.apply(inputLink, dbLink) && linkIsDifferent.apply(inputLink, dbLink)
+            ).limit(1)
+        )
+        .map(createCopyToSave)
+        .collect(Collectors.toList());
     linkRepository.save(linksToUpdate);
 
     // Delete links not present
     List<Link> linksToDelete = dbLinks.stream()
-            .filter(dbLink -> links.stream()
-                    .filter(inputLink -> idsMatch.apply(dbLink, inputLink))
-                    .count() == 0
-            )
-            .collect(Collectors.toList());
+        .filter(dbLink -> links.stream()
+            .filter(inputLink -> idsMatch.apply(dbLink, inputLink))
+            .count() == 0
+        )
+        .collect(Collectors.toList());
     linkRepository.delete(linksToDelete);
 
     // Create links that don't have an id
     List<Link> linksToCreate = links.stream()
-            .filter(link -> link.getId() == null)
-            .map(createCopyToSave)
-            .collect(Collectors.toList());
+        .filter(link -> link.getId() == null)
+        .map(createCopyToSave)
+        .collect(Collectors.toList());
     linkRepository.save(linksToCreate);
 
     return new GeneralResponse(response, BaseResponse.Status.OK);
@@ -197,6 +196,6 @@ public class LinkController {
   public TypedResponse<List<Link>> getLinksFor(String referenceType, Long referenceId, HttpServletResponse response) {
 
     return new TypedResponse<>(response, BaseResponse.Status.OK, null,
-            linkRepository.getLinksWithIdOfType(referenceId, referenceType));
+        linkRepository.getLinksWithIdOfType(referenceId, referenceType));
   }
 }

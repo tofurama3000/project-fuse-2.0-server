@@ -4,7 +4,6 @@ import static server.constants.RoleValue.ADMIN;
 import static server.constants.RoleValue.DEFAULT_USER;
 import static server.constants.RoleValue.INVITED_TO_JOIN;
 import static server.constants.RoleValue.OWNER;
-
 import org.hibernate.Session;
 import org.springframework.transaction.annotation.Transactional;
 import server.entities.MemberRelationship;
@@ -28,6 +27,9 @@ public abstract class UserToGroupPermission<T extends Group> {
     if (isMember()) {
       return JoinResult.ALREADY_JOINED;
     }
+    if (!allowedToJoin()) {
+      return JoinResult.NOT_ALLOWED;
+    }
 
     switch (group.getRestriction()) {
       case INVITE:
@@ -41,6 +43,8 @@ public abstract class UserToGroupPermission<T extends Group> {
         return JoinResult.OK;
     }
   }
+
+  protected abstract boolean allowedToJoin();
 
   protected abstract Session getSession();
 

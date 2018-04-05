@@ -3,19 +3,17 @@ package server.entities.user_to_group.permissions;
 import static server.constants.RoleValue.ADMIN;
 import static server.constants.RoleValue.CREATE_PROJECT_IN_ORGANIZATION;
 import static server.constants.RoleValue.OWNER;
+
 import lombok.Setter;
 import org.hibernate.Session;
-import org.springframework.beans.factory.annotation.Autowired;
 import server.entities.dto.group.organization.Organization;
-import server.entities.dto.group.organization.OrganizationApplication;
 import server.entities.dto.user.User;
 import server.repositories.group.organization.OrganizationApplicantRepository;
 import server.repositories.group.organization.OrganizationMemberRepository;
-import server.repositories.group.organization.OrganizationRepository;
-import server.utility.ApplicantUtil;
 
+import javax.annotation.Resource;
+import javax.transaction.Transactional;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class UserToOrganizationPermission extends UserToGroupPermission<Organization> {
@@ -31,6 +29,11 @@ public class UserToOrganizationPermission extends UserToGroupPermission<Organiza
 
   public UserToOrganizationPermission(User user, Organization group) {
     super(user, group);
+  }
+
+  @Override
+  protected boolean allowedToJoin() {
+    return true;
   }
 
   @Override

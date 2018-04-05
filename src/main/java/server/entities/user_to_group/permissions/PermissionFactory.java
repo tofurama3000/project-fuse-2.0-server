@@ -54,6 +54,9 @@ public class PermissionFactory {
     permission.setSession(sessionFactory.getCurrentSession());
     permission.setRepository(projectMemberRepository);
     permission.setProjectApplicantRepository(projectApplicantRepository);
+    if (project.getOrganization() != null) {
+      permission.setUserToOrganizationPermission(createUserToOrganizationPermission(user, project.getOrganization()));
+    }
     return permission;
   }
 }

@@ -12,10 +12,10 @@ import java.util.List;
 
 @Transactional
 public interface OrganizationRepository extends GroupRepository<Organization> {
-  @Query("From Organization t WHERE t.owner =:owner AND t.name=:name")
+  @Query("From Organization t WHERE t.owner =:owner AND t.name=:name AND t.deleted = 0")
   List<Organization> getGroups(@Param("owner") User user, @Param("name") String name);
 
 
-  @Query("From Project p WHERE p.organization = :organization")
+  @Query("From Project p WHERE p.organization = :organization AND p.deleted = 0")
   List<Project> getAllProjectsByOrganization(@Param("organization") Organization organizationId);
 }
