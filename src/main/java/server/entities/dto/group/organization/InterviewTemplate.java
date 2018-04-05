@@ -4,8 +4,6 @@ package server.entities.dto.group.organization;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import server.entities.dto.group.project.Project;
-import server.entities.dto.user.User;
-
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -21,12 +19,6 @@ public class InterviewTemplate {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column(name = "project_id")
-    private Long projectId;
-
-    @Column(name = "organization_id")
-    private Long organizationId;
-
     @Column(name = "start_time")
     private LocalDateTime startDateTime;
 
@@ -35,11 +27,11 @@ public class InterviewTemplate {
 
 
     @ManyToOne
-    @JoinColumn(name = "id", referencedColumnName = "organization_id")
+    @JoinColumn(name = "organization_id", referencedColumnName = "id")
     private Organization organization;
 
     @ManyToOne
-    @JoinColumn(name = "id", referencedColumnName = "project_id")
+    @JoinColumn(name = "project_id", referencedColumnName = "id")
     private Project project;
 
     public void setStart(String dateTime) {
