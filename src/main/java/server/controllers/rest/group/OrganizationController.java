@@ -333,7 +333,7 @@ public class OrganizationController extends GroupController<Organization, Organi
   public BaseResponse createInterviewTemplate(
           @ApiParam("The id of the organization")
           @PathVariable(value = "id") Long organizationId,
-          @RequestBody Interview interview,
+          @RequestBody InterviewTemplate template,
           HttpServletRequest request, HttpServletResponse response
   ){
 
@@ -353,12 +353,10 @@ public class OrganizationController extends GroupController<Organization, Organi
       errors.add(NO_GROUP_FOUND);
       return new GeneralResponse(response, BaseResponse.Status.BAD_DATA, errors);
     }
-    String start = "2016-01-25T21:34:55+00:00";
-    String end = "2016-01-25T21:35:55+00:00";
 
-    ZonedDateTime zonedDateTime = ZonedDateTime.parse(start);
+    ZonedDateTime zonedDateTime = ZonedDateTime.parse(template.getStart());
     LocalDateTime startDateTime = zonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
-    zonedDateTime = ZonedDateTime.parse(end);
+    zonedDateTime = ZonedDateTime.parse(template.getEnd());
     LocalDateTime endDateTime = zonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
     if(endDateTime.isBefore(startDateTime))
     {
@@ -372,8 +370,8 @@ public class OrganizationController extends GroupController<Organization, Organi
       return  new GeneralResponse(response,BaseResponse.Status.DENIED, errors);
     }
     List<Project> projects = organizationRepository.getAllProjectsByOrganization(organization);
-    for(Project p : projects){
-      interviewTemplateHelper.createTemplate(p, organization, start, end);
+    for(Project project : projects){
+      interviewTemplateHelper.createTemplate(project, organization, template.getStart(), template.getEnd());
     }
 
     return new GeneralResponse(response,BaseResponse.Status.OK,errors);
