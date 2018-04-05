@@ -18,4 +18,7 @@ public interface OrganizationRepository extends GroupRepository<Organization> {
 
   @Query("From Project p WHERE p.organization = :organization AND p.deleted = 0")
   List<Project> getAllProjectsByOrganization(@Param("organization") Organization organizationId);
+
+  @Query("From MemberProjectOrganizationInterviewSummaryView stat WHERE stat.OrganizationId = :organizationId")
+  List<Organization> getMemberProjectOrganizationInterviewSummary(@Param("organizationId") Long organizationId);
 }
