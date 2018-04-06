@@ -4,5 +4,3 @@ CREATE TABLE IF NOT EXISTS interview_template (
     start_time DATETIME,
     end_time DATETIME
 );
-
-ALTER TABLE interview_template ADD COLUMN project_id INT(11);

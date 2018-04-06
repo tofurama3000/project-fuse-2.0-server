@@ -328,7 +328,7 @@ public class OrganizationController extends GroupController<Organization, Organi
   }
 
   @ApiOperation("Create an interview template")
-  @PostMapping(path = "/{id}/projects/interviewslots")
+  @PostMapping(path = "/{id}/interview_template")
   @ResponseBody
   public BaseResponse createInterviewTemplate(
           @ApiParam("The id of the organization")
@@ -346,7 +346,6 @@ public class OrganizationController extends GroupController<Organization, Organi
     }
 
     User loggedInUser = session.get().getUser();
-
     Organization organization = organizationRepository.findOne(organizationId);
     if(organization == null)
     {
@@ -358,7 +357,7 @@ public class OrganizationController extends GroupController<Organization, Organi
     LocalDateTime startDateTime = zonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
     zonedDateTime = ZonedDateTime.parse(template.getEnd());
     LocalDateTime endDateTime = zonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
-    if(endDateTime.isBefore(startDateTime))
+    if(endDateTime.isBefore(startDateTime) || startDateTime.isBefore(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime()))
     {
       errors.add("Invalid time");
       return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
@@ -367,12 +366,10 @@ public class OrganizationController extends GroupController<Organization, Organi
     if(!userToOrganizationPermission.hasRole(ADMIN))
     {
       errors.add(INSUFFICIENT_PRIVELAGES);
-      return  new GeneralResponse(response,BaseResponse.Status.DENIED, errors);
+      return new GeneralResponse(response,BaseResponse.Status.DENIED, errors);
     }
-    List<Project> projects = organizationRepository.getAllProjectsByOrganization(organization);
-    for(Project project : projects){
-      interviewTemplateHelper.createTemplate(project, organization, template.getStart(), template.getEnd());
-    }
+
+    interviewTemplateHelper.createTemplate(organization, template.getStart(), template.getEnd());
 
     return new GeneralResponse(response,BaseResponse.Status.OK,errors);
 
@@ -407,6 +404,9 @@ public class OrganizationController extends GroupController<Organization, Organi
   protected PossibleError validateGroup(User user, Organization group) {
     return new PossibleError(OK);
   }
+
+  @Override
+  protected void createInterviewTemplate(Organization group) {}
 
   @Override
   protected void saveInvitation(OrganizationInvitation invitation) {

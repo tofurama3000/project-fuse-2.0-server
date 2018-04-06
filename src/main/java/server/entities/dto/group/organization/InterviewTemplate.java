@@ -3,7 +3,6 @@ package server.entities.dto.group.organization;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-import server.entities.dto.group.project.Project;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -30,9 +29,6 @@ public class InterviewTemplate {
     @JoinColumn(name = "organization_id", referencedColumnName = "id")
     private Organization organization;
 
-    @ManyToOne
-    @JoinColumn(name = "project_id", referencedColumnName = "id")
-    private Project project;
 
     public void setStart(String dateTime) {
         ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateTime);

@@ -11,6 +11,8 @@ import server.controllers.rest.response.BaseResponse;
 import server.entities.PossibleError;
 import server.entities.dto.group.GroupApplication;
 import server.entities.dto.group.GroupProfile;
+import server.entities.dto.group.interview.Interview;
+import server.entities.dto.group.organization.InterviewTemplate;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
 import server.entities.dto.group.project.ProjectApplication;
@@ -21,10 +23,9 @@ import server.entities.user_to_group.permissions.PermissionFactory;
 import server.entities.user_to_group.permissions.UserToGroupPermission;
 import server.entities.user_to_group.permissions.UserToOrganizationPermission;
 import server.entities.user_to_group.relationships.RelationshipFactory;
-import server.repositories.group.GroupApplicantRepository;
-import server.repositories.group.GroupInvitationRepository;
-import server.repositories.group.GroupMemberRepository;
-import server.repositories.group.GroupRepository;
+import server.handlers.InterviewTemplateHelper;
+import server.repositories.group.*;
+import server.repositories.group.organization.OrganizationInterviewTemplateRepository;
 import server.repositories.group.organization.OrganizationRepository;
 import server.repositories.group.project.ProjectApplicantRepository;
 import server.repositories.group.project.ProjectInvitationRepository;
@@ -32,6 +33,8 @@ import server.repositories.group.project.ProjectMemberRepository;
 import server.repositories.group.project.ProjectProfileRepository;
 import server.repositories.group.project.ProjectRepository;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -70,6 +73,12 @@ public class ProjectController extends GroupController<Project, ProjectMember, P
 
   @Autowired
   private SessionFactory sessionFactory;
+
+  @Autowired
+  private OrganizationInterviewTemplateRepository organizationInterviewTemplateRepository;
+
+  @Autowired
+  private InterviewRepository interviewRepository;
 
   @Override
   protected Project createGroup() {
@@ -155,6 +164,30 @@ public class ProjectController extends GroupController<Project, ProjectMember, P
       }
     } else {
       return new PossibleError(OK);
+    }
+  }
+
+  @Override
+  protected void createInterviewTemplate(Project group) {
+    Organization parentOrganization = group.getOrganization();
+
+    if (parentOrganization == null)
+    {
+       return;
+    }else{
+      List<InterviewTemplate> templates = organizationInterviewTemplateRepository.getInterviewTemplatesByStart(parentOrganization,
+              ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime());
+
+      for(InterviewTemplate template : templates)
+      {
+        Interview interview = new Interview();
+        interview.setGroupType("Project");
+        interview.setGroupId(group.getId());
+        interview.setUser(null);
+        interview.setStartDateTime(template.getStartDateTime());
+        interview.setEndDateTime(template.getEndDateTime());
+        interviewRepository.save(interview);
+      }
     }
   }
 
