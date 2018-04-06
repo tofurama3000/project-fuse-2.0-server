@@ -19,6 +19,7 @@ import server.controllers.rest.errors.DeniedException;
 import server.controllers.rest.response.TypedResponse;
 import server.entities.dto.TimeInterval;
 import server.entities.dto.group.project.ProjectInterviewSlots;
+import server.entities.dto.statistics.MemberProjectOrganizationInterviewSummaryView;
 import server.entities.dto.user.ProjectMemberCount;
 import server.entities.dto.user.User;
 import server.entities.dto.user.UserInterviewSlots;
@@ -125,4 +126,22 @@ public class StatisticsController {
       return new TypedResponse<>(response, BAD_DATA, e.getMessage());
     }
   }
+
+//  @GetMapping("organizations/{id}/members/view")
+//  @ResponseBody
+//  @ApiOperation("Returns count of projects for all users apart of")
+//  public TypedResponse<List<MemberProjectOrganizationInterviewSummaryView>> get(@ApiParam("Id of the organization")
+//                                                                               @PathVariable(value = "id") Long id,
+//                                                                                HttpServletRequest request, HttpServletResponse response)
+
+//  {
+//    try {
+//      return new TypedResponse<>(response, groupMemberHelper.organizationMembersProjectCount(id, sessionController.getUserFromSession(request)));
+//    } catch (DeniedException e) {
+//      return new TypedResponse<>(response, DENIED, e.getMessage());
+//    } catch (BadDataException e) {
+//      return new TypedResponse<>(response, BAD_DATA, e.getMessage());
+//    }
+//    return new TypedResponse<>(response, groupMemberHelper.getView(id));
+//  }
 }

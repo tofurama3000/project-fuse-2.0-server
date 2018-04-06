@@ -5,6 +5,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
+import server.entities.dto.statistics.MemberProjectOrganizationInterviewSummaryView;
 import server.entities.dto.user.User;
 import server.repositories.group.GroupRepository;
 
@@ -20,5 +21,5 @@ public interface OrganizationRepository extends GroupRepository<Organization> {
   List<Project> getAllProjectsByOrganization(@Param("organization") Organization organizationId);
 
   @Query("From MemberProjectOrganizationInterviewSummaryView stat WHERE stat.OrganizationId = :organizationId")
-  List<Organization> getMemberProjectOrganizationInterviewSummary(@Param("organizationId") Long organizationId);
+  List<MemberProjectOrganizationInterviewSummaryView> getMemberProjectOrganizationInterviewSummary(@Param("organizationId") Long organizationId);
 }

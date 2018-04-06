@@ -6,6 +6,7 @@ import server.controllers.rest.errors.BadDataException;
 import server.controllers.rest.errors.DeniedException;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
+import server.entities.dto.statistics.MemberProjectOrganizationInterviewSummaryView;
 import server.entities.dto.user.ProjectMemberCount;
 import server.entities.dto.user.User;
 import server.entities.dto.user.UserProjectCount;
@@ -66,4 +67,8 @@ public class GroupMemberHelper {
     return (int) projects.stream().map(project -> permissionFactory.createUserToProjectPermission(user, project))
         .filter(UserToGroupPermission::isMember).count();
   }
+
+//  public  List<MemberProjectOrganizationInterviewSummaryView> getView(Long id){
+//    return  organizationRepository.getMemberProjectOrganizationInterviewSummary(id);
+//  }
 }
