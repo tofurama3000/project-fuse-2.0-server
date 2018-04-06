@@ -20,6 +20,7 @@ import server.controllers.rest.response.TypedResponse;
 import server.entities.dto.TimeInterval;
 import server.entities.dto.group.project.ProjectInterviewSlots;
 import server.entities.dto.statistics.MemberProjectOrganizationInterviewSummaryView;
+import server.entities.dto.statistics.UsersWithInvalidProfilesBreakdownView;
 import server.entities.dto.statistics.UsersWithInvalidProfilesSummaryView;
 import server.entities.dto.user.ProjectMemberCount;
 import server.entities.dto.user.User;
@@ -147,7 +148,7 @@ public class StatisticsController {
 
   @GetMapping("organizations/{id}/members/invalidProfilesSummary")
   @ResponseBody
-  @ApiOperation("Returns users that have invalid profile")
+  @ApiOperation("Returns summary of users that have invalid profile")
   public TypedResponse<List<UsersWithInvalidProfilesSummaryView>> getUsersWithInvalidProfilesSummaryView(@ApiParam("Id of the organization")
                                                                                                                              @PathVariable(value = "id") Long id,
                                                                                                          HttpServletRequest request, HttpServletResponse response)
@@ -162,5 +163,22 @@ public class StatisticsController {
     }
   }
 
+  @GetMapping("organizations/{id}/members/invalidProfilesBreakdown")
+  @ResponseBody
+  @ApiOperation("Returns break down of user that have invalid profile")
+  public TypedResponse<List<UsersWithInvalidProfilesBreakdownView>> getUsersWithInvalidProfilesBreakdownView(@ApiParam("Id of the organization")
+                                                                                                         @PathVariable(value = "id") Long id,
+                                                                                                             HttpServletRequest request, HttpServletResponse response)
 
+  {
+    try {
+      return new TypedResponse<>(response, groupMemberHelper.getUsersWithInvalidProfilesBreakdownView(id,sessionController.getUserFromSession(request)));
+    } catch (DeniedException e) {
+      return new TypedResponse<>(response, DENIED, e.getMessage());
+    } catch (BadDataException e) {
+      return new TypedResponse<>(response, BAD_DATA, e.getMessage());
+    }
+  }
+
+  
 }

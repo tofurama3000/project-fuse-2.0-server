@@ -7,6 +7,7 @@ import server.controllers.rest.errors.DeniedException;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
 import server.entities.dto.statistics.MemberProjectOrganizationInterviewSummaryView;
+import server.entities.dto.statistics.UsersWithInvalidProfilesBreakdownView;
 import server.entities.dto.statistics.UsersWithInvalidProfilesSummaryView;
 import server.entities.dto.user.ProjectMemberCount;
 import server.entities.dto.user.User;
@@ -89,5 +90,16 @@ public class GroupMemberHelper {
       throw new DeniedException(INSUFFICIENT_PRIVELAGES);
     }
     return  organizationRepository.getUsersWithInvalidProfilesSummary(organizationId);
+  }
+
+  public  List<UsersWithInvalidProfilesBreakdownView> getUsersWithInvalidProfilesBreakdownView(Long organizationId, User loggedInUser) throws BadDataException, DeniedException {
+    Organization organization = organizationRepository.findOne(organizationId);
+    if (organization == null)
+      throw new BadDataException(NO_GROUP_FOUND);
+    UserToOrganizationPermission userToOrganizationPermission = permissionFactory.createUserToOrganizationPermission(loggedInUser, organization);
+    if (!userToOrganizationPermission.hasRole(ADMIN)) {
+      throw new DeniedException(INSUFFICIENT_PRIVELAGES);
+    }
+    return  organizationRepository.getUsersWithInvalidProfilesBreakdown(organizationId);
   }
 }
