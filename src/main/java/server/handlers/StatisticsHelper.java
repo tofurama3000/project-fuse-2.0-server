@@ -6,9 +6,7 @@ import server.controllers.rest.errors.BadDataException;
 import server.controllers.rest.errors.DeniedException;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
-import server.entities.dto.statistics.MemberProjectOrganizationInterviewSummaryView;
-import server.entities.dto.statistics.UsersWithInvalidProfilesBreakdownView;
-import server.entities.dto.statistics.UsersWithInvalidProfilesSummaryView;
+import server.entities.dto.statistics.*;
 import server.entities.dto.user.ProjectMemberCount;
 import server.entities.dto.user.User;
 import server.entities.dto.user.UserProjectCount;
@@ -29,7 +27,7 @@ import static server.controllers.rest.response.CannedResponse.INSUFFICIENT_PRIVE
 import static server.controllers.rest.response.CannedResponse.NO_GROUP_FOUND;
 
 @Component
-public class GroupMemberHelper {
+public class StatisticsHelper {
   @Autowired
   private OrganizationRepository organizationRepository;
 
@@ -101,5 +99,38 @@ public class GroupMemberHelper {
       throw new DeniedException(INSUFFICIENT_PRIVELAGES);
     }
     return  organizationRepository.getUsersWithInvalidProfilesBreakdown(organizationId);
+  }
+
+  public  List<ProjectOrganizationInterviewBreakdownView> getProjectOrganizationInterviewBreakdownView(Long organizationId, User loggedInUser) throws BadDataException, DeniedException {
+    Organization organization = organizationRepository.findOne(organizationId);
+    if (organization == null)
+      throw new BadDataException(NO_GROUP_FOUND);
+    UserToOrganizationPermission userToOrganizationPermission = permissionFactory.createUserToOrganizationPermission(loggedInUser, organization);
+    if (!userToOrganizationPermission.hasRole(ADMIN)) {
+      throw new DeniedException(INSUFFICIENT_PRIVELAGES);
+    }
+    return  organizationRepository.getProjectOrganizationInterviewBreakdown(organizationId);
+  }
+
+  public  List<MemberProjectOrganizationInterviewBreakdownView> getMemberProjectOrganizationInterviewBreakdownView(Long organizationId, User loggedInUser) throws BadDataException, DeniedException {
+    Organization organization = organizationRepository.findOne(organizationId);
+    if (organization == null)
+      throw new BadDataException(NO_GROUP_FOUND);
+    UserToOrganizationPermission userToOrganizationPermission = permissionFactory.createUserToOrganizationPermission(loggedInUser, organization);
+    if (!userToOrganizationPermission.hasRole(ADMIN)) {
+      throw new DeniedException(INSUFFICIENT_PRIVELAGES);
+    }
+    return  organizationRepository.getMemberProjectOrganizationInterviewBreakdown(organizationId);
+  }
+
+  public  List<ProjectOrganizationInterviewSummaryView> getProjectOrganizationInterviewSummaryView(Long organizationId, User loggedInUser) throws BadDataException, DeniedException {
+    Organization organization = organizationRepository.findOne(organizationId);
+    if (organization == null)
+      throw new BadDataException(NO_GROUP_FOUND);
+    UserToOrganizationPermission userToOrganizationPermission = permissionFactory.createUserToOrganizationPermission(loggedInUser, organization);
+    if (!userToOrganizationPermission.hasRole(ADMIN)) {
+      throw new DeniedException(INSUFFICIENT_PRIVELAGES);
+    }
+    return  organizationRepository.getProjectOrganizationInterviewSummary(organizationId);
   }
 }

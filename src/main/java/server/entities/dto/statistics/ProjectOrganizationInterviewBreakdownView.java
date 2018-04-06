@@ -7,12 +7,14 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.time.LocalDateTime;
 
 @Data
 @Entity
 @Immutable
-@Table(name="users_with_invalid_profiles_breakdown")
-public class UsersWithInvalidProfilesBreakdownView {
+@Table(name="project_organization_interview_breakdown")
+public class ProjectOrganizationInterviewBreakdownView {
+
   @Id
   private String id;
 
@@ -25,13 +27,19 @@ public class UsersWithInvalidProfilesBreakdownView {
   @Column(name="member_name")
   private String member_name;
 
-  @Column(name="has_thumbnail")
-  private boolean hasThumbnail;
+  @Column(name="proj_id")
+  private Long ProjectId;
 
-  @Column(name="has_headline")
-  private boolean hasHeadline;
+  @Column(name="proj_name")
+  private String projectName;
 
-  @Column(name="has_summary")
-  private boolean hasSummary;
+  @Column(name="start_time")
+  private LocalDateTime startTime;
+
+  @Column(name="end_time")
+  private LocalDateTime endTime;
+
+  @Column(name="available")
+  private char available;
+
 }
-
