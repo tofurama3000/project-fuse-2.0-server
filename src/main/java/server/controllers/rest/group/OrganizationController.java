@@ -376,6 +376,49 @@ public class OrganizationController extends GroupController<Organization, Organi
   }
 
 
+  @ApiOperation("Get an interview template")
+  @GetMapping(path = "/{id}/interview_templates")
+  @ResponseBody
+  public TypedResponse<List<InterviewTemplate>> getInterviewTemplate(
+          @ApiParam("The id of the organization")
+          @PathVariable(value = "id") Long organizationId,
+          HttpServletRequest request, HttpServletResponse response
+  ){
+
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new TypedResponse<>(response, BaseResponse.Status.DENIED, errors);
+    }
+
+    User loggedInUser = session.get().getUser();
+
+    if (organizationId == null) {
+      errors.add(INVALID_FIELDS);
+      return new TypedResponse<>(response, errors);
+    }
+
+    Organization organization = organizationRepository.findOne(organizationId);
+    if (organization == null) {
+      errors.add(NO_GROUP_FOUND);
+      return new TypedResponse<>(response, errors);
+    }
+
+    UserToOrganizationPermission userToOrganizationPermission = permissionFactory.createUserToOrganizationPermission(loggedInUser, organization);
+    if(!userToOrganizationPermission.hasRole(ADMIN))
+    {
+      errors.add(INSUFFICIENT_PRIVELAGES);
+      return new TypedResponse<>(response, errors);
+    }
+
+
+    return new TypedResponse<>(response, OK, errors, interviewTemplateHelper.getAllTemplates(organization));
+
+  }
+
+
   @Override
   protected GroupApplication<Organization> getApplication() {
     return new OrganizationApplication();

@@ -10,6 +10,8 @@ import server.repositories.group.InterviewRepository;
 import server.repositories.group.organization.OrganizationInterviewTemplateRepository;
 import server.repositories.group.organization.OrganizationRepository;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 
@@ -48,5 +50,11 @@ public class InterviewTemplateHelper {
             interview.setEndDateTime(template.getEndDateTime());
             interviewRepository.save(interview);
         }
+    }
+
+    public List<InterviewTemplate> getAllTemplates(Organization organization)
+    {
+        return organizationInterviewTemplateRepository.getInterviewTemplatesByStart(organization,
+                ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime());
     }
 }
