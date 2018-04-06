@@ -7,6 +7,7 @@ import server.controllers.rest.errors.DeniedException;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
 import server.entities.dto.statistics.MemberProjectOrganizationInterviewSummaryView;
+import server.entities.dto.statistics.UsersWithInvalidProfilesSummaryView;
 import server.entities.dto.user.ProjectMemberCount;
 import server.entities.dto.user.User;
 import server.entities.dto.user.UserProjectCount;
@@ -68,7 +69,25 @@ public class GroupMemberHelper {
         .filter(UserToGroupPermission::isMember).count();
   }
 
-//  public  List<MemberProjectOrganizationInterviewSummaryView> getView(Long id){
-//    return  organizationRepository.getMemberProjectOrganizationInterviewSummary(id);
-//  }
+  public  List<MemberProjectOrganizationInterviewSummaryView> getMemberProjectOrganizationInterviewSummaryView(Long organizationId, User loggedInUser) throws BadDataException, DeniedException {
+    Organization organization = organizationRepository.findOne(organizationId);
+    if (organization == null)
+      throw new BadDataException(NO_GROUP_FOUND);
+    UserToOrganizationPermission userToOrganizationPermission = permissionFactory.createUserToOrganizationPermission(loggedInUser, organization);
+    if (!userToOrganizationPermission.hasRole(ADMIN)) {
+      throw new DeniedException(INSUFFICIENT_PRIVELAGES);
+    }
+    return  organizationRepository.getMemberProjectOrganizationInterviewSummary(organizationId);
+  }
+
+  public  List<UsersWithInvalidProfilesSummaryView> getUsersWithInvalidProfilesSummaryView(Long organizationId, User loggedInUser) throws BadDataException, DeniedException {
+    Organization organization = organizationRepository.findOne(organizationId);
+    if (organization == null)
+      throw new BadDataException(NO_GROUP_FOUND);
+    UserToOrganizationPermission userToOrganizationPermission = permissionFactory.createUserToOrganizationPermission(loggedInUser, organization);
+    if (!userToOrganizationPermission.hasRole(ADMIN)) {
+      throw new DeniedException(INSUFFICIENT_PRIVELAGES);
+    }
+    return  organizationRepository.getUsersWithInvalidProfilesSummary(organizationId);
+  }
 }

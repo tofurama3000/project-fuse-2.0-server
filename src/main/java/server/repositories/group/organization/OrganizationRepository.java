@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
 import server.entities.dto.statistics.MemberProjectOrganizationInterviewSummaryView;
+import server.entities.dto.statistics.UsersWithInvalidProfilesSummaryView;
 import server.entities.dto.user.User;
 import server.repositories.group.GroupRepository;
 
@@ -22,4 +23,7 @@ public interface OrganizationRepository extends GroupRepository<Organization> {
 
   @Query("From MemberProjectOrganizationInterviewSummaryView stat WHERE stat.OrganizationId = :organizationId")
   List<MemberProjectOrganizationInterviewSummaryView> getMemberProjectOrganizationInterviewSummary(@Param("organizationId") Long organizationId);
+
+  @Query("From UsersWithInvalidProfilesSummaryView stat WHERE stat.id = :organizationId")
+  List<UsersWithInvalidProfilesSummaryView> getUsersWithInvalidProfilesSummary(@Param("organizationId") Long organizationId);
 }
