@@ -31,6 +31,8 @@ sudo apt-get install -y nodejs build-essential
 echo "mysql-server mysql-server/root_password select root" | sudo debconf-set-selections
 echo "mysql-server mysql-server/root_password_again select root" | sudo debconf-set-selections
 sudo apt-get install -y mysql-server
+sudo cp my.cnf /etc/mysql/my.cnf
+sudo service mysql restart
 
 #Install haproxy
 sudo apt install -y haproxy
