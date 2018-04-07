@@ -17,13 +17,7 @@ import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import server.controllers.rest.response.BaseResponse;
 import server.controllers.rest.response.GeneralResponse;
 import server.controllers.rest.response.TypedResponse;
@@ -31,29 +25,27 @@ import server.entities.PossibleError;
 import server.entities.dto.FuseSession;
 import server.entities.dto.group.GroupApplication;
 import server.entities.dto.group.GroupProfile;
-import server.entities.dto.group.organization.Organization;
-import server.entities.dto.group.organization.OrganizationApplication;
-import server.entities.dto.group.organization.OrganizationInvitation;
-import server.entities.dto.group.organization.OrganizationMember;
+import server.entities.dto.group.interview.Interview;
+import server.entities.dto.group.organization.*;
 import server.entities.dto.group.project.Project;
 import server.entities.dto.user.User;
 import server.entities.user_to_group.permissions.PermissionFactory;
 import server.entities.user_to_group.permissions.UserToGroupPermission;
 import server.entities.user_to_group.permissions.UserToOrganizationPermission;
 import server.entities.user_to_group.relationships.RelationshipFactory;
+import server.handlers.InterviewTemplateHelper;
 import server.repositories.group.GroupApplicantRepository;
 import server.repositories.group.GroupInvitationRepository;
 import server.repositories.group.GroupMemberRepository;
 import server.repositories.group.GroupRepository;
-import server.repositories.group.organization.OrganizationApplicantRepository;
-import server.repositories.group.organization.OrganizationInvitationRepository;
-import server.repositories.group.organization.OrganizationMemberRepository;
-import server.repositories.group.organization.OrganizationProfileRepository;
-import server.repositories.group.organization.OrganizationRepository;
+import server.repositories.group.organization.*;
 import server.repositories.group.project.ProjectRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -90,6 +82,11 @@ public class OrganizationController extends GroupController<Organization, Organi
 
   @Autowired
   private ProjectRepository projectRepository;
+
+  @Autowired
+  private InterviewTemplateHelper interviewTemplateHelper;
+
+
 
   @GetMapping("/{id}/can_create_project")
   @ResponseBody
@@ -330,6 +327,97 @@ public class OrganizationController extends GroupController<Organization, Organi
     return revokeAccessForMember(id, memberId, CREATE_PROJECT_IN_ORGANIZATION, response, request);
   }
 
+  @ApiOperation("Create an interview template")
+  @PostMapping(path = "/{id}/interview_template")
+  @ResponseBody
+  public BaseResponse createInterviewTemplate(
+          @ApiParam("The id of the organization")
+          @PathVariable(value = "id") Long organizationId,
+          @RequestBody InterviewTemplate template,
+          HttpServletRequest request, HttpServletResponse response
+  ){
+
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
+    }
+
+    User loggedInUser = session.get().getUser();
+    Organization organization = organizationRepository.findOne(organizationId);
+    if(organization == null)
+    {
+      errors.add(NO_GROUP_FOUND);
+      return new GeneralResponse(response, BaseResponse.Status.BAD_DATA, errors);
+    }
+
+    ZonedDateTime zonedDateTime = ZonedDateTime.parse(template.getStart());
+    LocalDateTime startDateTime = zonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+    zonedDateTime = ZonedDateTime.parse(template.getEnd());
+    LocalDateTime endDateTime = zonedDateTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+    if(endDateTime.isBefore(startDateTime) || startDateTime.isBefore(ZonedDateTime.now(ZoneOffset.UTC).toLocalDateTime()))
+    {
+      errors.add("Invalid time");
+      return new GeneralResponse(response, BaseResponse.Status.DENIED, errors);
+    }
+    UserToOrganizationPermission userToOrganizationPermission = permissionFactory.createUserToOrganizationPermission(loggedInUser, organization);
+    if(!userToOrganizationPermission.hasRole(ADMIN))
+    {
+      errors.add(INSUFFICIENT_PRIVELAGES);
+      return new GeneralResponse(response,BaseResponse.Status.DENIED, errors);
+    }
+
+    interviewTemplateHelper.createTemplate(organization, template.getStart(), template.getEnd());
+
+    return new GeneralResponse(response,BaseResponse.Status.OK,errors);
+
+  }
+
+
+  @ApiOperation("Get an interview template")
+  @GetMapping(path = "/{id}/interview_templates")
+  @ResponseBody
+  public TypedResponse<List<InterviewTemplate>> getInterviewTemplate(
+          @ApiParam("The id of the organization")
+          @PathVariable(value = "id") Long organizationId,
+          HttpServletRequest request, HttpServletResponse response
+  ){
+
+    List<String> errors = new ArrayList<>();
+
+    Optional<FuseSession> session = fuseSessionController.getSession(request);
+    if (!session.isPresent()) {
+      errors.add(INVALID_SESSION);
+      return new TypedResponse<>(response, BaseResponse.Status.DENIED, errors);
+    }
+
+    User loggedInUser = session.get().getUser();
+
+    if (organizationId == null) {
+      errors.add(INVALID_FIELDS);
+      return new TypedResponse<>(response, errors);
+    }
+
+    Organization organization = organizationRepository.findOne(organizationId);
+    if (organization == null) {
+      errors.add(NO_GROUP_FOUND);
+      return new TypedResponse<>(response, errors);
+    }
+
+    UserToOrganizationPermission userToOrganizationPermission = permissionFactory.createUserToOrganizationPermission(loggedInUser, organization);
+    if(!userToOrganizationPermission.hasRole(ADMIN))
+    {
+      errors.add(INSUFFICIENT_PRIVELAGES);
+      return new TypedResponse<>(response, errors);
+    }
+
+
+    return new TypedResponse<>(response, OK, errors, interviewTemplateHelper.getAllTemplates(organization));
+
+  }
+
 
   @Override
   protected GroupApplication<Organization> getApplication() {
@@ -355,6 +443,9 @@ public class OrganizationController extends GroupController<Organization, Organi
   protected PossibleError validateGroup(User user, Organization group) {
     return new PossibleError(OK);
   }
+
+  @Override
+  protected void createInterviewTemplate(Organization group) {}
 
   @Override
   protected void saveInvitation(OrganizationInvitation invitation) {
