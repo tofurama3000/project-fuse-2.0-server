@@ -40,6 +40,7 @@ public class Link {
       case "github":
         return "/assets/images/github.svg";
       case "youtube":
+      case "youtube_channel":
         return "/assets/images/youtube.svg";
       case "linkedin":
         return "/assets/images/linkedin.svg";
@@ -51,6 +52,10 @@ public class Link {
         return "/assets/images/wordpress.svg";
       case "drupal":
         return "/assets/images/drupal.svg";
+      case "resume":
+        return "/assets/images/resume.svg";
+      case "published_article":
+        return "/assets/images/article.svg";
       default:
         return null;
     }
