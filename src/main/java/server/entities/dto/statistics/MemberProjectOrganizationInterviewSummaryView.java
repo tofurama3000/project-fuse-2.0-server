@@ -23,7 +23,7 @@ public class MemberProjectOrganizationInterviewSummaryView {
     private String member_name;
 
     @Column(name="org_id")
-    private Long OrganizationId;
+    private Long organizationId;
 
     @Column(name="num_interviews")
     private Long numberOfInterviews;

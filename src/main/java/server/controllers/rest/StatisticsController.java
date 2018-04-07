@@ -19,11 +19,12 @@ import server.controllers.rest.errors.DeniedException;
 import server.controllers.rest.response.TypedResponse;
 import server.entities.dto.TimeInterval;
 import server.entities.dto.group.project.ProjectInterviewSlots;
+import server.entities.dto.statistics.*;
 import server.entities.dto.user.ProjectMemberCount;
 import server.entities.dto.user.User;
 import server.entities.dto.user.UserInterviewSlots;
 import server.entities.dto.user.UserProjectCount;
-import server.handlers.GroupMemberHelper;
+import server.handlers.StatisticsHelper;
 import server.handlers.InterviewSlotsHelper;
 
 import javax.servlet.http.HttpServletRequest;
@@ -42,7 +43,7 @@ public class StatisticsController {
   private InterviewSlotsHelper interviewSlotsHelper;
 
   @Autowired
-  private GroupMemberHelper groupMemberHelper;
+  private StatisticsHelper statisticsHelper;
 
   @GetMapping("organizations/{id}/projects/interviews")
   @ResponseBody
@@ -101,7 +102,7 @@ public class StatisticsController {
 
     try {
       User user = sessionController.getUserFromSession(request);
-      return new TypedResponse<>(response, groupMemberHelper.organizationProjectsUserCount(id, user));
+      return new TypedResponse<>(response, statisticsHelper.organizationProjectsUserCount(id, user));
     } catch (DeniedException e) {
       return new TypedResponse<>(response, DENIED, e.getMessage());
     } catch (BadDataException e) {
@@ -118,11 +119,114 @@ public class StatisticsController {
 
   {
     try {
-      return new TypedResponse<>(response, groupMemberHelper.organizationMembersProjectCount(id, sessionController.getUserFromSession(request)));
+      return new TypedResponse<>(response, statisticsHelper.organizationMembersProjectCount(id, sessionController.getUserFromSession(request)));
     } catch (DeniedException e) {
       return new TypedResponse<>(response, DENIED, e.getMessage());
     } catch (BadDataException e) {
       return new TypedResponse<>(response, BAD_DATA, e.getMessage());
     }
   }
+
+  @GetMapping("organizations/{id}/member/interview/summary")
+  @ResponseBody
+  @ApiOperation("Returns interview summary of organization")
+  public TypedResponse<List<MemberProjectOrganizationInterviewSummaryView>> getMemberProjectOrganizationInterviewSummaryView(@ApiParam("Id of the organization")
+                                                                               @PathVariable(value = "id") Long id,
+                                                                                HttpServletRequest request, HttpServletResponse response)
+
+  {
+    try {
+      return new TypedResponse<>(response, statisticsHelper.getMemberProjectOrganizationInterviewSummaryView(id,sessionController.getUserFromSession(request)));
+    } catch (DeniedException e) {
+      return new TypedResponse<>(response, DENIED, e.getMessage());
+    } catch (BadDataException e) {
+      return new TypedResponse<>(response, BAD_DATA, e.getMessage());
+    }
+  }
+
+  @GetMapping("organizations/{id}/members/invalidProfilesSummary")
+  @ResponseBody
+  @ApiOperation("Returns summary of users that have invalid profile")
+  public TypedResponse<List<UsersWithInvalidProfilesSummaryView>> getUsersWithInvalidProfilesSummaryView(@ApiParam("Id of the organization")
+                                                                                                                             @PathVariable(value = "id") Long id,
+                                                                                                         HttpServletRequest request, HttpServletResponse response)
+
+  {
+    try {
+      return new TypedResponse<>(response, statisticsHelper.getUsersWithInvalidProfilesSummaryView(id,sessionController.getUserFromSession(request)));
+    } catch (DeniedException e) {
+      return new TypedResponse<>(response, DENIED, e.getMessage());
+    } catch (BadDataException e) {
+      return new TypedResponse<>(response, BAD_DATA, e.getMessage());
+    }
+  }
+
+  @GetMapping("organizations/{id}/members/invalidProfilesBreakdown")
+  @ResponseBody
+  @ApiOperation("Returns break down of user that have invalid profile")
+  public TypedResponse<List<UsersWithInvalidProfilesBreakdownView>> getUsersWithInvalidProfilesBreakdownView(@ApiParam("Id of the organization")
+                                                                                                         @PathVariable(value = "id") Long id,
+                                                                                                             HttpServletRequest request, HttpServletResponse response)
+
+  {
+    try {
+      return new TypedResponse<>(response, statisticsHelper.getUsersWithInvalidProfilesBreakdownView(id,sessionController.getUserFromSession(request)));
+    } catch (DeniedException e) {
+      return new TypedResponse<>(response, DENIED, e.getMessage());
+    } catch (BadDataException e) {
+      return new TypedResponse<>(response, BAD_DATA, e.getMessage());
+    }
+  }
+
+  @GetMapping("organizations/{id}/project/interviewBreakdown")
+  @ResponseBody
+  @ApiOperation("Returns break down of project interview with organization")
+  public TypedResponse<List<ProjectOrganizationInterviewBreakdownView>> getProjectOrganizationInterviewBreakdownView(@ApiParam("Id of the organization")
+                                                                                                             @PathVariable(value = "id") Long id,
+                                                                                                                     HttpServletRequest request, HttpServletResponse response)
+
+  {
+    try {
+      return new TypedResponse<>(response, statisticsHelper.getProjectOrganizationInterviewBreakdownView(id,sessionController.getUserFromSession(request)));
+    } catch (DeniedException e) {
+      return new TypedResponse<>(response, DENIED, e.getMessage());
+    } catch (BadDataException e) {
+      return new TypedResponse<>(response, BAD_DATA, e.getMessage());
+    }
+  }
+
+  @GetMapping("organizations/{id}/project/member/interviewBreakdown")
+  @ResponseBody
+  @ApiOperation("Returns break down of project interview with organization")
+  public TypedResponse<List<MemberProjectOrganizationInterviewBreakdownView>> getMemberProjectOrganizationInterviewBreakdownView(@ApiParam("Id of the organization")
+                                                                                                                     @PathVariable(value = "id") Long id,
+                                                                                                                           HttpServletRequest request, HttpServletResponse response)
+
+  {
+    try {
+      return new TypedResponse<>(response, statisticsHelper.getMemberProjectOrganizationInterviewBreakdownView(id,sessionController.getUserFromSession(request)));
+    } catch (DeniedException e) {
+      return new TypedResponse<>(response, DENIED, e.getMessage());
+    } catch (BadDataException e) {
+      return new TypedResponse<>(response, BAD_DATA, e.getMessage());
+    }
+  }
+
+  @GetMapping("organizations/{id}/project/interviewSummary")
+  @ResponseBody
+  @ApiOperation("Returns break down of project interview with organization")
+  public TypedResponse<List<ProjectOrganizationInterviewSummaryView>> getProjectOrganizationInterviewSummaryView(@ApiParam("Id of the organization")
+                                                                                                                                 @PathVariable(value = "id") Long id,
+                                                                                                                                 HttpServletRequest request, HttpServletResponse response)
+
+  {
+    try {
+      return new TypedResponse<>(response, statisticsHelper.getProjectOrganizationInterviewSummaryView(id,sessionController.getUserFromSession(request)));
+    } catch (DeniedException e) {
+      return new TypedResponse<>(response, DENIED, e.getMessage());
+    } catch (BadDataException e) {
+      return new TypedResponse<>(response, BAD_DATA, e.getMessage());
+    }
+  }
+
 }
