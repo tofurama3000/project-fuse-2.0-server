@@ -2,6 +2,7 @@ package server.entities.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import server.entities.dto.group.interview.Interview;
 import server.entities.dto.user.User;
 import server.utility.NotificationEntityNames;
 
@@ -12,6 +13,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.time.LocalDateTime;
@@ -55,6 +57,11 @@ public class Notification {
 
   @Column(name = "deleted")
   private boolean deleted;
+
+  //@JsonIgnore // Do we need to ignore really. Why do we need extra data?
+  @Column(name = "interview_id")
+  @OneToOne
+  private Interview interview;
 
   @Transient
   private Object data;

@@ -194,7 +194,7 @@ public class NotificationController {
 
   public <T extends Group> void sendUserAcceptedInterviewNotification(User user, T group, Interview interview) {
     String msg = user.getName() + " has accepted invitation to interview for  " + group.getGroupType().toLowerCase() + " "
-        + group.getName() + " at " + interview.getPrettyFormattedTimeInterval();
+        + group.getName();
     sendGroupNotificationToAdmins(
         group,
         msg,
@@ -222,14 +222,14 @@ public class NotificationController {
     User user = application.getSender();
     Group group = application.getGroup();
     String msg = user.getName() + " has applied to the " + group.getGroupType().toLowerCase() + " " + group.getName();
-    sendGroupNotificationToAdmins(
-        group,
-        msg,
-        getNotificationEntityType(group),
-        NotificationType.APPLICATION,
-        NotificationStatus.INFO,
-        application.getId()
-    );
+
+    Notification notification = new Notification();
+    notification.setInterview(application.getInterview());
+    notification.setMessage(msg);
+    notification.setInfo(getNotificationEntityType(group), NotificationType.APPLICATION, NotificationStatus.INFO);
+    notification.setObjectId(application.getId());
+
+    sendGroupNotificationToAdmins(group, notification);
   }
 
   public <T extends Group, A extends GroupApplication<T>> void markAsDoneForApplicant(A application) {
@@ -312,14 +312,17 @@ public class NotificationController {
     notificationRepository.save(notification);
   }
 
+  private void sendNotification( User user, Notification notification) throws IllegalArgumentException {
+    notificationRepository.save(notification);
+  }
+
   private <T extends Group> void sendGroupNotificationToAdmins(
       T group,
       String message,
       NotificationEntity dataType,
       NotificationType notificationType,
       NotificationStatus notificationStatus,
-      long id
-  ) throws IllegalArgumentException {
+      long id) throws IllegalArgumentException {
     if (isGroupProject(group)) {
       final Set<User> uniqueUsers = new HashSet<>(projectMemberRepository.getUsersByGroup((Project) group));
       uniqueUsers.stream()
@@ -337,6 +340,30 @@ public class NotificationController {
               .collect(Collectors.toList())
               .size() > 0)
           .forEach(u -> sendNotification(u, message, dataType, notificationType, notificationStatus, id));
+    } else {
+      throw new IllegalArgumentException("Unknown group type " + group.getClass().getName());
+    }
+  }
+
+
+  private <T extends Group> void sendGroupNotificationToAdmins(T group, Notification notification) throws IllegalArgumentException {
+    if (isGroupProject(group)) {
+      final Set<User> uniqueUsers = new HashSet<>(projectMemberRepository.getUsersByGroup((Project) group));
+      uniqueUsers.stream()
+          .filter(u -> projectMemberRepository.getRoles((Project) group, u).stream()
+              .filter(r -> r == ADMIN || r == OWNER)
+              .collect(Collectors.toList())
+              .size() > 0)
+          .forEach(u -> sendNotification(u, notification));
+
+    } else if (isGroupOrganzization(group)) {
+      final Set<User> uniqueUsers = new HashSet<>(organizationMemberRepository.getUsersByGroup((Organization) group));
+      uniqueUsers.stream()
+          .filter(u -> organizationMemberRepository.getRoles((Organization) group, u).stream()
+              .filter(r -> r == ADMIN || r == OWNER)
+              .collect(Collectors.toList())
+              .size() > 0)
+          .forEach(u -> sendNotification(u, notification));
     } else {
       throw new IllegalArgumentException("Unknown group type " + group.getClass().getName());
     }
