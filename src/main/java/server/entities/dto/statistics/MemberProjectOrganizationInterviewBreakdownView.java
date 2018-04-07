@@ -28,12 +28,6 @@ public class MemberProjectOrganizationInterviewBreakdownView {
   @Column(name="member_name")
   private String member_name;
 
-  @Column(name="proj_id")
-  private Long ProjectId;
-
-  @Column(name="proj_name")
-  private String projectName;
-
   @Column(name="num_interviews")
   private Long numInterviews;
 }

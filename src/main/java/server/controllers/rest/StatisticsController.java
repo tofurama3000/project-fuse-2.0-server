@@ -127,29 +127,19 @@ public class StatisticsController {
     }
   }
 
-  @GetMapping("organizations/{id}/member/interview/summary")
-  @ResponseBody
-  @ApiOperation("Returns interview summary of organization")
-  public TypedResponse<List<MemberProjectOrganizationInterviewSummaryView>> getMemberProjectOrganizationInterviewSummaryView(@ApiParam("Id of the organization")
-                                                                               @PathVariable(value = "id") Long id,
-                                                                                HttpServletRequest request, HttpServletResponse response)
 
-  {
-    try {
-      return new TypedResponse<>(response, statisticsHelper.getMemberProjectOrganizationInterviewSummaryView(id,sessionController.getUserFromSession(request)));
-    } catch (DeniedException e) {
-      return new TypedResponse<>(response, DENIED, e.getMessage());
-    } catch (BadDataException e) {
-      return new TypedResponse<>(response, BAD_DATA, e.getMessage());
-    }
-  }
 
-  @GetMapping("organizations/{id}/members/invalidProfilesSummary")
+
+
+
+
+  @GetMapping("organizations/{id}/members/invalid-profiles/summary")
   @ResponseBody
   @ApiOperation("Returns summary of users that have invalid profile")
-  public TypedResponse<List<UsersWithInvalidProfilesSummaryView>> getUsersWithInvalidProfilesSummaryView(@ApiParam("Id of the organization")
-                                                                                                                             @PathVariable(value = "id") Long id,
-                                                                                                         HttpServletRequest request, HttpServletResponse response)
+  public TypedResponse<List<UsersWithInvalidProfilesSummaryView>>
+    getUsersWithInvalidProfilesSummaryView(@ApiParam("Id of the organization")
+                                           @PathVariable(value = "id") Long id,
+                                           HttpServletRequest request, HttpServletResponse response)
 
   {
     try {
@@ -161,12 +151,13 @@ public class StatisticsController {
     }
   }
 
-  @GetMapping("organizations/{id}/members/invalidProfilesBreakdown")
+  @GetMapping("organizations/{id}/members/invalid-profiles/breakdown")
   @ResponseBody
   @ApiOperation("Returns break down of user that have invalid profile")
-  public TypedResponse<List<UsersWithInvalidProfilesBreakdownView>> getUsersWithInvalidProfilesBreakdownView(@ApiParam("Id of the organization")
-                                                                                                         @PathVariable(value = "id") Long id,
-                                                                                                             HttpServletRequest request, HttpServletResponse response)
+  public TypedResponse<List<UsersWithInvalidProfilesBreakdownView>>
+    getUsersWithInvalidProfilesBreakdownView(@ApiParam("Id of the organization")
+                                             @PathVariable(value = "id") Long id,
+                                             HttpServletRequest request, HttpServletResponse response)
 
   {
     try {
@@ -178,46 +169,13 @@ public class StatisticsController {
     }
   }
 
-  @GetMapping("organizations/{id}/project/interviewBreakdown")
+  @GetMapping("organizations/{id}/project/interview/summary")
   @ResponseBody
   @ApiOperation("Returns break down of project interview with organization")
-  public TypedResponse<List<ProjectOrganizationInterviewBreakdownView>> getProjectOrganizationInterviewBreakdownView(@ApiParam("Id of the organization")
-                                                                                                             @PathVariable(value = "id") Long id,
-                                                                                                                     HttpServletRequest request, HttpServletResponse response)
-
-  {
-    try {
-      return new TypedResponse<>(response, statisticsHelper.getProjectOrganizationInterviewBreakdownView(id,sessionController.getUserFromSession(request)));
-    } catch (DeniedException e) {
-      return new TypedResponse<>(response, DENIED, e.getMessage());
-    } catch (BadDataException e) {
-      return new TypedResponse<>(response, BAD_DATA, e.getMessage());
-    }
-  }
-
-  @GetMapping("organizations/{id}/project/member/interviewBreakdown")
-  @ResponseBody
-  @ApiOperation("Returns break down of project interview with organization")
-  public TypedResponse<List<MemberProjectOrganizationInterviewBreakdownView>> getMemberProjectOrganizationInterviewBreakdownView(@ApiParam("Id of the organization")
-                                                                                                                     @PathVariable(value = "id") Long id,
-                                                                                                                           HttpServletRequest request, HttpServletResponse response)
-
-  {
-    try {
-      return new TypedResponse<>(response, statisticsHelper.getMemberProjectOrganizationInterviewBreakdownView(id,sessionController.getUserFromSession(request)));
-    } catch (DeniedException e) {
-      return new TypedResponse<>(response, DENIED, e.getMessage());
-    } catch (BadDataException e) {
-      return new TypedResponse<>(response, BAD_DATA, e.getMessage());
-    }
-  }
-
-  @GetMapping("organizations/{id}/project/interviewSummary")
-  @ResponseBody
-  @ApiOperation("Returns break down of project interview with organization")
-  public TypedResponse<List<ProjectOrganizationInterviewSummaryView>> getProjectOrganizationInterviewSummaryView(@ApiParam("Id of the organization")
-                                                                                                                                 @PathVariable(value = "id") Long id,
-                                                                                                                                 HttpServletRequest request, HttpServletResponse response)
+  public TypedResponse<List<ProjectOrganizationInterviewSummaryView>>
+  getProjectOrganizationInterviewSummaryView(@ApiParam("Id of the organization")
+                                             @PathVariable(value = "id") Long id,
+                                             HttpServletRequest request, HttpServletResponse response)
 
   {
     try {
@@ -229,4 +187,58 @@ public class StatisticsController {
     }
   }
 
+
+  @GetMapping("organizations/{id}/project/interview/breakdown")
+  @ResponseBody
+  @ApiOperation("Returns break down of project interview with organization")
+  public TypedResponse<List<ProjectOrganizationInterviewBreakdownView>>
+    getProjectOrganizationInterviewBreakdownView(@ApiParam("Id of the organization")
+                                                 @PathVariable(value = "id") Long id,
+                                                 HttpServletRequest request, HttpServletResponse response)
+
+  {
+    try {
+      return new TypedResponse<>(response, statisticsHelper.getProjectOrganizationInterviewBreakdownView(id,sessionController.getUserFromSession(request)));
+    } catch (DeniedException e) {
+      return new TypedResponse<>(response, DENIED, e.getMessage());
+    } catch (BadDataException e) {
+      return new TypedResponse<>(response, BAD_DATA, e.getMessage());
+    }
+  }
+
+  @GetMapping("organizations/{id}/member/interview/summary")
+  @ResponseBody
+  @ApiOperation("Returns interview summary of organization")
+  public TypedResponse<List<MemberProjectOrganizationInterviewSummaryView>>
+  getMemberProjectOrganizationInterviewSummaryView(@ApiParam("Id of the organization")
+                                                   @PathVariable(value = "id") Long id,
+                                                   HttpServletRequest request, HttpServletResponse response)
+
+  {
+    try {
+      return new TypedResponse<>(response, statisticsHelper.getMemberProjectOrganizationInterviewSummaryView(id,sessionController.getUserFromSession(request)));
+    } catch (DeniedException e) {
+      return new TypedResponse<>(response, DENIED, e.getMessage());
+    } catch (BadDataException e) {
+      return new TypedResponse<>(response, BAD_DATA, e.getMessage());
+    }
+  }
+
+  @GetMapping("organizations/{id}/project/member/interview/breakdown")
+  @ResponseBody
+  @ApiOperation("Returns break down of project interview with organization")
+  public TypedResponse<List<MemberProjectOrganizationInterviewBreakdownView>>
+    getMemberProjectOrganizationInterviewBreakdownView(@ApiParam("Id of the organization")
+                                                       @PathVariable(value = "id") Long id,
+                                                       HttpServletRequest request, HttpServletResponse response)
+
+  {
+    try {
+      return new TypedResponse<>(response, statisticsHelper.getMemberProjectOrganizationInterviewBreakdownView(id,sessionController.getUserFromSession(request)));
+    } catch (DeniedException e) {
+      return new TypedResponse<>(response, DENIED, e.getMessage());
+    } catch (BadDataException e) {
+      return new TypedResponse<>(response, BAD_DATA, e.getMessage());
+    }
+  }
 }
