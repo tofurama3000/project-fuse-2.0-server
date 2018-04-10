@@ -160,6 +160,7 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       Group savedEntity = getGroupRepository().save(entity);
       addRelationship(user, entity, OWNER);
       addRelationship(user, entity, ADMIN);
+      createInterviewTemplate(entity);
       savedEntity.indexAsync();
       return new TypedResponse<>(response, OK, null, savedEntity);
     } else {
@@ -167,6 +168,8 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
       return new TypedResponse<>(response, errors);
     }
   }
+
+
 
   @CrossOrigin
   @PutMapping(path = "/delete/{id}")
@@ -1343,4 +1346,6 @@ public abstract class GroupController<T extends Group, R extends GroupMember<T>,
   protected abstract GroupInvitationRepository<I> getGroupInvitationRepository();
 
   protected abstract PossibleError validateGroup(User user, T group);
+
+  protected abstract void createInterviewTemplate(T group);
 }
