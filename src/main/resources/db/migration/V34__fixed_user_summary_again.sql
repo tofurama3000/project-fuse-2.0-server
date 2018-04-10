@@ -1,3 +1,5 @@
+CREATE
+OR REPLACE ALGORITHM = UNDEFINED
 SELECT
   organization.id as id,
   SUM(user_profile.has_thumbnail) as num_members_no_thumbnail,
