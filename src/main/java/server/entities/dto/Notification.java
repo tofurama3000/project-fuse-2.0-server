@@ -58,7 +58,7 @@ public class Notification {
   @Column(name = "deleted")
   private boolean deleted;
 
-  @Column(name = "interview_id")
+  @JoinColumn(name = "interview_id", referencedColumnName = "id")
   @OneToOne
   private Interview interview;
 

@@ -195,14 +195,14 @@ public class NotificationController {
   public <T extends Group> void sendUserAcceptedInterviewNotification(User user, T group, Interview interview) {
     String msg = user.getName() + " has accepted invitation to interview for  " + group.getGroupType().toLowerCase() + " "
         + group.getName();
-    sendGroupNotificationToAdmins(
-        group,
-        msg,
-        getNotificationEntityType(group),
-        NotificationType.JOINED,
-        NotificationStatus.INFO,
-        group.getId()
-    );
+
+    Notification notification = new Notification();
+    notification.setInterview(interview);
+    notification.setMessage(msg);
+    notification.setInfo(getNotificationEntityType(group), NotificationType.APPLICATION, NotificationStatus.INFO);
+    notification.setObjectId(group.getId());
+
+    sendGroupNotificationToAdmins(group, notification);
   }
 
   public <T extends Group> void sendUserDeclinedJoinInvite(User user, T group) {
@@ -313,6 +313,9 @@ public class NotificationController {
   }
 
   private void sendNotification( User user, Notification notification) throws IllegalArgumentException {
+    ZonedDateTime now = ZonedDateTime.now();
+    notification.setTime(now.toString());
+    notification.setReceiver(user);
     notificationRepository.save(notification);
   }
 
