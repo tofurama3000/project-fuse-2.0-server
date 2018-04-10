@@ -27,7 +27,6 @@ public abstract class BaseResponse {
   protected Status status;
   protected List<String> errors;
 
-
   private void setReturnStatus(HttpServletResponse response) {
     switch (this.status) {
       case OK:
