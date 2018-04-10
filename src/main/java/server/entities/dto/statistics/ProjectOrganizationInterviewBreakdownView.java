@@ -8,6 +8,8 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 @Data
 @Entity
@@ -38,6 +40,14 @@ public class ProjectOrganizationInterviewBreakdownView {
 
   @Column(name="end_time")
   private LocalDateTime endTime;
+
+  public String getStart() {
+    return startTime != null ? startTime.toString() + "+00:00" : null;
+  }
+
+  public String getEnd() {
+    return endTime != null ? endTime.toString() + "+00:00" : null;
+  }
 
   @Column(name="available")
   private char available;

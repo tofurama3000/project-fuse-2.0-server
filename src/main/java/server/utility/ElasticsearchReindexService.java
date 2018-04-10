@@ -33,7 +33,7 @@ public class ElasticsearchReindexService {
       if (!t.tryToIndex()) {
         logger.error("Unable to index document " + docId);
       } else {
-        logger.info("Indexed doucment " + docId);
+        logger.info("Indexed document " + docId);
       }
     };
   }
