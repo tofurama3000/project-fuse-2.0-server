@@ -1,5 +1,6 @@
 CREATE
 OR REPLACE ALGORITHM = UNDEFINED
+VIEW users_with_invalid_profiles_summary AS
 SELECT
   organization.id as id,
   SUM(user_profile.has_thumbnail) as num_members_no_thumbnail,
