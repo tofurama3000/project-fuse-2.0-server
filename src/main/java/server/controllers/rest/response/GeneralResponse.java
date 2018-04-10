@@ -11,7 +11,6 @@ import java.util.List;
 public class GeneralResponse extends BaseResponse {
 
   private Object data;
-  private Object extraData;
 
   public GeneralResponse(HttpServletResponse httpServletResponse, PossibleError possibleError) {
     this(httpServletResponse, possibleError.getStatus(), possibleError.getErrors());

@@ -58,7 +58,6 @@ public class Notification {
   @Column(name = "deleted")
   private boolean deleted;
 
-  //@JsonIgnore // Do we need to ignore really. Why do we need extra data?
   @Column(name = "interview_id")
   @OneToOne
   private Interview interview;

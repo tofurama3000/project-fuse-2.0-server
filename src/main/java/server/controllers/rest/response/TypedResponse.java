@@ -11,7 +11,6 @@ import java.util.List;
 public class TypedResponse<T> extends BaseResponse {
 
   private T data;
-  private Object extraData;
 
   public TypedResponse(HttpServletResponse response, Status status, List<String> errors, T data) {
     super(response, status, errors);
