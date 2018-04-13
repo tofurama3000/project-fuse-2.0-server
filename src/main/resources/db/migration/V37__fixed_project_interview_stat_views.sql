@@ -54,3 +54,40 @@ VIEW project_organization_interview_breakdown as
     interview.id
   ORDER BY
     project.name, interview.start_time ASC;
+
+
+CREATE
+OR REPLACE ALGORITHM = UNDEFINED
+VIEW member_project_organization_interview_summary AS
+  SELECT
+    CONCAT(member.id, '-', organization.id) AS id,
+    member.id as member_id,
+    member.name as member_name,
+    organization.id as org_id,
+    COUNT(interview.id) as num_interviews,
+    COUNT(interview.group_id) as num_projects_with_interviews
+  FROM
+    organization
+    INNER JOIN
+      organization_member ON organization_member.organization_id = organization.id
+    INNER JOIN
+      user as member ON member.id = organization_member.user_id
+    LEFT JOIN
+      project ON project.organization_id = organization.id
+    LEFT JOIN
+      (SELECT
+         project_id, user_id, id
+       FROM
+         project_member
+       GROUP BY
+         user_id, project_id
+      ) as relationship ON
+                        relationship.project_id = project.id and relationship.id = member.id
+    LEFT JOIN
+      interview ON
+                interview.group_type = 'Project' AND
+                interview.group_id = project.id AND
+                interview.user_id = member.id AND
+                interview.start_time > NOW()
+  GROUP BY
+    organization.id, member.id;
