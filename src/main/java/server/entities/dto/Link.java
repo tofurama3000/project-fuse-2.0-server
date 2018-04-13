@@ -54,6 +54,8 @@ public class Link {
         return "/assets/images/drupal.svg";
       case "resume":
         return "/assets/images/resume.svg";
+      case "website":
+        return "/assets/images/website.svg";
       case "published_article":
         return "/assets/images/article.svg";
       default:
