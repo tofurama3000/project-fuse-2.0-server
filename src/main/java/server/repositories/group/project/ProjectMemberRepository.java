@@ -4,10 +4,9 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
-import server.entities.dto.User;
-import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
 import server.entities.dto.group.project.ProjectMember;
+import server.entities.dto.user.User;
 import server.repositories.group.GroupMemberRepository;
 
 import java.util.List;

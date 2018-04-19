@@ -1,38 +1,36 @@
 package server.controllers.rest.response;
 
 import lombok.Data;
+import server.entities.PossibleError;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.Collections;
 import java.util.List;
 
 @Data
-public class GeneralResponse {
+public class GeneralResponse extends BaseResponse {
 
-  public enum Status {
-    OK,
-    ERROR,
-    BAD_DATA,
-    DENIED,
-  }
-
-  private Status status;
-  private List<String> errors;
   private Object data;
 
+  public GeneralResponse(HttpServletResponse httpServletResponse, PossibleError possibleError) {
+    this(httpServletResponse, possibleError.getStatus(), possibleError.getErrors());
+  }
 
   public GeneralResponse(HttpServletResponse response, Status status, List<String> errors, Object data) {
-    this.status = status;
-    this.errors = errors;
+    super(response, status, errors);
     this.data = data;
-    setReturnStatus(response);
   }
 
   public GeneralResponse(HttpServletResponse response, Status status, List<String> errors) {
     this(response, status, errors, null);
   }
 
+  public GeneralResponse(HttpServletResponse response, Status status, String error) {
+    this(response, status, Collections.singletonList(error), null);
+  }
+
   public GeneralResponse(HttpServletResponse response, Status status) {
-    this(response, status, null);
+    this(response, status, null, null);
   }
 
   public GeneralResponse(HttpServletResponse response) {
@@ -40,39 +38,9 @@ public class GeneralResponse {
   }
 
   public GeneralResponse(HttpServletResponse response, List<String> errors) {
-    if (errors.size() > 0) {
-      this.status = Status.BAD_DATA;
-      this.errors = errors;
-    } else {
-      this.status = Status.OK;
-      this.errors = null;
-    }
-    this.data = null;
-    setReturnStatus(response);
+    this(response, statusFromError(errors), errors, null);
   }
 
   public GeneralResponse() {
-    // Default constructor for serialization
   }
-
-  private void setReturnStatus(HttpServletResponse response) {
-    switch (this.status) {
-      case OK:
-        response.setStatus(HttpServletResponse.SC_OK);
-        break;
-      case ERROR:
-        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        break;
-      case BAD_DATA:
-        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-        break;
-      case DENIED:
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        break;
-      default:
-        response.setStatus(201);
-    }
-  }
-
-
 }

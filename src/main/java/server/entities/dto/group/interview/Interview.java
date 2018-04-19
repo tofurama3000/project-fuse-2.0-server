@@ -2,7 +2,7 @@ package server.entities.dto.group.interview;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-import server.entities.dto.User;
+import server.entities.dto.user.User;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -15,6 +15,7 @@ import javax.persistence.Table;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Data
 @Entity
@@ -41,6 +42,15 @@ public class Interview {
   @Column(name = "available")
   private char availability;
 
+  @Column(name = "cancelled")
+  private boolean cancelled;
+
+  @Column(name = "code")
+  private String code = "";
+
+  @Column(name = "deleted")
+  private boolean deleted = false;
+
   @ManyToOne
   @JoinColumn(name = "user_id", referencedColumnName = "id")
   private User user;
@@ -56,20 +66,33 @@ public class Interview {
   }
 
   @JsonIgnore
-  public LocalDateTime getStartDateTime(){
+  public LocalDateTime getStartDateTime() {
     return startDateTime;
   }
 
   @JsonIgnore
-  public LocalDateTime getEndDateTime(){
+  public LocalDateTime getEndDateTime() {
     return endDateTime;
   }
 
-  public String getStart(){
-    return startDateTime.toString() + "+00:00";
+  public String getStart() {
+    return startDateTime != null ? startDateTime.toString() + "+00:00" : null;
   }
 
-  public String getEnd(){
-    return endDateTime.toString() + "+00:00";
+  public String getEnd() {
+    return endDateTime != null ? endDateTime.toString() + "+00:00" : null;
+  }
+
+  public String getPrettyFormattedTimeInterval() {
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM dd, hh:mm A");
+    String startString = formatter.format(startDateTime);
+    String endString = formatter.format(endDateTime);
+
+    return startString + " to " + endString;
+  }
+
+  // Generate a unique, 256 character code
+  public void generateCode() {
+    code = java.util.UUID.randomUUID().toString();
   }
 }

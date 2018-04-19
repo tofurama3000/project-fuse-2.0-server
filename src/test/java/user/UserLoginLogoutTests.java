@@ -5,7 +5,7 @@ import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNull;
 import static junit.framework.TestCase.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static server.controllers.rest.response.GeneralResponse.Status.OK;
+import static server.controllers.rest.response.BaseResponse.Status.OK;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import framework.JsonHelper;
 import framework.RequestHelper;
@@ -19,7 +19,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 import server.controllers.rest.response.GeneralResponse;
 import server.entities.dto.FuseSession;
-import server.entities.dto.User;
+import server.entities.dto.user.User;
 
 
 @Transactional
@@ -41,7 +41,7 @@ public class UserLoginLogoutTests extends RestTester {
     String contents = requestHelper.getContentsFromResources("addUser/addUser2");
     primaryUser = new ObjectMapper().readValue(contents, User.class);
 
-    mockMvc.perform(post("/user/add")
+    mockMvc.perform(post("/users")
         .contentType(MediaType.APPLICATION_JSON_UTF8)
         .content(contents)).andReturn();
   }
@@ -50,7 +50,7 @@ public class UserLoginLogoutTests extends RestTester {
   public void testLoginCreatesValidSession() throws Exception {
 
     String contents = requestHelper.getContentsFromResources("login/loginUser2");
-    MvcResult mvcResult = mockMvc.perform(post("/user/login")
+    MvcResult mvcResult = mockMvc.perform(post("/users/login")
         .contentType(MediaType.APPLICATION_JSON_UTF8)
         .content(contents)).andReturn();
 

@@ -1,0 +1,200 @@
+{
+  "settings": {
+    "analysis": {
+      "filter": {
+        "tech_keyword_synonyms": {
+          "synonyms": [
+            "ui,ux,gui",
+            "nodejs => node",
+            "js => javascript",
+            "node,nodejs",
+            "c++ => cpp",
+            "c/c++ => c,cpp",
+            "c#,.net => csharp",
+            "i18n => internationalization",
+            "l10n => localization",
+            "ai => artificial intelligence",
+            "ml => machine learning",
+            "utf,utf-8,utf-16 => unicode",
+            "p2p,peer to peer => peer-to-peer",
+            "dev => devlopement",
+            "web,cloud",
+            "devops,operations",
+            "cad => computer aided design",
+            "g++ => gcc",
+            "fedora,linux,ubuntu,opensuse",
+            "db => database",
+            "admin => administrator",
+            "wifi,wireless,wi-fi",
+            "fp => functional programming",
+            "lisp,clojure,common lisp,common-lisp",
+            "asm => assembly",
+            "x86,x86-64,ia-32",
+            "erlang,elixir",
+            "hhvm,php,php4,php5,php7,hack,hack",
+            "lang => language",
+            "gb => gigabyte",
+            "mb => megabyte",
+            "html,html5 => hypertext markup language",
+            "css => cascading style sheet",
+            "http => hyptertext transfer protocol",
+            "jdk => java development kit",
+            "sql,sequel,mysql",
+            "nosql,mongodb,dynamodb,firebase",
+            "oop => object oriented programming",
+            "oo => object oriented",
+            "os => operating system",
+            "scrum,agile",
+            "config => configuration",
+            "doc => document,documentation",
+            "sqa => software quality assurance",
+            "qa => quality assurance",
+            "pm => project management",
+            "vs => visual studio",
+            "vscode => visual studio code",
+            "msvc => microsoft visual cpp",
+            "ide => integrated development environment",
+            "asd => adaptive software development",
+            "rad => rapid application development",
+            "dsdm => dynamic systems development method",
+            "cors => cross-origin resource sharing",
+            "cqrs => command and query resposibility segregation",
+            "swebok => software engineering body of knowledge",
+            "pmbok => project management body of knowledge",
+            "babok => business analysis body of knowledge",
+            "iso => international organization for standardization",
+            "iec => international electrotechnical commission",
+            "bis => bureau of indian standards",
+            "ieee-sa => institute of electircal end electronics engineers standards association",
+            "ieee => institute of electircal end electronics engineers",
+            "cmmi => capability maturity model integration",
+            "iac => infrastructure as code",
+            "msbuild => ms build",
+            "ara => application release automation",
+            "xml => extensible markup language",
+            "ddl => data definition language",
+            "vb,vb6,vb.net => visual basic",
+            "uml => unified modeling language",
+            "uwp => universal windows platform",
+            "winform,winforms => windows forms",
+            "xaml => extensible application markup language",
+            "jit => just-in-time, just in time",
+            "aot => ahead-of-time, ahead of time",
+            "clr => common language runtime",
+            "jvm => java virtual machine",
+            "scm => software configuration management",
+            "tdd => test-driven development",
+            "ddd,d3 => domain-driven design",
+            "cd => continuous delivery",
+            "ci => continuous integration",
+            "bdd => behavior-driven development",
+            "atdd => acceptance test-driven development",
+            "xp => extreme programming",
+            "rup => rational unified process",
+            "psp => personal software process",
+            "tsp => team software process",
+            "semat => software engineering method and theory",
+            "msf => microsoft solutions framework",
+            "mde => model-driven engineering",
+            "lsd => lean software development",
+            "fdd => feature-driven development",
+            "stl => standard template library",
+            "lib => library",
+            "bitcoin,altcoin,blockchain,crypto",
+            "cms => content management system",
+            "drm => durable resource manager",
+            "distributed systems,clustering",
+            "gc => garbage collector,garbage collection",
+            "iis => internet information services",
+            "it => information technology",
+            "soc => separation of concerns",
+            "bash,terminal,command line,command-line",
+            "isp => internet service provider"
+          ],
+          "type": "synonym"
+        },
+        "tech_synonyms": {
+          "synonyms": [
+            "ui,ux,gui",
+            "nodejs,node",
+            "js,javascript",
+            "node,nodejs",
+            "c++ => cpp",
+            "c/c++ => c,cpp",
+            "c#,.net => csharp",
+            "i18n => internationalization",
+            "l10n => localization",
+            "p2p,peer-to-peer",
+            "dev => devlopement",
+            "web,cloud",
+            "devops,operations",
+            "g++ => gcc",
+            "fedora,linux,ubuntu,opensuse",
+            "db => database",
+            "dbs => databases",
+            "admin => administrator",
+            "lisp,clojure,common-lisp",
+            "asm => assembly",
+            "x86,x86-64,ia-32",
+            "erlang,elixir",
+            "hhvm,php,php4,php5,php7,hack,hack",
+            "lang => language",
+            "gb => gigabyte",
+            "mb => megabyte",
+            "html,html5",
+            "sql,sequel,mysql",
+            "nosql,mongodb,dynamodb,firebase",
+            "scrum,agile",
+            "config => configuration",
+            "doc => document,documentation",
+            "vb,vb6,vb.net",
+            "winform,winforms => windows forms",
+            "ddd,d3",
+            "bdd,tdd,atdd",
+            "lib => library",
+            "bitcoin,altcoin,blockchain,crypto",
+            "bash,terminal,xterm,command-line",
+            "programmer,developer"
+          ],
+          "type": "synonym"
+        }
+      },
+      "analyzer": {
+        "skills_analyzer": {
+          "filter": [
+            "lowercase",
+            "tech_keyword_synonyms"
+          ],
+          "type": "custom",
+          "tokenizer": "keyword"
+        },
+        "tech_analyzer": {
+          "filter": [
+            "lowercase",
+            "tech_synonyms"
+          ],
+          "type": "custom",
+          "tokenizer": "classic"
+        }
+      }
+    }
+  },
+  "mappings": {
+    "info": {
+      "properties": {
+        "skills": {
+          "analyzer": "skills_analyzer",
+          "type": "text"
+        },
+        "headline": {
+          "analyzer": "tech_analyzer",
+          "type": "text"
+        },
+        "summary": {
+          "analyzer": "tech_analyzer",
+          "type": "text"
+        }
+      }
+    }
+  }
+}

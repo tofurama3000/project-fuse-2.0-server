@@ -2,6 +2,7 @@ package server.entities.dto;
 
 import lombok.Data;
 import lombok.Getter;
+import server.entities.dto.user.User;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

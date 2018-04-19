@@ -35,3 +35,7 @@ target/
 .classpath
 .settings
 .project
+.vscode
+server_setup/packer/export.sh
+*.vagrant*
+

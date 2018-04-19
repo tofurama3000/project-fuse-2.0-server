@@ -5,13 +5,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import server.controllers.FuseSessionController;
-import server.entities.dto.User;
 import server.entities.dto.group.organization.Organization;
 import server.entities.dto.group.project.Project;
-import server.entities.dto.group.team.Team;
+import server.entities.dto.user.User;
+import server.repositories.group.organization.OrganizationApplicantRepository;
 import server.repositories.group.organization.OrganizationMemberRepository;
+import server.repositories.group.project.ProjectApplicantRepository;
 import server.repositories.group.project.ProjectMemberRepository;
-import server.repositories.group.team.TeamMemberRepository;
 
 @Service
 @Transactional
@@ -24,13 +24,16 @@ public class PermissionFactory {
   private SessionFactory sessionFactory;
 
   @Autowired
-  private TeamMemberRepository teamMemberRepository;
-
-  @Autowired
   private ProjectMemberRepository projectMemberRepository;
 
   @Autowired
+  private ProjectApplicantRepository projectApplicantRepository;
+
+  @Autowired
   private OrganizationMemberRepository organizationMemberRepository;
+
+  @Autowired
+  private OrganizationApplicantRepository organizationApplicantRepository;
 
   public UserPermission createUserPermission(User user) {
     UserPermission permission = new UserPermission(user);
@@ -42,6 +45,7 @@ public class PermissionFactory {
     UserToOrganizationPermission permission = new UserToOrganizationPermission(user, organization);
     permission.setSession(sessionFactory.getCurrentSession());
     permission.setRepository(organizationMemberRepository);
+    permission.setOrganizationApplicantRepository(organizationApplicantRepository);
     return permission;
   }
 
@@ -49,13 +53,10 @@ public class PermissionFactory {
     UserToProjectPermission permission = new UserToProjectPermission(user, project);
     permission.setSession(sessionFactory.getCurrentSession());
     permission.setRepository(projectMemberRepository);
-    return permission;
-  }
-
-  public UserToTeamPermission createUserToTeamPermission(User user, Team team) {
-    UserToTeamPermission permission = new UserToTeamPermission(user, team);
-    permission.setSession(sessionFactory.getCurrentSession());
-    permission.setRepository(teamMemberRepository);
+    permission.setProjectApplicantRepository(projectApplicantRepository);
+    if (project.getOrganization() != null) {
+      permission.setUserToOrganizationPermission(createUserToOrganizationPermission(user, project.getOrganization()));
+    }
     return permission;
   }
 }
